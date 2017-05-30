@@ -1,3 +1,5 @@
+# 1.4.7/1.4.6
+- Update dependencies
 
 # 1.4.6
 - Update Kotlin `1.1.1`

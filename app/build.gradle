@@ -1,21 +1,3 @@
-buildscript {
-  repositories {
-    jcenter() // gradle-versions-plugin
-    mavenCentral()
-    maven { url 'https://maven.fabric.io/public' }
-    maven { url 'https://plugins.gradle.org/m2/' } //nimbledroid
-  }
-
-  dependencies {
-    classpath 'io.fabric.tools:gradle:1.22.1'
-    classpath 'com.github.ben-manes:gradle-versions-plugin:0.13.0'
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$deps.kotlin"
-    classpath "org.jetbrains.kotlin:kotlin-android-extensions:$deps.kotlin"
-    classpath 'com.stanfy.spoon:spoon-gradle-plugin:1.2.2'
-    classpath 'gradle.plugin.com.nimbledroid:gradle-profiler:1.1.0'
-  }
-}
-
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
@@ -23,11 +5,10 @@ apply plugin: 'io.fabric'
 apply plugin: 'com.github.ben-manes.versions'
 apply plugin: 'spoon'
 apply from: '../jacoco.gradle'
-apply plugin: 'com.nimbledroid.profiler'
 
 def appId = "com.makingiants.android.banjotuner"
-def appVersionName = "1.4.6"
-def appVersionCode = 22
+def appVersionName = "1.4.7"
+def appVersionCode = 66
 
 android {
   compileSdkVersion setup.targetSdk
@@ -66,13 +47,13 @@ android {
   }
 
   aaptOptions {
-    // Disable automatic automatic image optimization (do it manually)
+    // All images are already optimized so we can avoid this
     cruncherEnabled = false
   }
 }
 
-repositories {
-  maven { url 'https://maven.fabric.io/public' }
+def excludeAnnotations = {
+  exclude group: 'com.android.support', module: 'support-annotations'
 }
 
 dependencies {
@@ -81,40 +62,30 @@ dependencies {
 
   compile "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
 
-  compile('com.crashlytics.sdk.android:crashlytics:2.6.6@aar') { transitive = true; }
+  compile('com.crashlytics.sdk.android:crashlytics:2.6.8@aar') { transitive = true; }
 
   testCompile 'junit:junit:4.12'
   testCompile "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
   testCompile "org.jetbrains.kotlin:kotlin-test-junit:$deps.kotlin"
 
-  androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
-    exclude group: 'com.android.support', module: 'support-annotations'
-  })
+  androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', excludeAnnotations)
+  androidTestCompile('com.android.support.test:runner:0.5', excludeAnnotations)
+  androidTestCompile('com.android.support.test:rules:0.5', excludeAnnotations)
+
+  androidTestCompile 'com.squareup.spoon:spoon-client:1.7.1'
   androidTestCompile('com.jraska:falcon-spoon-compat:1.0.4') {
     exclude group: 'com.squareup.spoon', module: 'spoon-client'
   }
-  androidTestCompile 'com.squareup.spoon:spoon-client:1.7.1'
-
-  androidTestCompile('com.android.support.test:runner:0.5') {
-    exclude group: 'com.android.support', module: 'support-annotations'
-  }
-  androidTestCompile('com.android.support.test:rules:0.5') {
-    exclude group: 'com.android.support', module: 'support-annotations'
-  }
 }
 
-//jacoco {
-//  toolVersion = "0.7.4.201502262128"
-//}
+jacoco {
+  toolVersion = deps.jacoco
+}
 
 spoon {
   debug = true
   codeCoverage = true
-  // To grant permissions to Android M >= devices */
   grantAllPermissions = true
 }
 
-nimbledroid {
-  apiKey BANJEN_NIMBLEDROID_API_KEY
-  apkFilename 'app/build/outputs/apk/app-release.apk'
-}
+apply plugin: 'com.google.gms.google-services' // Firebase
