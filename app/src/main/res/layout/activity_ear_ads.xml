@@ -10,6 +10,7 @@
     android:id="@+id/soundsRadioGroup"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
+    android:layout_centerInParent="true"
     android:orientation="vertical">
 
     <ToggleButton
@@ -58,7 +59,7 @@
     android:id="@+id/adsView"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:layout_gravity="bottom"
+    android:layout_alignParentBottom="true"
     ads:adSize="BANNER"
     ads:adUnitId="@string/ads_unit_id_banner" />
 
