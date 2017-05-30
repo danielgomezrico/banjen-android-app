@@ -1,10 +1,16 @@
 machine:
   environment:
-    GRADLE_VERSION: "gradle-2.13"
+    GRADLE_VERSION: "gradle-2.14.1"
     PATH: "~/$CIRCLE_PROJECT_REPONAME/$GRADLE_VERSION/bin:$PATH"
     TERM: "dumb"
     ADB_INSTALL_TIMEOUT: "10"
+
+    # Avoid out of memory error
     GRADLE_OPTS: '-Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError"'
+    _JAVA_OPTIONS: "-Xms512m -Xmx2048m" # some libraries ignore the gradle opts
+
+  java:
+    version: oraclejdk8
 
 dependencies:
   cache_directories:
@@ -46,9 +52,3 @@ test:
     - cp -r app/build/spoon/* $CIRCLE_TEST_REPORTS
   post:
     - bash <(curl -s https://codecov.io/bash) -s "$CIRCLE_TEST_REPORTS"
-
-deployment:
-  staging:
-    branch: /^release\$*/
-    commands:
-      - ./gradlew ndUpload -PdisablePreDex #upload to nimbledroid
