@@ -1,0 +1,8 @@
+<resources>
+
+  <!-- Default screen margins, per the Android Design guidelines. -->
+  <dimen name="ear_horizontal_margin">16dp</dimen>
+  <dimen name="ear_vertical_margin">8dp</dimen>
+  <dimen name="ear_button_height">90dp</dimen>
+
+</resources>

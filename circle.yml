@@ -1,6 +1,6 @@
 machine:
   environment:
-    GRADLE_VERSION: "gradle-3.5"
+    GRADLE_VERSION: "gradle-2.14.1"
     PATH: "~/$CIRCLE_PROJECT_REPONAME/$GRADLE_VERSION/bin:$PATH"
     TERM: "dumb"
     ADB_INSTALL_TIMEOUT: "10"
@@ -31,7 +31,7 @@ compile:
         parallel: true
 
   override:
-    - ./gradlew assembleDebug --stacktrace -PdisablePreDex --no-daemon --console=plain -scan
+    - ./gradlew assembleDebug --stacktrace -PdisablePreDex --no-daemon --console=plain
 
 test:
   override:

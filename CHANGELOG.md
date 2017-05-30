@@ -1,3 +1,10 @@
+# 1.4.7/1.4.6
+- Update dependencies
+
+# 1.4.6
+- Update Kotlin `1.1.1`
+- Update support library `25.3.0` and children...
+- Refactor UI for simplicity removing track drawables on touch.
 
 # 1.4.5
 - Update support library 25.1.1.

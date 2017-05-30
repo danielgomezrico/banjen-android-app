@@ -2,8 +2,8 @@
 
   <!-- Base application theme. -->
   <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-    <item name="colorPrimaryDark">@color/banjen_primary_dark</item>
-    <item name="colorPrimary">@color/banjen_primary</item>
+    <item name="colorPrimaryDark">@color/banjen_primary</item>
+    <item name="colorPrimary">@color/banjen_primary_dark</item>
     <item name="colorAccent">@color/banjen_accent</item>
     <item name="colorControlHighlight">@color/banjen_accent</item>
 
@@ -11,12 +11,16 @@
     <item name="android:colorBackgroundCacheHint">@color/banjen_background</item>
 
     <item name="colorButtonNormal">@color/banjen_primary</item>
+
   </style>
 
-  <style name="EarButton" parent="Widget.AppCompat.Button.Borderless.Colored">
+  <style name="EarButton" parent="Base.Widget.AppCompat.Button.Borderless">
+    <item name="android:layout_width">fill_parent</item>
+    <item name="android:layout_height">fill_parent</item>
     <item name="android:textColor">#fff</item>
-    <item name="android:background">@drawable/toggle_button</item>
+    <item name="android:gravity">center</item>
     <item name="android:textAppearance">@style/TextAppearance.AppCompat.Display1</item>
+    <item name="android:drawSelectorOnTop">true</item>
   </style>
 
 </resources>
