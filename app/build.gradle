@@ -8,7 +8,7 @@ apply from: '../jacoco.gradle'
 
 def appId = "com.makingiants.android.banjotuner"
 def appVersionName = "1.4.7"
-def appVersionCode = 66
+def appVersionCode = 106
 
 android {
   compileSdkVersion setup.targetSdk
