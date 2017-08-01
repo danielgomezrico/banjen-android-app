@@ -44,6 +44,9 @@ android {
 
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
     }
+    packagingOptions {
+      exclude 'META-INF/services/org.xmlpull.v1.XmlPullParserFactory'
+    }
   }
 }
 
@@ -63,9 +66,9 @@ dependencies {
   testCompile "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
   testCompile "org.jetbrains.kotlin:kotlin-test-junit:$deps.kotlin"
 
-  androidTestCompile 'com.android.support.test.espresso:espresso-core:2.2.2', excludeAnnotations
-  androidTestCompile 'com.android.support.test:runner:0.5', excludeAnnotations
-  androidTestCompile 'com.android.support.test:rules:0.5', excludeAnnotations
+  androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.0', excludeAnnotations
+  androidTestCompile 'com.android.support.test:runner:1.0.0', excludeAnnotations
+  androidTestCompile 'com.android.support.test:rules:1.0.0', excludeAnnotations
 
   androidTestCompile 'com.squareup.spoon:spoon-client:1.7.1'
   androidTestCompile 'com.jraska:falcon-spoon-compat:1.0.4', {
