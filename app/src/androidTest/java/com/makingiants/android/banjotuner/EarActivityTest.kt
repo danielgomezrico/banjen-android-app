@@ -1,13 +1,13 @@
 package com.makingiants.android.banjotuner
 
-import android.support.test.filters.MediumTest
+import android.support.test.filters.LargeTest
 import android.support.test.rule.ActivityTestRule
 import android.support.test.runner.AndroidJUnit4
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-@MediumTest
+@LargeTest
 @RunWith(AndroidJUnit4::class)
 class EarActivityTest {
 
@@ -31,7 +31,7 @@ class EarActivityTest {
   fun test_onClick_ifUnselected_playSound() = (1..4).forEach {
     test_isPlaying(it)
   }
-  
+
   @Test
   fun test_onClick_ifSelected_stopSound() = (1..4).forEach {
     test_stopsPlaying(it)

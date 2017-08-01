@@ -16,6 +16,11 @@ class EarRobot(val activity: Activity) {
 
   val audioService = activity.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
+  init {
+    // animations that repeat forever break espresso
+    (activity as EarActivity).clickAnimation.repeatCount = 0
+  }
+
   fun click(buttonIndex: Int) {
     FalconSpoon.screenshot(activity, "before-click-$buttonIndex")
     onView(withText(Matchers.startsWith("$buttonIndex"))).perform(ViewActions.click())
