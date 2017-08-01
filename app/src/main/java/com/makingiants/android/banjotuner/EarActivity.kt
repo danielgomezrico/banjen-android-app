@@ -1,6 +1,7 @@
 package com.makingiants.android.banjotuner
 
 import android.os.Bundle
+import android.support.annotation.VisibleForTesting
 import android.support.v4.view.ViewCompat
 import android.support.v4.view.animation.FastOutLinearInInterpolator
 import android.support.v7.app.AppCompatActivity
@@ -20,7 +21,9 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
 
   private val player by lazy { SoundPlayer(this) }
   private val firebaseAnalytics by lazy { FirebaseAnalytics.getInstance(this) }
-  private val clickAnimation: Animation by lazy {
+
+  @VisibleForTesting
+  internal val clickAnimation: Animation by lazy {
     AnimationUtils.loadAnimation(this, R.anim.shake_animation).apply {
       interpolator = FastOutLinearInInterpolator()
     }
@@ -53,7 +56,7 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
 
             if (!shouldCheck) {
               it.clearAnimation()
-              ViewCompat.setElevation(it, 4f)
+              ViewCompat.setElevation(it, 0f)
             }
           }
     }
