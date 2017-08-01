@@ -14,13 +14,13 @@
 
     <ToggleButton
       android:id="@+id/ear4Button"
-      android:theme="@style/EarButton"
       android:layout_width="fill_parent"
       android:layout_height="fill_parent"
       android:layout_weight="1"
       android:tag="3"
       android:textOff="@string/ear_button_4_text"
-      android:textOn="@string/ear_button_4_text" />
+      android:textOn="@string/ear_button_4_text"
+      android:theme="@style/EarButton" />
 
     <ToggleButton
       android:id="@+id/ear3Button"
@@ -58,7 +58,7 @@
     android:id="@+id/adsView"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content"
-    android:layout_gravity="bottom"
+    android:layout_gravity="top"
     ads:adSize="BANNER"
     ads:adUnitId="@string/ads_unit_id_banner" />
 
