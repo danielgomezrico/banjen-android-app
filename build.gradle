@@ -1,11 +1,11 @@
 buildscript {
-  ext.deps = [kotlin      : "1.1.2-3",
-              supportLib  : "25.3.1",
+  ext.deps = [kotlin      : "1.1.3-2",
+              supportLib  : "26.0.0",
               googleGsm   : "3.1.0",
-              playServices: "10.2.6",
+              playServices: "11.0.4",
               jacoco      : "0.7.9"]
 
-  ext.setup = [targetSdk : 25,
+  ext.setup = [targetSdk : 26,
                minSdk    : 14,
                buildTools: "25.0.3"]
 
@@ -34,5 +34,6 @@ allprojects {
   repositories {
     jcenter()
     maven { url 'https://maven.fabric.io/public' } // Crashlytics
+    maven { url "https://maven.google.com" }
   }
 }
