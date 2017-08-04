@@ -4,4 +4,5 @@
   <color name="banjen_primary_dark">@color/primary_dark_material_dark</color>
   <color name="banjen_accent">#ffa38251</color>
   <color name="banjen_background">@color/banjen_primary</color>
+  <color name="banjen_gray">#666666</color>
 </resources>

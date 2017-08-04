@@ -5,24 +5,17 @@
     <item name="colorPrimaryDark">@color/banjen_primary</item>
     <item name="colorPrimary">@color/banjen_primary_dark</item>
     <item name="colorAccent">@color/banjen_accent</item>
-    <item name="colorControlHighlight">@color/banjen_accent</item>
-
-    <item name="android:windowBackground">@color/banjen_background</item>
-    <item name="android:colorBackgroundCacheHint">@color/banjen_background</item>
-
-    <item name="colorButtonNormal">@color/banjen_primary</item>
-
   </style>
 
   <style name="EarButton" parent="Widget.AppCompat.Button.Borderless">
-    <item name="android:textColor">#fff</item>
     <item name="android:gravity">center</item>
     <item name="android:textAppearance">@style/TextAppearance.AppCompat.Large</item>
-    <!--<item name="android:drawSelectorOnTop">true</item>-->
 
+    <item name="android:drawSelectorOnTop">true</item>
     <item name="android:background">@drawable/button</item>
-    <!--<item name="android:foreground">?attr/selectableItemBackgroundBorderless</item>-->
-    <!--<item name="android:clickable">true</item>-->
+    <item name="android:foreground">?attr/selectableItemBackground</item>
+    <item name="android:clickable">true</item>
+    <item name="android:focusable">true</item>
   </style>
 
 </resources>
