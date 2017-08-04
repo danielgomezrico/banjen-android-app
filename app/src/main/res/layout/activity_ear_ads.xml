@@ -15,42 +15,42 @@
     <ToggleButton
       android:id="@+id/ear4Button"
       android:layout_width="fill_parent"
-      android:layout_height="fill_parent"
+      android:layout_height="wrap_content"
       android:layout_weight="1"
       android:tag="3"
       android:textOff="@string/ear_button_4_text"
       android:textOn="@string/ear_button_4_text"
-      android:theme="@style/EarButton" />
+      style="@style/EarButton" />
 
     <ToggleButton
       android:id="@+id/ear3Button"
       android:layout_width="fill_parent"
-      android:layout_height="fill_parent"
+      android:layout_height="wrap_content"
       android:layout_weight="1"
       android:tag="2"
       android:textOff="@string/ear_button_3_text"
       android:textOn="@string/ear_button_3_text"
-      android:theme="@style/EarButton" />
+      style="@style/EarButton" />
 
     <ToggleButton
       android:id="@+id/ear2Button"
       android:layout_width="fill_parent"
-      android:layout_height="fill_parent"
+      android:layout_height="wrap_content"
       android:layout_weight="1"
       android:tag="1"
       android:textOff="@string/ear_button_2_text"
       android:textOn="@string/ear_button_2_text"
-      android:theme="@style/EarButton" />
+      style="@style/EarButton" />
 
     <ToggleButton
       android:id="@+id/ear1Button"
       android:layout_width="fill_parent"
-      android:layout_height="fill_parent"
+      android:layout_height="wrap_content"
       android:layout_weight="1"
       android:tag="0"
       android:textOff="@string/ear_button_1_text"
       android:textOn="@string/ear_button_1_text"
-      android:theme="@style/EarButton" />
+      style="@style/EarButton" />
 
   </RadioGroup>
 

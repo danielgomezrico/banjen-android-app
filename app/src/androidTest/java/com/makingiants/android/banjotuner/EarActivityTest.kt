@@ -12,20 +12,16 @@ import org.junit.runner.RunWith
 class EarActivityTest {
 
   @Rule @JvmField
-  var mActivityRule: ActivityTestRule<EarActivity> = ActivityTestRule(EarActivity::class.java)
+  var activityRule: ActivityTestRule<EarActivity> = ActivityTestRule(EarActivity::class.java)
 
-  fun test_isPlaying(index: Int) {
-    withEarRobot(mActivityRule.activity) {
-      click(index)
-    }.isPlaying()
-  }
+  fun test_isPlaying(index: Int) = withEarRobot(activityRule.activity) {
+    click(index)
+  }.isPlaying()
 
-  fun test_stopsPlaying(index: Int) {
-    withEarRobot(mActivityRule.activity) {
-      click(index)
-      click(index)
-    }.isNotPlaying()
-  }
+  fun test_stopsPlaying(index: Int) = withEarRobot(activityRule.activity) {
+    click(index)
+    click(index)
+  }.isNotPlaying()
 
   @Test
   fun test_onClick_ifUnselected_playSound() = (1..4).forEach {
