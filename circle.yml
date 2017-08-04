@@ -44,7 +44,7 @@ test:
 
     # run tests  against the emulator.
     - ./gradlew spoonDebugAndroidTest -PdisablePreDex --stacktrace
-    - ./gradlew createDebugCoverageReport -PdisablePreDex --stacktrace
+    # - ./gradlew createDebugCoverageReport -PdisablePreDex --stacktrace
 
     # copy the build outputs to artifacts
     - cp -r app/build/outputs $CIRCLE_ARTIFACTS
