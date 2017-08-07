@@ -16,12 +16,12 @@ class EarActivityTest {
 
   fun test_isPlaying(index: Int) = withEarRobot(activityRule.activity) {
     click(index)
-  }.isPlaying()
+  }.checkIsPlaying()
 
   fun test_stopsPlaying(index: Int) = withEarRobot(activityRule.activity) {
     click(index)
     click(index)
-  }.isNotPlaying()
+  }.checkIsNotPlaying()
 
   @Test
   fun test_onClick_ifUnselected_playSound() = (1..4).forEach {

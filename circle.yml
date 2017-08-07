@@ -26,7 +26,7 @@ compile:
     # start the emulator
     - mksdcard -l e 128M mysdcard.img # Spoon screenshots
 
-    - emulator -avd circleci-android24 -no-audio -no-window -sdcard mysdcard.img:
+    - emulator -avd circleci-android21 -no-audio -no-window -sdcard mysdcard.img:
         background: true
         parallel: true
 

@@ -21,7 +21,7 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
 
   private val player by lazy { SoundPlayer(this) }
   private val firebaseAnalytics by lazy { FirebaseAnalytics.getInstance(this) }
-  private val elevationPixels: Float by lazy {
+  private val elevationPixels by lazy {
     resources.getDimensionPixelSize(R.dimen.spacing_4dp).toFloat()
   }
 

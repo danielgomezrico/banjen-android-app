@@ -5,6 +5,7 @@
     <item name="colorPrimaryDark">@color/banjen_primary</item>
     <item name="colorPrimary">@color/banjen_primary_dark</item>
     <item name="colorAccent">@color/banjen_accent</item>
+    <item name="colorControlHighlight">@color/banjen_accent</item>
   </style>
 
   <style name="EarButton" parent="Widget.AppCompat.Button.Borderless">
