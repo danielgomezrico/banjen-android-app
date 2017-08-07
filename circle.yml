@@ -36,7 +36,7 @@ compile:
 test:
   override:
     # Prepare the device
-    - circle-android wait-for-boot
+    #- circle-android wait-for-boot
     - sleep 30
     - adb shell input keyevent 82
     - adb shell input touchscreen swipe 370 735 371 735
