@@ -12,10 +12,12 @@ import android.widget.Button
 import android.widget.ToggleButton
 import com.crashlytics.android.Crashlytics
 import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
 import com.google.firebase.analytics.FirebaseAnalytics
 import io.fabric.sdk.android.Fabric
 import kotlinx.android.synthetic.main.activity_ear_ads.*
 import java.io.IOException
+import java.lang.ref.WeakReference
 
 class EarActivity : AppCompatActivity(), View.OnClickListener {
 
@@ -29,6 +31,8 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
   internal val clickAnimation: Animation by lazy {
     AnimationUtils.loadAnimation(this, R.anim.shake_animation)
   }
+
+  private val adsRunnable by lazy { AdSetupRunnable(adsView) }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -51,16 +55,7 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
       it.setOnClickListener(this)
     }
 
-    val adRequest: AdRequest
-    if (BuildConfig.DEBUG) {
-      adRequest = AdRequest.Builder()
-          .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-          .addTestDevice("027c6ee5571a8376")
-          .build()
-    } else {
-      adRequest = AdRequest.Builder().build()
-    }
-    adsView.loadAd(adRequest)
+    adsView.postDelayed(adsRunnable, 300)
   }
 
   override fun onPause() {
@@ -98,5 +93,22 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
     }
   }
 
+  class AdSetupRunnable(adsView: AdView) : Runnable {
+    val weakAdsView = WeakReference(adsView)
+
+    override fun run() {
+      val adRequest: AdRequest
+      if (BuildConfig.DEBUG) {
+        adRequest = AdRequest.Builder()
+            .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+            .addTestDevice("027c6ee5571a8376")
+            .build()
+      } else {
+        adRequest = AdRequest.Builder().build()
+      }
+
+      weakAdsView.get()?.loadAd(adRequest)
+    }
+  }
 }
 
