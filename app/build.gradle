@@ -7,8 +7,8 @@ apply plugin: 'spoon'
 apply from: '../jacoco.gradle'
 
 def appId = "com.makingiants.android.banjotuner"
-def appVersionName = "1.4.9"
-def appVersionCode = 108
+def appVersionName = "1.5.0"
+def appVersionCode = 109
 
 android {
   compileSdkVersion setup.targetSdk

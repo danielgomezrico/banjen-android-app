@@ -1,3 +1,6 @@
+# 1.5.0
+- Fix app delay on startup: move ads initialization to runnable.
+
 # 1.4.7/1.4.6
 - Update dependencies
 
