@@ -1,13 +1,5 @@
 buildscript {
-  ext.deps = [kotlin      : "1.1.3-2",
-              supportLib  : "26.0.0",
-              googleGsm   : "3.1.0",
-              playServices: "11.0.4",
-              jacoco      : "0.7.9"]
-
-  ext.setup = [targetSdk : 26,
-               minSdk    : 14,
-               buildTools: "25.0.3"]
+  apply from: "dependencies.gradle"
 
   repositories {
     jcenter()
@@ -24,9 +16,9 @@ buildscript {
 
     classpath 'com.stanfy.spoon:spoon-gradle-plugin:1.2.2'
 
-    classpath 'io.fabric.tools:gradle:1.22.1'
+    classpath 'io.fabric.tools:gradle:1.24.2'
 
-    classpath 'com.github.ben-manes:gradle-versions-plugin:0.13.0'
+    classpath 'com.github.ben-manes:gradle-versions-plugin:0.15.0'
   }
 }
 
