@@ -22,6 +22,10 @@ dependencies:
     - sh scripts/cp-env-to-properties.sh
 
 compile:
+  override:
+    - ./gradlew assembleDebug --stacktrace -PdisablePreDex --no-daemon --console=plain
+
+test:
   pre:
     # start the emulator
     - mksdcard -l e 128M mysdcard.img # Spoon screenshots
@@ -29,11 +33,6 @@ compile:
     - emulator -avd circleci-android21 -no-audio -no-window -sdcard mysdcard.img:
         background: true
         parallel: true
-
-  override:
-    - ./gradlew assembleDebug --stacktrace -PdisablePreDex --no-daemon --console=plain
-
-test:
   override:
     # Prepare the device
     #- circle-android wait-for-boot
