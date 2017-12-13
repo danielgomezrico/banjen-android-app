@@ -1,8 +1,8 @@
 ext {
-  deps = [kotlin      : "1.1.51",
-          supportLib  : "26.1.0",
+  deps = [kotlin      : "1.2.10",
+          supportLib  : "27.0.2",
           googleGsm   : "3.1.0",
-          playServices: "11.4.2",
+          playServices: "11.6.2",
           jacoco      : "0.7.9"]
 
   setup = [targetSdk : 26,

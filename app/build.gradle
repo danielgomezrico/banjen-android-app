@@ -7,8 +7,8 @@ apply plugin: 'spoon'
 apply from: '../jacoco.gradle'
 
 def appId = "com.makingiants.android.banjotuner"
-def appVersionName = "1.5.1"
-def appVersionCode = 110
+def appVersionName = "1.5.2"
+def appVersionCode = 111
 
 android {
   compileSdkVersion setup.targetSdk
@@ -60,7 +60,7 @@ dependencies {
 
   compile "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
 
-  compile('com.crashlytics.sdk.android:crashlytics:2.7.0@aar') { transitive = true; }
+  compile('com.crashlytics.sdk.android:crashlytics:2.8.0@aar') { transitive = true; }
 
   testCompile 'junit:junit:4.12'
   testCompile "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
