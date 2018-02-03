@@ -1,3 +1,7 @@
+# 1.5.1
+- Update kotlin 1.1.51
+- Support library 26
+
 # 1.5.0
 - Fix app delay on startup: move ads initialization to runnable.
 
