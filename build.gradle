@@ -7,18 +7,16 @@ buildscript {
     maven { url 'https://maven.fabric.io/public' }
   }
   dependencies {
-    classpath 'com.android.tools.build:gradle:2.1.3' //2.2.3 and 2.3.0+ breaks jacoco support
-
-    classpath "com.google.gms:google-services:$deps.googleGsm" // Firebase
-
+    classpath 'com.android.tools.build:gradle:2.1.3' // because 2.2.3 and 2.3.0+ breaks jacoco support
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$deps.kotlin"
-    classpath "org.jetbrains.kotlin:kotlin-android-extensions:$deps.kotlin"
 
+    // Firebase
+    classpath 'com.google.gms:google-services:3.2.1'
+    classpath 'io.fabric.tools:gradle:1.25.1'
+
+    // Extras
     classpath 'com.stanfy.spoon:spoon-gradle-plugin:1.2.2'
-
-    classpath 'io.fabric.tools:gradle:1.24.2'
-
-    classpath 'com.github.ben-manes:gradle-versions-plugin:0.15.0'
+    classpath 'com.github.ben-manes:gradle-versions-plugin:0.17.0'
   }
 }
 
