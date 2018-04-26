@@ -12,12 +12,20 @@ import android.widget.Button
 import android.widget.ToggleButton
 import com.crashlytics.android.Crashlytics
 import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.AdView
 import com.google.firebase.analytics.FirebaseAnalytics
 import io.fabric.sdk.android.Fabric
-import kotlinx.android.synthetic.main.activity_ear_ads.*
 import java.io.IOException
+import java.lang.ref.WeakReference
 
 class EarActivity : AppCompatActivity(), View.OnClickListener {
+
+  private val adsView by lazy { findViewById<AdView>(R.id.adsView) }
+  private val ear1Button by lazy { findViewById<Button>(R.id.ear1Button) }
+  private val ear2Button by lazy { findViewById<Button>(R.id.ear2Button) }
+  private val ear3Button by lazy { findViewById<Button>(R.id.ear3Button) }
+  private val ear4Button by lazy { findViewById<Button>(R.id.ear4Button) }
+  private val soundsRadioGroup by lazy { findViewById<RadioGroup>(R.id.soundsRadioGroup) }
 
   private val player by lazy { SoundPlayer(this) }
   private val firebaseAnalytics by lazy { FirebaseAnalytics.getInstance(this) }
@@ -29,6 +37,7 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
   internal val clickAnimation: Animation by lazy {
     AnimationUtils.loadAnimation(this, R.anim.shake_animation)
   }
+
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -51,16 +60,7 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
       it.setOnClickListener(this)
     }
 
-    val adRequest: AdRequest
-    if (BuildConfig.DEBUG) {
-      adRequest = AdRequest.Builder()
-          .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-          .addTestDevice("027c6ee5571a8376")
-          .build()
-    } else {
-      adRequest = AdRequest.Builder().build()
-    }
-    adsView.loadAd(adRequest)
+    adsView.postDelayed(adsRunnable, 300)
   }
 
   override fun onPause() {
@@ -95,6 +95,24 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
     } else {
       ViewCompat.setElevation(button, 0f)
       button.clearAnimation()
+    }
+  }
+
+  class AdSetupRunnable(adsView: AdView) : Runnable {
+    val weakAdsView = WeakReference(adsView)
+
+    override fun run() {
+      val adRequest: AdRequest
+      if (BuildConfig.DEBUG) {
+        adRequest = AdRequest.Builder()
+            .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+            .addTestDevice("027c6ee5571a8376")
+            .build()
+      } else {
+        adRequest = AdRequest.Builder().build()
+      }
+
+      weakAdsView.get()?.loadAd(adRequest)
     }
   }
 
