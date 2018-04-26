@@ -78,9 +78,9 @@ dependencies {
   testCompile "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
   testCompile "org.jetbrains.kotlin:kotlin-test-junit:$deps.kotlin"
 
-  androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.2', excludeAnnotations
-  androidTestCompile 'com.android.support.test:runner:1.0.2', excludeAnnotations
-  androidTestCompile 'com.android.support.test:rules:1.0.2', excludeAnnotations
+  androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.1', excludeAnnotations
+  androidTestCompile 'com.android.support.test:runner:1.0.1', excludeAnnotations
+  androidTestCompile 'com.android.support.test:rules:1.0.1', excludeAnnotations
   androidTestCompile 'com.squareup.spoon:spoon-client:1.7.1'
   androidTestCompile 'com.jraska:falcon-spoon-compat:1.0.4', {
     exclude group: 'com.squareup.spoon', module: 'spoon-client'
