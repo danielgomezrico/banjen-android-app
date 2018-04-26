@@ -108,6 +108,7 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
     }
   }
 
+
   /**
    * Setup the ads in a runnable helping to not lose frames when the view is been created
    * ([onCreate]), ads process takes time to finish.
@@ -133,5 +134,6 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
       weakAdsView.get()?.loadAd(adRequest)
     }
   }
+
 }
 
