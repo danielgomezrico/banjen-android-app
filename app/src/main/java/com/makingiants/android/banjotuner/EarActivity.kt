@@ -1,5 +1,6 @@
 package com.makingiants.android.banjotuner
 
+import android.content.Context
 import android.os.Bundle
 import android.support.annotation.VisibleForTesting
 import android.support.v4.view.ViewCompat
@@ -9,17 +10,25 @@ import android.view.View
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
 import android.widget.Button
+import android.widget.RadioGroup
 import android.widget.ToggleButton
 import com.crashlytics.android.Crashlytics
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.MobileAds
 import com.google.firebase.analytics.FirebaseAnalytics
 import io.fabric.sdk.android.Fabric
-import kotlinx.android.synthetic.main.activity_ear_ads.*
 import java.io.IOException
 import java.lang.ref.WeakReference
 
 class EarActivity : AppCompatActivity(), View.OnClickListener {
+
+  private val adsView by lazy { findViewById<AdView>(R.id.adsView) }
+  private val ear1Button by lazy { findViewById<Button>(R.id.ear1Button) }
+  private val ear2Button by lazy { findViewById<Button>(R.id.ear2Button) }
+  private val ear3Button by lazy { findViewById<Button>(R.id.ear3Button) }
+  private val ear4Button by lazy { findViewById<Button>(R.id.ear4Button) }
+  private val soundsRadioGroup by lazy { findViewById<RadioGroup>(R.id.soundsRadioGroup) }
 
   private val player by lazy { SoundPlayer(this) }
   private val firebaseAnalytics by lazy { FirebaseAnalytics.getInstance(this) }
@@ -32,12 +41,18 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
     AnimationUtils.loadAnimation(this, R.anim.shake_animation)
   }
 
-  private val adsRunnable by lazy { AdSetupRunnable(adsView) }
+  private val adsRunnable by lazy { SetupAdsRunnable(adsView, this) }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    Fabric.with(this, Crashlytics())
+
+    Fabric.with(Fabric.Builder(this)
+        .kits(Crashlytics())
+        .debuggable(true)           // Enables Crashlytics debugger
+        .build())
+
     firebaseAnalytics.logEvent("screenview", Bundle().apply { putString("name", "ear") })
+
     setContentView(R.layout.activity_ear_ads)
 
     soundsRadioGroup.setOnCheckedChangeListener { radioGroup, i ->
@@ -93,18 +108,26 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
     }
   }
 
-  class AdSetupRunnable(adsView: AdView) : Runnable {
-    val weakAdsView = WeakReference(adsView)
+  /**
+   * Setup the ads in a runnable helping to not lose frames when the view is been created
+   * ([onCreate]), ads process takes time to finish.
+   */
+  class SetupAdsRunnable(adsView: AdView, context: Context) : Runnable {
+    private val weakAdsView = WeakReference(adsView)
+    private val weakContext = WeakReference(context)
 
     override fun run() {
-      val adRequest: AdRequest
-      if (BuildConfig.DEBUG) {
-        adRequest = AdRequest.Builder()
+      weakContext.get()?.let {
+        MobileAds.initialize(it, it.resources.getString(R.string.ads_unit_id_banner))
+      }
+
+      val adRequest = if (BuildConfig.DEBUG) {
+        AdRequest.Builder()
             .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
             .addTestDevice("027c6ee5571a8376")
             .build()
       } else {
-        adRequest = AdRequest.Builder().build()
+        AdRequest.Builder().build()
       }
 
       weakAdsView.get()?.loadAd(adRequest)
