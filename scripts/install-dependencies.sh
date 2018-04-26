@@ -8,8 +8,8 @@ DEPS_FILE="$ANDROID_HOME/android-dependencies-installed"
 
 if [ ! -e $DEPS_FILE ]; then
 
-  for I in android-26 \
-           build-tools-26.0.1  \
+  for I in android-27 \
+           build-tools-27.0.3  \
            tool \
            extra-android-m2repository \
            extra-android-support \
