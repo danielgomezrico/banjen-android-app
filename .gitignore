@@ -3,6 +3,8 @@ app/newrelic.properties
 app/google-services.json
 captures/
 
+gradle.properties
+
 nimbledroid.properties
 
 # Created by https://www.gitignore.io
