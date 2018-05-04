@@ -1,3 +1,10 @@
+# 1.5.2 # 1.5.3
+- Sdk to 27
+- Update dependencies:
+  + Firebase
+  + Ads
+  + Kotlin
+  + Support Library
 
 # 1.5.1
 - Update kotlin 1.1.51
