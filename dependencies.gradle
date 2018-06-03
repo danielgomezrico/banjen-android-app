@@ -1,12 +1,10 @@
 ext {
 
-  deps = [kotlin    : "1.2.40",
+  deps = [kotlin    : "1.2.41",
           supportLib: "27.1.1",
-          firebase  : "12.0.1",
-          jacoco    : "0.7.9"]
+          firebase  : "15.0.0"]
 
   setup = [targetSdk : 27,
-           minSdk    : 14,
-           buildTools: "27.0.3"]
+           minSdk    : 14]
 
 }

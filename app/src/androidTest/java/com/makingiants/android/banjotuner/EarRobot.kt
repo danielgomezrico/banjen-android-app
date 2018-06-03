@@ -7,12 +7,18 @@ import android.media.AudioManager
 import android.support.test.espresso.Espresso.onView
 import android.support.test.espresso.action.ViewActions
 import android.support.test.espresso.matcher.ViewMatchers.withText
-import com.jraska.falcon.FalconSpoon
+import com.jraska.falcon.FalconSpoonRule
 import org.hamcrest.Matchers
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Rule
+
+
 
 class EarRobot(val activity: Activity) {
+
+  @Rule
+  val falconSpoonRule = FalconSpoonRule()
 
   val audioService by lazy { activity.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
 
@@ -22,18 +28,18 @@ class EarRobot(val activity: Activity) {
   }
 
   fun click(buttonIndex: Int) {
-    FalconSpoon.screenshot(activity, "before-click-$buttonIndex")
+    falconSpoonRule.screenshot(activity, "before-click-$buttonIndex")
     onView(withText(Matchers.startsWith("$buttonIndex"))).perform(ViewActions.click())
-    FalconSpoon.screenshot(activity, "after-click-$buttonIndex")
+    falconSpoonRule.screenshot(activity, "after-click-$buttonIndex")
   }
 
   fun checkIsPlaying() {
-    FalconSpoon.screenshot(activity, "isPLaying")
+    falconSpoonRule.screenshot(activity, "isPLaying")
     assertTrue(audioService.isMusicActive)
   }
 
   fun checkIsNotPlaying() {
-    FalconSpoon.screenshot(activity, "checkIsNotPlaying")
+    falconSpoonRule.screenshot(activity, "checkIsNotPlaying")
     assertFalse(audioService.isMusicActive)
   }
 

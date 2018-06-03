@@ -1,3 +1,8 @@
+# 1.6.0
+- Update android gradle plugin to 3.x.
+- Update kotlin to 1.2.41.
+- Update firebase to 15.0.0.
+
 # 1.5.2 # 1.5.3
 - Sdk to 27
 - Update dependencies:

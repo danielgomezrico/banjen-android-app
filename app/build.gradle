@@ -2,16 +2,16 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'io.fabric'
 apply plugin: 'com.github.ben-manes.versions'
-apply plugin: 'spoon'
+apply plugin: "com.jaredsburrows.spoon"
 apply from: '../jacoco.gradle'
 
 def appId = "com.makingiants.android.banjotuner"
 def appVersionName = "1.5.3"
 def appVersionCode = 112
 
+
 android {
   compileSdkVersion setup.targetSdk
-  buildToolsVersion setup.buildTools
 
   defaultConfig {
     applicationId appId
@@ -43,10 +43,10 @@ android {
 
       proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
     }
+  }
 
-    packagingOptions {
-      exclude 'META-INF/services/org.xmlpull.v1.XmlPullParserFactory'
-    }
+  packagingOptions {
+    exclude 'META-INF/services/org.xmlpull.v1.XmlPullParserFactory'
   }
 
   signingConfigs {
@@ -60,6 +60,11 @@ android {
     }
   }
 
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+
 }
 
 def excludeAnnotations = {
@@ -67,36 +72,34 @@ def excludeAnnotations = {
 }
 
 dependencies {
-  compile "com.android.support:appcompat-v7:${deps.supportLib}"
-  compile "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
+  implementation "com.android.support:appcompat-v7:${deps.supportLib}"
+  implementation "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
 
   // Ads/Crash
-  compile 'com.crashlytics.sdk.android:crashlytics:2.9.1'
-  compile "com.google.firebase:firebase-core:${deps.firebase}"
-  compile "com.google.firebase:firebase-ads:${deps.firebase}"
+  implementation 'com.crashlytics.sdk.android:crashlytics:2.9.3'
+  implementation "com.google.firebase:firebase-core:${deps.firebase}"
+  implementation "com.google.firebase:firebase-ads:${deps.firebase}"
 
-  testCompile 'junit:junit:4.12'
-  testCompile "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
-  testCompile "org.jetbrains.kotlin:kotlin-test-junit:$deps.kotlin"
+  testImplementation 'junit:junit:4.12'
+  testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
+  testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$deps.kotlin"
 
-  androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.1', excludeAnnotations
-  androidTestCompile 'com.android.support.test:runner:1.0.1', excludeAnnotations
-  androidTestCompile 'com.android.support.test:rules:1.0.1', excludeAnnotations
+  androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2', excludeAnnotations
+  androidTestImplementation 'com.android.support.test:runner:1.0.2', excludeAnnotations
+  androidTestImplementation 'com.android.support.test:rules:1.0.2', excludeAnnotations
 
-  androidTestCompile 'com.squareup.spoon:spoon-client:1.7.1'
-  androidTestCompile 'com.jraska:falcon-spoon-compat:1.0.4', {
+  //androidTestImplementation 'com.squareup.spoon:spoon-client:1.7.1'
+  androidTestImplementation  "com.squareup.spoon:spoon-client:2.0.0-SNAPSHOT" // For Spoon snapshot, until 2.0.0 is released
+  androidTestImplementation 'com.jraska:falcon-spoon-compat:2.0.1', {
     exclude group: 'com.squareup.spoon', module: 'spoon-client'
   }
-}
-
-jacoco {
-  toolVersion = deps.jacoco
 }
 
 spoon {
   debug = true
   codeCoverage = true
-  grantAllPermissions = true
+  noAnimations = true
+  grantAll = true
 }
 
 
