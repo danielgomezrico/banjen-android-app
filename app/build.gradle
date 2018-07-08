@@ -12,6 +12,7 @@ def appVersionCode = 112
 
 android {
   compileSdkVersion setup.targetSdk
+  flavorDimensions "default"
 
   defaultConfig {
     applicationId appId
