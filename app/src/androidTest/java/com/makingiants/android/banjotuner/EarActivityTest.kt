@@ -12,7 +12,7 @@ import org.junit.runner.RunWith
 class EarActivityTest {
 
   @Rule @JvmField
-  var activityRule: ActivityTestRule<EarActivity> = ActivityTestRule(EarActivity::class.java)
+  var activityRule = ActivityTestRule(EarActivity::class.java)
 
   fun test_isPlaying(index: Int) = withEarRobot(activityRule.activity) {
     click(index)
