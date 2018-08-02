@@ -45,6 +45,7 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_ear_ads)
 
     Fabric.with(Fabric.Builder(this)
         .kits(Crashlytics())
@@ -52,8 +53,6 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
         .build())
 
     firebaseAnalytics.logEvent("screenview", Bundle().apply { putString("name", "ear") })
-
-    setContentView(R.layout.activity_ear_ads)
 
     soundsRadioGroup.setOnCheckedChangeListener { radioGroup, i ->
       (0 until radioGroup.childCount)
@@ -98,7 +97,7 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
     }
   }
 
-  fun handleAnimation(button: Button, shouldShow: Boolean = false) {
+  private fun handleAnimation(button: Button, shouldShow: Boolean = false) {
     if (shouldShow) {
       ViewCompat.setElevation(button, elevationPixels)
       button.startAnimation(clickAnimation)

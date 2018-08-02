@@ -1,4 +1,13 @@
+# 1.5.5
+- Instant app
+
+# 1.5.4
+- Update kotlin to 1.2.51.
+
 # 1.5.2 # 1.5.3
+- Update android gradle plugin to 3.x.
+- Update kotlin to 1.2.41.
+- Update firebase to 15.0.0.
 - Sdk to 27
 - Update dependencies:
   + Firebase
