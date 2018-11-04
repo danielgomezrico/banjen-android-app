@@ -26,6 +26,7 @@ android {
     resConfigs "en", "pt"
 
     resValue "string", "ads_unit_id_banner", "${System.getenv("BANJEN_ADS_UNIT_ID_BANNER")}"
+    resValue "string", "ads_app_id", "${System.getenv("BANJEN_ADMOB_APP_ID")}"
   }
 
   buildTypes {
@@ -90,6 +91,8 @@ def excludeAnnotations = {
 dependencies {
   implementation "com.android.support:appcompat-v7:${deps.supportLib}"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
+
+  implementation "com.google.firebase:firebase-ads:${deps.firebase}"
 
   testImplementation 'junit:junit:4.12'
   testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
