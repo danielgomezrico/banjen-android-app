@@ -2,42 +2,25 @@ buildscript {
   apply from: "dependencies.gradle"
 
   repositories {
-    jcenter()
-    mavenCentral()
-
     // Crashlytics
     maven { url 'https://maven.fabric.io/public' }
 
-    // For Spoon snapshot
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-
     google()
+    jcenter()
+    mavenCentral()
   }
   dependencies {
-    classpath 'com.android.tools.build:gradle:3.3.0-alpha03'
+    classpath 'com.android.tools.build:gradle:3.2.1'
     classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$deps.kotlin"
 
-    // Firebase
-    classpath 'com.google.gms:google-services:4.0.1'
     classpath 'io.fabric.tools:gradle:1.25.4'
-
-    // Extras
-    //classpath 'com.stanfy.spoon:spoon-gradle-plugin:1.2.2'
-    classpath "com.jaredsburrows:gradle-spoon-plugin:1.4.0"
-    classpath 'com.github.ben-manes:gradle-versions-plugin:0.20.0'
   }
 }
 
 allprojects {
   repositories {
-    jcenter()
-
-    // Crashlytics
-    maven { url 'https://maven.fabric.io/public' }
-
-    // For Spoon snapshot
-    maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-
     google()
+    jcenter()
+    maven { url 'https://maven.fabric.io/public' }
   }
 }

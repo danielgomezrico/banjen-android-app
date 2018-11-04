@@ -54,12 +54,4 @@
 
   </RadioGroup>
 
-  <com.google.android.gms.ads.AdView
-    android:id="@+id/adsView"
-    android:layout_width="fill_parent"
-    android:layout_height="wrap_content"
-    android:layout_gravity="top"
-    ads:adSize="BANNER"
-    ads:adUnitId="@string/ads_unit_id_banner" />
-
 </FrameLayout>
