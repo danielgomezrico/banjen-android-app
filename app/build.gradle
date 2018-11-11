@@ -5,8 +5,8 @@ apply plugin: 'io.fabric'
 apply from: '../jacoco.gradle'
 
 def appId = "com.makingiants.android.banjotuner"
-def appVersionName = "1.5.5"
-def appVersionCode = 114
+def appVersionName = "1.5.6"
+def appVersionCode = 115
 
 
 android {
