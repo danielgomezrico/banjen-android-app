@@ -2,18 +2,16 @@ buildscript {
   apply from: "dependencies.gradle"
 
   repositories {
-    // Crashlytics
-    maven { url 'https://maven.fabric.io/public' }
-
     google()
+    maven { url 'https://maven.fabric.io/public' }
     jcenter()
     mavenCentral()
   }
   dependencies {
     classpath 'com.android.tools.build:gradle:3.2.1'
-    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$deps.kotlin"
-
+    classpath 'com.google.gms:google-services:4.2.0'
     classpath 'io.fabric.tools:gradle:1.25.4'
+    classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$deps.kotlin"
   }
 }
 

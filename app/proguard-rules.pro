@@ -26,3 +26,6 @@
 -dontwarn org.joda.time.**
 -dontwarn org.shaded.apache.**
 -dontwarn org.ietf.jgss.**
+
+-dontwarn com.google.android.gms.internal.measurement.**
+-dontwarn com.google.android.gms.measurement.internal.**

@@ -18,6 +18,7 @@ import com.google.android.gms.ads.MobileAds
 import java.io.IOException
 import java.lang.ref.WeakReference
 
+
 class EarActivity : AppCompatActivity(), View.OnClickListener {
 
     private val adsView by lazy { findViewById<AdView>(R.id.adView) }
@@ -41,7 +42,6 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         setContentView(R.layout.activity_ear_ads)
 
         soundsRadioGroup.setOnCheckedChangeListener { radioGroup, i ->
