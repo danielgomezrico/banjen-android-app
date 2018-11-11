@@ -1,8 +1,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'io.fabric'
-apply plugin: 'com.github.ben-manes.versions'
-apply plugin: "com.jaredsburrows.spoon"
+
 apply from: '../jacoco.gradle'
 
 def appId = "com.makingiants.android.banjotuner"
@@ -27,6 +26,7 @@ android {
     resConfigs "en", "pt"
 
     resValue "string", "ads_unit_id_banner", "${System.getenv("BANJEN_ADS_UNIT_ID_BANNER")}"
+    resValue "string", "ads_app_id", "\"${System.getenv("BANJEN_ADMOB_APP_ID")}\""
   }
 
   buildTypes {
@@ -61,11 +61,6 @@ android {
     }
   }
 
-  compileOptions {
-    sourceCompatibility JavaVersion.VERSION_1_8
-    targetCompatibility JavaVersion.VERSION_1_8
-  }
-
   lintOptions {
     abortOnError false
   }
@@ -97,14 +92,17 @@ dependencies {
   implementation "com.android.support:appcompat-v7:${deps.supportLib}"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
 
-  // Ads/Crash
-  implementation 'com.crashlytics.sdk.android:crashlytics:2.9.4'
-  implementation "com.google.firebase:firebase-core:${deps.firebase}", {
+  implementation "com.google.firebase:firebase-core:16.0.4", {
     exclude group: 'com.android.support'
   }
-  implementation "com.google.firebase:firebase-ads:${deps.firebase}", {
+  implementation "com.google.firebase:firebase-ads-lite:17.1.0", {
     exclude group: 'com.android.support'
+    exclude group: 'com.google.android.gms', module: 'play-services'
+    exclude group: 'com.google.android.gms', module: 'play-services-measurement-api'
+    exclude group: 'com.google.android.gms', module: 'play-services-measurement-base'
   }
+
+  implementation 'com.crashlytics.sdk.android:crashlytics:2.9.6'
 
   testImplementation 'junit:junit:4.12'
   testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
@@ -113,22 +111,6 @@ dependencies {
   androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2', excludeAnnotations
   androidTestImplementation 'com.android.support.test:runner:1.0.2', excludeAnnotations
   androidTestImplementation 'com.android.support.test:rules:1.0.2', excludeAnnotations
-
-  //androidTestImplementation 'com.squareup.spoon:spoon-client:1.7.1'
-  androidTestImplementation  "com.squareup.spoon:spoon-client:2.0.0-SNAPSHOT" // For Spoon snapshot, until 2.0.0 is released
-  androidTestImplementation 'com.jraska:falcon-spoon-compat:2.0.1', {
-    exclude group: 'com.squareup.spoon', module: 'spoon-client'
-  }
 }
-
-spoon {
-  debug = true
-  codeCoverage = true
-  noAnimations = true
-  grantAll = true
-}
-
-
-
 
 apply plugin: 'com.google.gms.google-services'
