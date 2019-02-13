@@ -92,17 +92,17 @@ dependencies {
   implementation "com.android.support:appcompat-v7:${deps.supportLib}"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
 
-  implementation "com.google.firebase:firebase-core:16.0.4", {
+  implementation "com.google.firebase:firebase-core:16.0.7", {
     exclude group: 'com.android.support'
   }
-  implementation "com.google.firebase:firebase-ads-lite:17.1.0", {
+  implementation "com.google.firebase:firebase-ads-lite:17.1.3", {
     exclude group: 'com.android.support'
     exclude group: 'com.google.android.gms', module: 'play-services'
     exclude group: 'com.google.android.gms', module: 'play-services-measurement-api'
     exclude group: 'com.google.android.gms', module: 'play-services-measurement-base'
   }
 
-  implementation 'com.crashlytics.sdk.android:crashlytics:2.9.6'
+  implementation 'com.crashlytics.sdk.android:crashlytics:2.9.9'
 
   testImplementation 'junit:junit:4.12'
   testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"

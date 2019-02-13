@@ -55,6 +55,8 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
                     }
         }
 
+        ear1Button.setOnClickListener(this)
+
         arrayOf(ear1Button, ear2Button, ear3Button, ear4Button).forEach {
             it.setOnClickListener(this)
         }
