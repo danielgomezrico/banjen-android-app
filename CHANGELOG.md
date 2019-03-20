@@ -1,3 +1,6 @@
+# 1.5.6, 1.5.7, 1.5.8
+- Update dependencies.
+
 # 1.5.5
 - Instant app
 
