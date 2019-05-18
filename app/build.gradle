@@ -3,6 +3,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'io.fabric'
 
 apply from: '../jacoco.gradle'
+apply plugin: "com.github.ben-manes.versions"
 
 def appId = "com.makingiants.android.banjotuner"
 def appVersionName = "1.5.8"
@@ -91,7 +92,7 @@ def excludeAnnotations = {
 dependencies {
   implementation "com.android.support:appcompat-v7:${deps.supportLib}"
   implementation "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
-  implementation "com.google.firebase:firebase-core:16.0.8", {
+  implementation "com.google.firebase:firebase-core:16.0.9", {
     exclude group: 'com.android.support'
   }
   implementation "com.google.firebase:firebase-ads-lite:17.2.0", {
@@ -100,7 +101,7 @@ dependencies {
     exclude group: 'com.google.android.gms', module: 'play-services-measurement-api'
     exclude group: 'com.google.android.gms', module: 'play-services-measurement-base'
   }
-  implementation 'com.crashlytics.sdk.android:crashlytics:2.9.9'
+  implementation 'com.crashlytics.sdk.android:crashlytics:2.10.0'
   testImplementation 'junit:junit:4.12'
   testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
   testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$deps.kotlin"
