@@ -16,6 +16,7 @@ import com.crashlytics.android.Crashlytics
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 import io.fabric.sdk.android.Fabric
 import java.io.IOException
 import java.lang.ref.WeakReference
@@ -115,15 +116,17 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 }
 
-                val adRequest = if (BuildConfig.DEBUG) {
-                    AdRequest.Builder()
-                            .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                if (BuildConfig.DEBUG) {
+                    val testDevices: MutableList<String> = ArrayList()
+                    testDevices.add(AdRequest.DEVICE_ID_EMULATOR)
+
+                    val requestConfiguration = RequestConfiguration.Builder()
+                            .setTestDeviceIds(testDevices)
                             .build()
-                } else {
-                    AdRequest.Builder().build()
+                    MobileAds.setRequestConfiguration(requestConfiguration)
                 }
 
-                weakAdsView.get()?.loadAd(adRequest)
+                weakAdsView.get()?.loadAd(AdRequest.Builder().build())
             } catch (e: Exception) {
                 Crashlytics.logException(e)
             } catch (e: IllegalStateException) {

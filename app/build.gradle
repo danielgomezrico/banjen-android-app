@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply plugin: 'com.google.gms.google-services'
 apply plugin: 'kotlin-android'
 apply plugin: 'io.fabric'
 
@@ -100,10 +101,6 @@ android {
 
 }
 
-def excludeAnnotations = {
-    exclude group: 'com.android.support', module: 'support-annotations'
-}
-
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$deps.kotlin"
 
@@ -120,5 +117,3 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.2.0'
     androidTestImplementation 'androidx.test:rules:1.2.0'
 }
-
-apply plugin: 'com.google.gms.google-services'
