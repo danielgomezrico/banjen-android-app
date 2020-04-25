@@ -2,9 +2,6 @@ package com.makingiants.android.banjotuner
 
 import android.content.Context
 import android.os.Bundle
-import android.support.annotation.VisibleForTesting
-import android.support.v4.view.ViewCompat
-import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
 import android.view.animation.Animation
@@ -12,9 +9,14 @@ import android.view.animation.AnimationUtils
 import android.widget.Button
 import android.widget.RadioGroup
 import android.widget.ToggleButton
+import androidx.annotation.VisibleForTesting
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import com.crashlytics.android.Crashlytics
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
+import io.fabric.sdk.android.Fabric
 import java.io.IOException
 import java.lang.ref.WeakReference
 
@@ -42,6 +44,7 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Fabric.with(this, Crashlytics())
         setContentView(R.layout.activity_ear_ads)
 
         soundsRadioGroup.setOnCheckedChangeListener { radioGroup, i ->
@@ -105,19 +108,27 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
         private val weakContext = WeakReference(context)
 
         override fun run() {
-            weakContext.get()?.let {
-                MobileAds.initialize(it, it.resources.getString(R.string.ads_app_id))
-            }
+            try {
+                weakContext.get()?.let {
+                    MobileAds.initialize(it) {
+                        Crashlytics.log("Ads initialized")
+                    }
+                }
 
-            val adRequest = if (BuildConfig.DEBUG) {
-                AdRequest.Builder()
-                        .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
-                        .build()
-            } else {
-                AdRequest.Builder().build()
-            }
+                val adRequest = if (BuildConfig.DEBUG) {
+                    AdRequest.Builder()
+                            .addTestDevice(AdRequest.DEVICE_ID_EMULATOR)
+                            .build()
+                } else {
+                    AdRequest.Builder().build()
+                }
 
-            weakAdsView.get()?.loadAd(adRequest)
+                weakAdsView.get()?.loadAd(adRequest)
+            } catch (e: Exception) {
+                Crashlytics.logException(e)
+            } catch (e: IllegalStateException) {
+                Crashlytics.logException(e)
+            }
         }
     }
 
