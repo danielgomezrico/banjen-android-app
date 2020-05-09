@@ -4,6 +4,7 @@ package com.makingiants.android.banjotuner
 import android.app.Activity
 import android.content.Context
 import android.media.AudioManager
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions
 import androidx.test.espresso.matcher.ViewMatchers.withText
@@ -14,8 +15,6 @@ import org.junit.Assert.assertTrue
 
 class EarRobot(val activity: Activity) {
 
-    val audioService by lazy { activity.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
-
     init {
         // animations that repeat forever break espresso
         (activity as EarActivity).clickAnimation.repeatCount = 0
@@ -25,12 +24,19 @@ class EarRobot(val activity: Activity) {
         onView(withText(Matchers.startsWith("$buttonIndex"))).perform(ViewActions.click())
     }
 
-    fun checkIsPlaying() {
-        assertTrue(audioService.isMusicActive)
-    }
+    fun assert(func: Assert.() -> Unit) = Assert().apply { func() }
 
-    fun checkIsNotPlaying() {
-        assertFalse(audioService.isMusicActive)
+    class Assert {
+        private val context: Context get() = ApplicationProvider.getApplicationContext()
+        private val audioService by lazy { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
+
+        fun checkIsPlaying() {
+            assertTrue(audioService.isMusicActive)
+        }
+
+        fun checkIsNotPlaying() {
+            assertFalse(audioService.isMusicActive)
+        }
     }
 
 }

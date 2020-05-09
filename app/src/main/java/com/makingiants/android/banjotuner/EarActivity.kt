@@ -12,12 +12,11 @@ import android.widget.ToggleButton
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
-import com.crashlytics.android.Crashlytics
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
-import io.fabric.sdk.android.Fabric
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.io.IOException
 import java.lang.ref.WeakReference
 
@@ -45,7 +44,6 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        Fabric.with(this, Crashlytics())
         setContentView(R.layout.activity_ear_ads)
 
         soundsRadioGroup.setOnCheckedChangeListener { radioGroup, i ->
@@ -112,7 +110,7 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
             try {
                 weakContext.get()?.let {
                     MobileAds.initialize(it) {
-                        Crashlytics.log("Ads initialized")
+                        FirebaseCrashlytics.getInstance().log("Ads initialized")
                     }
                 }
 
@@ -128,9 +126,9 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
 
                 weakAdsView.get()?.loadAd(AdRequest.Builder().build())
             } catch (e: Exception) {
-                Crashlytics.logException(e)
+                FirebaseCrashlytics.getInstance().recordException(e)
             } catch (e: IllegalStateException) {
-                Crashlytics.logException(e)
+                FirebaseCrashlytics.getInstance().recordException(e)
             }
         }
     }
