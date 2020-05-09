@@ -25,7 +25,7 @@ class SoundPlayer(private val context: Context) : OnPreparedListener, OnCompleti
    * @throws java.io.IOException
    */
   fun playWithLoop(index: Int) {
-    if (mediaPlayer?.isPlaying ?: false) {
+    if (mediaPlayer?.isPlaying == true) {
       stop()
     }
 
