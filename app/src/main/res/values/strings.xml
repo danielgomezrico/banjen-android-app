@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-  <string name="app_name" translatable="false">Banjen</string>
-
-  <string name="ear_button_1_text">1 - D</string>
-  <string name="ear_button_2_text">2 - B</string>
-  <string name="ear_button_3_text">3 - G</string>
-  <string name="ear_button_4_text">4 - D</string>
-</resources>
