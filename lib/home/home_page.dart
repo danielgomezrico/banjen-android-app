@@ -25,7 +25,7 @@ class HomeState extends State<HomePage> {
 
   List<Widget> buildButtons() {
     return _buttonTexts.mapIndexed((index, text) {
-            var color = _selectedButtonIndex == index ? Colors.green : Colors.white;
+      var color = _selectedButtonIndex == index ? Colors.green : Colors.white;
 
       return Expanded(
         child: FlatButton(
