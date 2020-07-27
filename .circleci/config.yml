@@ -18,12 +18,6 @@ jobs:
             ./scripts/check_format.sh
 
       - run:
-          name: Run the application tests
-          command: |
-            flutter test --coverage
-            bash <(curl -s https://codecov.io/bash)
-
-      - run:
           name: Build the Android version
           command: flutter build apk
 
