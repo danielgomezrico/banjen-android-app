@@ -10,6 +10,7 @@ if [[ $? != 0 ]]; then
     echo "Command failed."
 elif [[ $RESULT ]]; then
     echo "Something is looking weird here :O"
+    exit 1
 else
     echo "All format is good :)"
 fi
