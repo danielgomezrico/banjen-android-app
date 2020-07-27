@@ -1,5 +1,6 @@
 import 'package:banjen_flutter/home/player.dart';
 import 'package:banjen_flutter/map_extensions.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -19,25 +20,18 @@ class HomeState extends State<HomePage> {
       selectedStatus[_selectedButtonIndex] = true;
     }
 
-    var screenSize = MediaQuery.of(context).size;
+    return Scaffold(body: Column(children: buildButtons()));
+  }
 
-    return Scaffold(
-        appBar: AppBar(
-          title: const Text('ToggleButtons'),
-        ),
-        body: Container(
-            width: double.infinity,
-            height: double.infinity,
-            child: ToggleButtons(
-                constraints: BoxConstraints.expand(
-                  height: screenSize.height,
-                  width: (screenSize.width / _buttonTexts.length) - 2,
-                ),
-                isSelected: selectedStatus,
-                onPressed: onClick,
-                children: _buttonTexts
-                    .mapIndexed((index, text) => Text(text))
-                    .toList())));
+  List<Widget> buildButtons() {
+    return _buttonTexts.mapIndexed((index, text) {
+      var color = _selectedButtonIndex == index ? Colors.green : Colors.white;
+
+      return Expanded(
+        child: FlatButton(
+            onPressed: () => onClick(index), color: color, child: Text(text)),
+      );
+    }).toList();
   }
 
   void onClick(index) {
