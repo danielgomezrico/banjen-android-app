@@ -1,6 +1,7 @@
 import 'package:banjen_flutter/home/player.dart';
 import 'package:banjen_flutter/map_extensions.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class HomePage extends StatefulWidget {
@@ -20,18 +21,24 @@ class HomeState extends State<HomePage> {
       selectedStatus[_selectedButtonIndex] = true;
     }
 
-    return Scaffold(body: Column(children: buildButtons()));
+    return Scaffold(body: _buildButtons());
   }
 
-  List<Widget> buildButtons() {
-    return _buttonTexts.mapIndexed((index, text) {
+  Widget _buildButtons() {
+    final buttons = _buttonTexts.mapIndexed((index, text) {
       var color = _selectedButtonIndex == index ? Colors.green : Colors.white;
 
       return Expanded(
         child: FlatButton(
-            onPressed: () => onClick(index), color: color, child: Text(text)),
+          onPressed: () => onClick(index),
+          color: color,
+          child: Text(text),
+        ),
       );
     }).toList();
+
+    return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch, children: buttons);
   }
 
   void onClick(index) {
