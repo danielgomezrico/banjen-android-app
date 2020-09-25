@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="ear_button_1_text">1 - Re</string>
+  <string name="ear_button_2_text">2 - Si</string>
+  <string name="ear_button_3_text">3 - Sol</string>
+  <string name="ear_button_4_text">4 - Re</string>
+</resources>
