@@ -39,7 +39,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
         // Enable just English configs for dependencies, allowing to shrink apk size more
-        resConfigs "en", "pt"
+        resConfigs "en", "pt", "es", "it"
 
         resValue "string", "ads_unit_id_banner", "\"${adsUnitId()}\""
         resValue "string", "ads_app_id", "\"${adsAppId()}\""
