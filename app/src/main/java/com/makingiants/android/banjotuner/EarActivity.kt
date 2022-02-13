@@ -12,17 +12,14 @@ import android.widget.ToggleButton
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.RequestConfiguration
+import com.google.android.gms.ads.*
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.io.IOException
 import java.lang.ref.WeakReference
 
+const val logTag = "my_banjen"
 
 class EarActivity : AppCompatActivity(), View.OnClickListener {
-
     private val adsView by lazy { findViewById<AdView>(R.id.adView) }
     private val ear1Button by lazy { findViewById<Button>(R.id.ear1Button) }
     private val ear2Button by lazy { findViewById<Button>(R.id.ear2Button) }
@@ -48,13 +45,13 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
 
         soundsRadioGroup.setOnCheckedChangeListener { radioGroup, i ->
             (0 until radioGroup.childCount)
-                    .map { radioGroup.getChildAt(it) as ToggleButton }
-                    .forEach {
-                        val shouldCheck = it.id == i
+                .map { radioGroup.getChildAt(it) as ToggleButton }
+                .forEach {
+                    val shouldCheck = it.id == i
 
-                        it.isChecked = shouldCheck
-                        handleAnimation(it, shouldCheck)
-                    }
+                    it.isChecked = shouldCheck
+                    handleAnimation(it, shouldCheck)
+                }
         }
 
         arrayOf(ear1Button, ear2Button, ear3Button, ear4Button).forEach {
@@ -115,20 +112,48 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
                 }
 
                 if (BuildConfig.DEBUG) {
-                    val testDevices: MutableList<String> = ArrayList()
-                    testDevices.add(AdRequest.DEVICE_ID_EMULATOR)
+                    val testDevices = mutableListOf(
+                        AdRequest.DEVICE_ID_EMULATOR, "5787EB8B965B6C7DFB6DE239B3DB318B",
+                    )
 
                     val requestConfiguration = RequestConfiguration.Builder()
-                            .setTestDeviceIds(testDevices)
-                            .build()
+                        .setTestDeviceIds(testDevices)
+                        .build()
                     MobileAds.setRequestConfiguration(requestConfiguration)
                 }
 
+                monitor()
                 weakAdsView.get()?.loadAd(AdRequest.Builder().build())
             } catch (e: Exception) {
                 FirebaseCrashlytics.getInstance().recordException(e)
             } catch (e: IllegalStateException) {
                 FirebaseCrashlytics.getInstance().recordException(e)
+            }
+        }
+
+        private fun monitor() {
+            weakAdsView.get()?.adListener = object : AdListener() {
+                override fun onAdLoaded() {
+                    FirebaseCrashlytics.getInstance().log("On Ad loaded")
+                }
+
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    val exception =
+                        Exception("Something happened with ads: code(${adError.code}) message(${adError.message})")
+                    FirebaseCrashlytics.getInstance().recordException(exception)
+                }
+
+                override fun onAdOpened() {
+                    FirebaseCrashlytics.getInstance().log("On Ad opened")
+                }
+
+                override fun onAdClicked() {
+                    FirebaseCrashlytics.getInstance().log("On Ad clicked")
+                }
+
+                override fun onAdClosed() {
+                    FirebaseCrashlytics.getInstance().log("On Ad closed")
+                }
             }
         }
     }
