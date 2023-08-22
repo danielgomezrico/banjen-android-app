@@ -1,8 +1,12 @@
 ext {
 
-    setup = [targetSdk: 29,
-             minSdk   : 16]
+    setup = [
+        targetSdk: 33,
+        minSdk   : 19
+    ]
 
-    deps = [kotlin    : "1.3.72"]
+    deps = [
+        kotlin: "1.9.0"
+    ]
 
 }

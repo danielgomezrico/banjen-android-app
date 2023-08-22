@@ -30,7 +30,7 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
     private val ear4Button by lazy { findViewById<Button>(R.id.ear4Button) }
     private val soundsRadioGroup by lazy { findViewById<RadioGroup>(R.id.soundsRadioGroup) }
 
-    private val player by lazy { SoundPlayer(this) }
+    private val player by lazy { com.makingiants.android.banjotuner.SoundPlayer(this) }
     private val elevationPixels by lazy {
         resources.getDimensionPixelSize(R.dimen.spacing_4dp).toFloat()
     }
@@ -114,15 +114,7 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 }
 
-                if (BuildConfig.DEBUG) {
-                    val testDevices: MutableList<String> = ArrayList()
-                    testDevices.add(AdRequest.DEVICE_ID_EMULATOR)
-
-                    val requestConfiguration = RequestConfiguration.Builder()
-                            .setTestDeviceIds(testDevices)
-                            .build()
-                    MobileAds.setRequestConfiguration(requestConfiguration)
-                }
+               
 
                 weakAdsView.get()?.loadAd(AdRequest.Builder().build())
             } catch (e: Exception) {

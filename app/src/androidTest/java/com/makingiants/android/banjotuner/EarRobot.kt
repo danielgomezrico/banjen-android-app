@@ -13,8 +13,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 
 
-class EarRobot(val activity: Activity) {
-
+class EarRobot(activity: Activity) {
     init {
         // animations that repeat forever break espresso
         (activity as EarActivity).clickAnimation.repeatCount = 0
@@ -28,7 +27,9 @@ class EarRobot(val activity: Activity) {
 
     class Assert {
         private val context: Context get() = ApplicationProvider.getApplicationContext()
-        private val audioService by lazy { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
+        private val audioService by lazy {
+            context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        }
 
         fun checkIsPlaying() {
             assertTrue(audioService.isMusicActive)
@@ -41,4 +42,6 @@ class EarRobot(val activity: Activity) {
 
 }
 
-fun withEarRobot(activity: Activity, func: EarRobot.() -> Unit) = EarRobot(activity).apply { func() }
+fun withEarRobot(activity: Activity, func: EarRobot.() -> Unit) = EarRobot(activity).apply {
+    func()
+}
