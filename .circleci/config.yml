@@ -7,7 +7,7 @@ jobs:
   build:
     executor:
       name: android/android-machine
-      resource-class: small
+      resource-class: medium
     environment:
       JVM_OPTS: -Xmx3200m
     steps:
