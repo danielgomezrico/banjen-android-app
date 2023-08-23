@@ -5,6 +5,9 @@ orbs:
 
 jobs:
   build:
+    executor:
+      name: android/android-machine
+      resource-class: small
     environment:
       JVM_OPTS: -Xmx3200m
     steps:
