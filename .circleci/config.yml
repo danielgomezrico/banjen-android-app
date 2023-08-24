@@ -1,22 +1,26 @@
-version: 2
+version: 2.1
+
+orbs:
+  android: circleci/android@2.3.0
+
 jobs:
   build:
-    docker:
-      - image: circleci/android:api-26-alpha
-
+    executor:
+      name: android/android-machine
+      resource-class: medium
+      tag: 2023.08.1
     environment:
-      JVM_OPTS: -Xmx3200m
+      JVM_OPTS: -Xmx2048m
+
     steps:
       - checkout
-
       - run:
           name: Setup environment keys
           command: |
             echo $BANJEN_GOOGLE_SERVICES > google-services.base64
             base64 -d google-services.base64 > app/google-services.json
-
       - run:
-          name: Instal Dependencies
+          name: Install Dependencies
           command: bash scripts/install-dependencies.sh
 
       - run:

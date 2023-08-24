@@ -15,14 +15,12 @@ import androidx.core.view.ViewCompat
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.RequestConfiguration
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import java.io.IOException
 import java.lang.ref.WeakReference
 
 
 class EarActivity : AppCompatActivity(), View.OnClickListener {
-
     private val adsView by lazy { findViewById<AdView>(R.id.adView) }
     private val ear1Button by lazy { findViewById<Button>(R.id.ear1Button) }
     private val ear2Button by lazy { findViewById<Button>(R.id.ear2Button) }
@@ -48,13 +46,13 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
 
         soundsRadioGroup.setOnCheckedChangeListener { radioGroup, i ->
             (0 until radioGroup.childCount)
-                    .map { radioGroup.getChildAt(it) as ToggleButton }
-                    .forEach {
-                        val shouldCheck = it.id == i
+                .map { radioGroup.getChildAt(it) as ToggleButton }
+                .forEach {
+                    val shouldCheck = it.id == i
 
-                        it.isChecked = shouldCheck
-                        handleAnimation(it, shouldCheck)
-                    }
+                    it.isChecked = shouldCheck
+                    handleAnimation(it, shouldCheck)
+                }
         }
 
         arrayOf(ear1Button, ear2Button, ear3Button, ear4Button).forEach {
@@ -114,15 +112,7 @@ class EarActivity : AppCompatActivity(), View.OnClickListener {
                     }
                 }
 
-                if (BuildConfig.DEBUG) {
-                    val testDevices: MutableList<String> = ArrayList()
-                    testDevices.add(AdRequest.DEVICE_ID_EMULATOR)
 
-                    val requestConfiguration = RequestConfiguration.Builder()
-                            .setTestDeviceIds(testDevices)
-                            .build()
-                    MobileAds.setRequestConfiguration(requestConfiguration)
-                }
 
                 weakAdsView.get()?.loadAd(AdRequest.Builder().build())
             } catch (e: Exception) {
