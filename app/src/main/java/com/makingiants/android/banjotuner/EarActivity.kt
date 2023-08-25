@@ -46,10 +46,10 @@ import java.io.IOException
 import java.lang.ref.WeakReference
 
 class EarActivity : AppCompatActivity() {
-    private val adsView by lazy { findViewById<AdView>(R.id.adView) }
+    //    private val adsView by lazy { findViewById<AdView>(R.id.adView) }
     private val player by lazy { SoundPlayer(this) }
 
-    private val adsRunnable by lazy { SetupAdsRunnable(adsView, this) }
+    // private val adsRunnable by lazy { SetupAdsRunnable(adsView, this) }
 
     @VisibleForTesting
     internal val clickAnimation: Animation by lazy {
@@ -209,7 +209,4 @@ class EarActivity : AppCompatActivity() {
             }
         }
     }
-
-
 }
-
