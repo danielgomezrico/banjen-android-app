@@ -122,6 +122,7 @@ class EarActivity : AppCompatActivity() {
   @Composable
   private fun AdView() {
     val adsAppId = stringResource(id = R.string.ads_app_id)
+    
     AndroidView(
       factory = { context ->
         AdView(context).apply {
