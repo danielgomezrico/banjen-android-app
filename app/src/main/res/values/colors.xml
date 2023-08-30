@@ -5,4 +5,5 @@
   <color name="banjen_accent">#6d94a1</color>
   <color name="banjen_background">@color/banjen_primary</color>
   <color name="banjen_gray">#666666</color>
+  <color name="banjen_gray_light">#BBB</color>
 </resources>

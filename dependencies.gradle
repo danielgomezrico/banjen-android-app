@@ -1,8 +1,8 @@
 ext {
 
     setup = [
-        targetSdk: 33,
-        minSdk   : 19
+        targetSdk: 34,
+        minSdk   : 21
     ]
 
     deps = [
