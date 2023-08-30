@@ -105,14 +105,17 @@ class EarActivity : AppCompatActivity() {
                     R.string.ear_button_1_text,
                 )
 
-                val selectedOption = remember { mutableIntStateOf(radioOptions.first()) }
+                val selectedOption = remember { mutableIntStateOf(-1) }
 
                 radioOptions.forEachIndexed { index, text ->
                     TextButton(
                         modifier = Modifier.weight(1f).fillMaxWidth(),
                         onClick = {
                             val selectedValue = selectedOption.value
+
                             if (selectedValue != text) {
+                                selectedOption.value = text
+
                                 try {
                                     player.playWithLoop(index)
                                 } catch (e: IOException) {
@@ -120,9 +123,9 @@ class EarActivity : AppCompatActivity() {
                                 }
                             } else {
                                 player.stop()
+                                selectedOption.value = -1
                             }
 
-                            selectedOption.value = text
                         },
                     ) {
                         Text(
@@ -133,10 +136,6 @@ class EarActivity : AppCompatActivity() {
                                 textAlign = TextAlign.Center
                             )
                         )
-
-                        if (selectedOption.value == text) {
-                            GuitarString()
-                        }
                     }
                 }
             }
