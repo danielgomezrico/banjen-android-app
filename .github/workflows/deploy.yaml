@@ -1,0 +1,37 @@
+name: Deploy Play Store
+
+on:
+  branches: feat/ci
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+          cache: gradle
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Prepare Env
+        env:
+          KEY: ${{ secrets.BANJEN_SIGN_KEY }}
+          BANJEN_SIGN_PWD: ${{ secrets.BANJEN_SIGN_PWD }}
+          BANJEN_SIGN_ALIAS: ${{ secrets.BANJEN_SIGN_ALIAS }}
+          BANJEN_SIGN_PATH: ${{ secrets.BANJEN_SIGN_PATH }}
+          BANJEN_ADS_UNIT_ID_BANNER: ${{ secrets.BANJEN_ADS_UNIT_ID_BANNER }}
+          BANJEN_ADMOB_APP_ID: ${{ secrets.BANJEN_ADMOB_APP_ID }}
+        run: |
+          base64 -d <<< $KEY > app/key.keystore
+          echo $BANJEN_SIGN_PWD >> gradle.properties
+          echo $BANJEN_SIGN_ALIAS >> gradle.properties
+          echo $BANJEN_SIGN_PATH >> gradle.properties
+          echo $BANJEN_ADS_UNIT_ID_BANNER >> gradle.properties
+          echo $BANJEN_ADMOB_APP_ID >> gradle.properties
+
+      - name: Build with Gradle
+        run: ./gradlew bundleRelease
