@@ -29,7 +29,7 @@ jobs:
           BANJEN_ADMOB_APP_ID: ${{ secrets.BANJEN_ADMOB_APP_ID }}
           GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
         run: |
-          run: |
+          echo "org.gradle.jvmargs=-Xmx2048M -Dkotlin.daemon.jvm.options="-Xmx2048M" >> gradle.properties
           echo "android.useAndroidX=true" >> gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
           
