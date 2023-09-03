@@ -32,15 +32,15 @@ jobs:
           run: |
           echo "android.useAndroidX=true" >> gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
- 
-          base64 -d <<< $KEY > app/key.keystore
-          base64 -d <<< GOOGLE_SERVICES > app/google-services.json
-          echo $BANJEN_SIGN_PWD >> gradle.properties
-          echo $BANJEN_SIGN_ALIAS >> gradle.properties
-          echo $BANJEN_SIGN_PATH >> gradle.properties
-          echo $BANJEN_ADS_UNIT_ID_BANNER >> gradle.properties
-          echo $BANJEN_ADMOB_APP_ID >> gradle.properties
-
+          
+          echo "$KEY" | base64 -d >  app/key.keystore
+          echo "GOOGLE_SERVICES" | base64 -d > app/google-services.json
+          
+          echo "$BANJEN_SIGN_PWD" | base64 -d >> gradle.properties
+          echo "$BANJEN_SIGN_ALIAS" | base64 -d >> gradle.properties
+          echo "$BANJEN_SIGN_PATH" | base64 -d >> gradle.properties
+          echo "$BANJEN_ADS_UNIT_ID_BANNER" | base64 -d >> gradle.properties
+          echo "$BANJEN_ADMOB_APP_ID" | base64 -d >> gradle.properties
 
       - name: Build with Gradle
         run: ./gradlew bundleRelease
