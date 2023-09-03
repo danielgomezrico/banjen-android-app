@@ -1,7 +1,9 @@
 name: Deploy Play Store
 
 on:
-  branches: feat/ci
+  push:
+    branches:
+      - '**'
 
 jobs:
   build:
