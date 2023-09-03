@@ -20,9 +20,13 @@ jobs:
         run: chmod +x gradlew
 
       - name: Prepare Env
+        env:
+          GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
         run: |
           echo "android.useAndroidX=true" >> gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
+          
+          base64 -d <<< GOOGLE_SERVICES > app/google-services.json
 
       - name: Build with Gradle
         run: ./gradlew build

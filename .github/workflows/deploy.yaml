@@ -27,12 +27,14 @@ jobs:
           BANJEN_SIGN_PATH: ${{ secrets.BANJEN_SIGN_PATH }}
           BANJEN_ADS_UNIT_ID_BANNER: ${{ secrets.BANJEN_ADS_UNIT_ID_BANNER }}
           BANJEN_ADMOB_APP_ID: ${{ secrets.BANJEN_ADMOB_APP_ID }}
+          GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
         run: |
           run: |
           echo "android.useAndroidX=true" >> gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
  
           base64 -d <<< $KEY > app/key.keystore
+          base64 -d <<< GOOGLE_SERVICES > app/google-services.json
           echo $BANJEN_SIGN_PWD >> gradle.properties
           echo $BANJEN_SIGN_ALIAS >> gradle.properties
           echo $BANJEN_SIGN_PATH >> gradle.properties
