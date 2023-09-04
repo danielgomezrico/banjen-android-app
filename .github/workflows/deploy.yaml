@@ -29,19 +29,26 @@ jobs:
           BANJEN_ADMOB_APP_ID: ${{ secrets.BANJEN_ADMOB_APP_ID }}
           GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
         run: |
+          echo "Preparing gradle.properties variables"
+          
           # Build
+          echo "Preparing env"
           echo "org.gradle.jvmargs=-Xmx2048M -Dkotlin.daemon.jvm.options=-Xmx2048M" >> gradle.properties
           echo "android.useAndroidX=true" >> gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
           
+          echo "Preparing variables"
           echo "$BANJEN_SIGN_PWD" | base64 -d >> gradle.properties
           echo "$BANJEN_SIGN_ALIAS" | base64 -d >> gradle.properties
           echo "$BANJEN_SIGN_PATH" | base64 -d >> gradle.properties
           echo "$BANJEN_ADS_UNIT_ID_BANNER" | base64 -d >> gradle.properties
           echo "$BANJEN_ADMOB_APP_ID" | base64 -d >> gradle.properties
+          
+          echo "Preparing google-services.json"
           echo "$GOOGLE_SERVICES" | base64 -d > app/google-services.json
           
           # Deploy
+          echo "Preparing key.keystore"
           echo "$KEY" | base64 -d >  app/key.keystore
 
       - name: Build with Gradle
