@@ -29,20 +29,40 @@ jobs:
           BANJEN_ADMOB_APP_ID: ${{ secrets.BANJEN_ADMOB_APP_ID }}
           GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
         run: |
+          # Build
           echo "org.gradle.jvmargs=-Xmx2048M -Dkotlin.daemon.jvm.options=-Xmx2048M" >> gradle.properties
           echo "android.useAndroidX=true" >> gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
-          
-          echo "$KEY" | base64 -d >  app/key.keystore
-          echo "GOOGLE_SERVICES" | base64 -d > app/google-services.json
           
           echo "$BANJEN_SIGN_PWD" | base64 -d >> gradle.properties
           echo "$BANJEN_SIGN_ALIAS" | base64 -d >> gradle.properties
           echo "$BANJEN_SIGN_PATH" | base64 -d >> gradle.properties
           echo "$BANJEN_ADS_UNIT_ID_BANNER" | base64 -d >> gradle.properties
           echo "$BANJEN_ADMOB_APP_ID" | base64 -d >> gradle.properties
+          echo "$GOOGLE_SERVICES" | base64 -d > app/google-services.json
+          
+          # Deploy
+          echo "$KEY" | base64 -d >  app/key.keystore
+          echo "$SERVICE_ACCOUNT_JSON" | base64 -d > app/service-account.json
 
       - name: Build with Gradle
         run: ./gradlew bundleRelease
 
-    
+      - name: Artifact Upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: app-release
+          path: app/build/outputs/bundle/release/app-release.aab
+
+      - name: Upload Android Release to Play Store
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ SERVICE_ACCOUNT_JSON }}
+          serviceAccountJson: app/service-account.json
+          packageName: com.banjen.app
+          releaseFiles: app/build/outputs/bundle/release/app-release.aab
+          track: production
+          status: inProgress
+          whatsNewDirectory: distribution/whatsnew
+          mappingFile: app/build/outputs/mapping/release/mapping.txt
+          debugSymbols: app/intermediates/merged_native_libs/release/out/lib
