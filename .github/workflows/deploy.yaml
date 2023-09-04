@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: set up JDK 11
+      - name: set up JDK
         uses: actions/setup-java@v3
         with:
-          java-version: '11'
+          java-version: '17'
           distribution: 'temurin'
           cache: gradle
       - name: Grant execute permission for gradlew
@@ -27,13 +27,35 @@ jobs:
           BANJEN_SIGN_PATH: ${{ secrets.BANJEN_SIGN_PATH }}
           BANJEN_ADS_UNIT_ID_BANNER: ${{ secrets.BANJEN_ADS_UNIT_ID_BANNER }}
           BANJEN_ADMOB_APP_ID: ${{ secrets.BANJEN_ADMOB_APP_ID }}
+          GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
         run: |
-          base64 -d <<< $KEY > app/key.keystore
-          echo $BANJEN_SIGN_PWD >> gradle.properties
-          echo $BANJEN_SIGN_ALIAS >> gradle.properties
-          echo $BANJEN_SIGN_PATH >> gradle.properties
-          echo $BANJEN_ADS_UNIT_ID_BANNER >> gradle.properties
-          echo $BANJEN_ADMOB_APP_ID >> gradle.properties
+          echo "Preparing gradle.properties variables"
+          
+          # Build
+          echo "Preparing env"
+          echo "org.gradle.jvmargs=-Xmx2048M -Dkotlin.daemon.jvm.options=-Xmx2048M" >> gradle.properties
+          echo "android.useAndroidX=true" >> gradle.properties
+          echo "android.enableJetifier=true" >> gradle.properties
+          
+          echo "Preparing variables"
+          echo "BANJEN_SIGN_PWD=$BANJEN_SIGN_PWD" >> gradle.properties
+          echo "BANJEN_SIGN_ALIAS=$BANJEN_SIGN_ALIAS" >> gradle.properties
+          echo "BANJEN_SIGN_PATH=$BANJEN_SIGN_PATH" >> gradle.properties
+          echo "BANJEN_ADS_UNIT_ID_BANNER=$BANJEN_ADS_UNIT_ID_BANNER" >> gradle.properties
+          echo "BANJEN_ADMOB_APP_ID=$BANJEN_ADMOB_APP_ID" >> gradle.properties
+          
+          echo "Preparing google-services.json"
+          echo "$GOOGLE_SERVICES" | base64 -d > app/google-services.json
+          
+          # Deploy
+          echo "Preparing key.keystore"
+          echo "$KEY" | base64 -d >  app/key.keystore
 
       - name: Build with Gradle
         run: ./gradlew bundleRelease
+
+      - name: Artifact Upload
+        uses: actions/upload-artifact@v2
+        with:
+          name: app-release
+          path: app/build/outputs/bundle/release/app-release.aab
