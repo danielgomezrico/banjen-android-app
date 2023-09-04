@@ -44,3 +44,5 @@ jobs:
 
       - name: Build with Gradle
         run: ./gradlew bundleRelease
+
+    
