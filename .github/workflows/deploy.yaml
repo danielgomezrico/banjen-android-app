@@ -43,7 +43,6 @@ jobs:
           
           # Deploy
           echo "$KEY" | base64 -d >  app/key.keystore
-          echo "$SERVICE_ACCOUNT_JSON" | base64 -d > app/service-account.json
 
       - name: Build with Gradle
         run: ./gradlew bundleRelease
