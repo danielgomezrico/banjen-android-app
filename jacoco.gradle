@@ -27,13 +27,15 @@ project.afterEvaluate {
       def testTaskName = "test${sourceName.capitalize()}UnitTest"
       def coverageTaskName = "${testTaskName}Coverage"
 
+      if (!tasks.findByName(testTaskName)) return
+
       // Create coverage task of form 'testFlavorTypeCoverage' depending on 'testFlavorTypeUnitTest'
       task "${coverageTaskName}"(type: JacocoReport, dependsOn: "$testTaskName") {
         group = 'Reporting'
         description = "Generate Jacoco coverage reports for the ${sourceName.capitalize()} build."
 
         classDirectories.from = fileTree(
-            dir: "${project.buildDir}/intermediates/classes/${sourcePath}",
+            dir: "${project.layout.buildDirectory.get().asFile}/intermediates/classes/${sourcePath}",
             excludes: ['**/R.class',
                        '**/R$*.class',
                        '**/*$ViewInjector*.*',
@@ -56,7 +58,7 @@ project.afterEvaluate {
 
         additionalSourceDirs.from = files(coverageSourceDirs)
         sourceDirectories.from = files(coverageSourceDirs)
-        executionData.from = files("${project.buildDir}/jacoco/${testTaskName}.exec")
+        executionData.from = files("${project.layout.buildDirectory.get().asFile}/jacoco/${testTaskName}.exec")
 
         reports {
           //todo: FIX

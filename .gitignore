@@ -2,7 +2,7 @@ app/gradle.properties
 app/newrelic.properties
 app/google-services.json
 captures/
-app/google-services.json
+*.keystore
 
 gradle.properties
 
