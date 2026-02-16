@@ -9,9 +9,8 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 
 class EarRobot(
-    private val composeTestRule: AndroidComposeTestRule<ActivityScenarioRule<EarActivity>, EarActivity>
+    private val composeTestRule: AndroidComposeTestRule<ActivityScenarioRule<EarActivity>, EarActivity>,
 ) {
-
     fun click(buttonIndex: Int) {
         composeTestRule
             .onNodeWithText("$buttonIndex - ", substring = true)
@@ -21,8 +20,9 @@ class EarRobot(
 
     fun assert(func: Assert.() -> Unit) = Assert(composeTestRule.activity).apply { func() }
 
-    class Assert(private val activity: EarActivity) {
-
+    class Assert(
+        private val activity: EarActivity,
+    ) {
         fun checkIsPlaying() {
             waitForPlayer(playing = true)
             assertTrue(activity.player.isPlaying)
@@ -33,7 +33,10 @@ class EarRobot(
             assertFalse(activity.player.isPlaying)
         }
 
-        private fun waitForPlayer(playing: Boolean, timeoutMs: Long = 3000) {
+        private fun waitForPlayer(
+            playing: Boolean,
+            timeoutMs: Long = 3000,
+        ) {
             val start = System.currentTimeMillis()
             while (activity.player.isPlaying != playing) {
                 if (System.currentTimeMillis() - start > timeoutMs) break
@@ -41,12 +44,11 @@ class EarRobot(
             }
         }
     }
-
 }
 
 fun withEarRobot(
     composeTestRule: AndroidComposeTestRule<ActivityScenarioRule<EarActivity>, EarActivity>,
-    func: EarRobot.() -> Unit
+    func: EarRobot.() -> Unit,
 ) = EarRobot(composeTestRule).apply {
     func()
 }
