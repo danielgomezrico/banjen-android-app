@@ -21,7 +21,7 @@ jobs:
 
       - name: Prepare Env
         env:
-          KEY: ${{ secrets.BANJEN_SIGN_KEY }}
+          KEY: ${{ secrets.KEY }}
           BANJEN_SIGN_PWD: ${{ secrets.BANJEN_SIGN_PWD }}
           BANJEN_SIGN_ALIAS: ${{ secrets.BANJEN_SIGN_ALIAS }}
           BANJEN_SIGN_PATH: key.keystore
