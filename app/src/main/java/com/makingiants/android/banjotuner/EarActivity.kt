@@ -45,7 +45,6 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.RequestConfiguration
 import java.io.IOException
 
 class EarActivity : AppCompatActivity() {
@@ -69,8 +68,6 @@ class EarActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         MobileAds.initialize(this)
-        RequestConfiguration.Builder().setTestDeviceIds(listOf("63F546CA43A28B64F327E2FBB15AFF90"))
-
         setContent { Contents() }
     }
 
