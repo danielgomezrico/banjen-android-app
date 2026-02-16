@@ -3,6 +3,7 @@ app/newrelic.properties
 app/google-services.json
 captures/
 *.keystore
+*.hprof
 
 gradle.properties
 
