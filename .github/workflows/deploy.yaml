@@ -24,7 +24,7 @@ jobs:
           KEY: ${{ secrets.BANJEN_SIGN_KEY }}
           BANJEN_SIGN_PWD: ${{ secrets.BANJEN_SIGN_PWD }}
           BANJEN_SIGN_ALIAS: ${{ secrets.BANJEN_SIGN_ALIAS }}
-          BANJEN_SIGN_PATH: ${{ secrets.BANJEN_SIGN_PATH }}
+          BANJEN_SIGN_PATH: key.keystore
           BANJEN_ADS_UNIT_ID_BANNER: ${{ secrets.BANJEN_ADS_UNIT_ID_BANNER }}
           BANJEN_ADMOB_APP_ID: ${{ secrets.BANJEN_ADMOB_APP_ID }}
           GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
@@ -37,8 +37,9 @@ jobs:
           echo "android.useAndroidX=true" >> gradle.properties
           
           echo "Preparing variables"
-          echo "BANJEN_SIGN_PWD=$BANJEN_SIGN_PWD" >> gradle.properties
-          echo "BANJEN_SIGN_ALIAS=$BANJEN_SIGN_ALIAS" >> gradle.properties
+          echo "BANJEN_SIGN_STORE_PASSWORD=$BANJEN_SIGN_PWD" >> gradle.properties
+          echo "BANJEN_SIGN_KEY_ALIAS=$BANJEN_SIGN_ALIAS" >> gradle.properties
+          echo "BANJEN_SIGN_KEY_PASSWORD=$BANJEN_SIGN_PWD" >> gradle.properties
           echo "BANJEN_SIGN_PATH=$BANJEN_SIGN_PATH" >> gradle.properties
           echo "BANJEN_ADS_UNIT_ID_BANNER=$BANJEN_ADS_UNIT_ID_BANNER" >> gradle.properties
           echo "BANJEN_ADMOB_APP_ID=$BANJEN_ADMOB_APP_ID" >> gradle.properties
