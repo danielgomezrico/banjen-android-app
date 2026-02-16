@@ -4,8 +4,6 @@
 
 Android app to help to tune a 4 string banjo
 
-Developed with Android Studio v4.0-beta5
-
 ## License
 
 * [Apache Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.html)
