@@ -1,6 +1,6 @@
 plugins {
     id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.plugin.compose'
     id 'com.google.gms.google-services'
     id 'com.google.firebase.crashlytics'
 }
@@ -8,8 +8,8 @@ plugins {
 apply from: '../jacoco.gradle'
 
 def appId = "com.makingiants.android.banjotuner"
-def appVersionName = "1.6.0"
-def appVersionCode = 119
+def appVersionName = "1.7.0"
+def appVersionCode = 120
 
 def customProperty(key) {
     if (project.hasProperty(key)) {
@@ -39,6 +39,17 @@ android {
         resConfigs "en", "pt", "es", "it"
     }
 
+    signingConfigs {
+        if (project.hasProperty('BANJEN_SIGN_PATH')) {
+            release {
+                storeFile file(customProperty("BANJEN_SIGN_PATH"))
+                storePassword customProperty("BANJEN_SIGN_STORE_PASSWORD")
+                keyAlias customProperty("BANJEN_SIGN_KEY_ALIAS")
+                keyPassword customProperty("BANJEN_SIGN_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         debug {
             minifyEnabled false
@@ -50,68 +61,57 @@ android {
             minifyEnabled true
             shrinkResources true
 
+            if (project.hasProperty('BANJEN_SIGN_PATH')) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'rules.pro'
         }
     }
 
-    signingConfigs {
-        release {
-            if (project.hasProperty('BANJEN_SIGN_PATH')) {
-                storeFile file(project.property("BANJEN_SIGN_PATH"))
-                storePassword project.property("BANJEN_SIGN_PWD")
-                keyAlias project.property("BANJEN_SIGN_ALIAS")
-                keyPassword project.property("BANJEN_SIGN_PWD")
-            }
-        }
-    }
-
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = '1.8'
-    }
-
-    lintOptions {
+    lint {
         abortOnError false
     }
 
     buildFeatures {
         compose true
+        resValues true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.2"
-    }
 }
 
 dependencies {
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.9.0"
-    implementation "androidx.appcompat:appcompat:1.6.1"
-    implementation "com.google.android.gms:play-services-ads-lite:22.3.0"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:2.3.10"
+    implementation "androidx.appcompat:appcompat:1.7.1"
+    implementation "com.google.android.gms:play-services-ads-lite:24.8.0"
 
-    implementation platform("com.google.firebase:firebase-bom:32.2.2")
-    implementation "com.google.firebase:firebase-crashlytics-ktx"
+    implementation platform("com.google.firebase:firebase-bom:34.9.0")
+    implementation "com.google.firebase:firebase-crashlytics"
     implementation 'com.google.firebase:firebase-analytics'
 
-    def composeBom = platform('androidx.compose:compose-bom:2023.08.00')
+    def composeBom = platform('androidx.compose:compose-bom:2026.02.00')
     implementation composeBom
     androidTestImplementation composeBom
-    implementation 'androidx.compose.material3:material3-android:1.2.0-alpha06'
+    implementation 'androidx.compose.material3:material3'
     implementation 'androidx.compose.ui:ui-tooling-preview'
     debugImplementation 'androidx.compose.ui:ui-tooling'
+    debugImplementation 'androidx.compose.ui:ui-test-manifest'
     implementation 'androidx.compose.ui:ui'
-    implementation 'androidx.activity:activity-compose:1.8.0-alpha07'
+    implementation 'androidx.activity:activity-compose:1.12.4'
 
     testImplementation 'junit:junit:4.13.2'
-    testImplementation "org.jetbrains.kotlin:kotlin-stdlib:1.9.0"
-    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:1.9.0"
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib:2.3.10"
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:2.3.10"
 
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    androidTestImplementation 'androidx.test.espresso:espresso-contrib:3.5.1'
-    androidTestImplementation "androidx.test.ext:junit:1.1.5"
-    androidTestImplementation 'androidx.test:runner:1.5.2'
-    androidTestImplementation 'androidx.test:rules:1.5.0'
+    androidTestImplementation 'androidx.compose.ui:ui-test-junit4'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.7.0'
+    androidTestImplementation "androidx.test.ext:junit:1.3.0"
+    androidTestImplementation 'androidx.test:runner:1.7.0'
+    androidTestImplementation 'androidx.test:rules:1.7.0'
 }

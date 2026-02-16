@@ -1,47 +1,54 @@
 package com.makingiants.android.banjotuner
 
-
-import android.app.Activity
-import android.content.Context
-import android.media.AudioManager
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions
-import androidx.test.espresso.matcher.ViewMatchers.withText
-import org.hamcrest.Matchers
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.junit4.AndroidComposeTestRule
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performSemanticsAction
+import androidx.test.ext.junit.rules.ActivityScenarioRule
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 
-
-class EarRobot(activity: Activity) {
-    init {
-        // animations that repeat forever break espresso
-        (activity as EarActivity).clickAnimation.repeatCount = 0
-    }
-
+class EarRobot(
+    private val composeTestRule: AndroidComposeTestRule<ActivityScenarioRule<EarActivity>, EarActivity>,
+) {
     fun click(buttonIndex: Int) {
-        onView(withText(Matchers.startsWith("$buttonIndex"))).perform(ViewActions.click())
+        composeTestRule
+            .onNodeWithText("$buttonIndex - ", substring = true)
+            .performSemanticsAction(SemanticsActions.OnClick)
+        composeTestRule.waitForIdle()
     }
 
-    fun assert(func: Assert.() -> Unit) = Assert().apply { func() }
+    fun assert(func: Assert.() -> Unit) = Assert(composeTestRule.activity).apply { func() }
 
-    class Assert {
-        private val context: Context get() = ApplicationProvider.getApplicationContext()
-        private val audioService by lazy {
-            context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        }
-
+    class Assert(
+        private val activity: EarActivity,
+    ) {
         fun checkIsPlaying() {
-            assertTrue(audioService.isMusicActive)
+            waitForPlayer(playing = true)
+            assertTrue(activity.player.isPlaying)
         }
 
         fun checkIsNotPlaying() {
-            assertFalse(audioService.isMusicActive)
+            waitForPlayer(playing = false)
+            assertFalse(activity.player.isPlaying)
+        }
+
+        private fun waitForPlayer(
+            playing: Boolean,
+            timeoutMs: Long = 3000,
+        ) {
+            val start = System.currentTimeMillis()
+            while (activity.player.isPlaying != playing) {
+                if (System.currentTimeMillis() - start > timeoutMs) break
+                Thread.sleep(100)
+            }
         }
     }
-
 }
 
-fun withEarRobot(activity: Activity, func: EarRobot.() -> Unit) = EarRobot(activity).apply {
+fun withEarRobot(
+    composeTestRule: AndroidComposeTestRule<ActivityScenarioRule<EarActivity>, EarActivity>,
+    func: EarRobot.() -> Unit,
+) = EarRobot(composeTestRule).apply {
     func()
 }
