@@ -49,7 +49,8 @@ import com.google.android.gms.ads.RequestConfiguration
 import java.io.IOException
 
 class EarActivity : AppCompatActivity() {
-  private val player by lazy { SoundPlayer(this) }
+  @VisibleForTesting
+  internal val player by lazy { SoundPlayer(this) }
 
   private val buttonsText = listOf(
     R.string.ear_button_4_text,

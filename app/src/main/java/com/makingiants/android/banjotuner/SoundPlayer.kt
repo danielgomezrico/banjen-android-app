@@ -11,6 +11,7 @@ import android.media.MediaPlayer.OnPreparedListener
  */
 class SoundPlayer(private val context: Context) : OnPreparedListener, OnCompletionListener {
   private var mediaPlayer: MediaPlayer? = null
+  val isPlaying: Boolean get() = mediaPlayer?.isPlaying == true
   private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
   private val soundsPath = "b_sounds"
   private val sounds = arrayOf("1.mp3", "2.mp3", "3.mp3", "4.mp3")
