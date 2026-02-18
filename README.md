@@ -18,6 +18,5 @@ but will be thoroughly reviewed and discussed.
 
 ## About
 
-+ MakinGIANTS
-+ http://www.makingiants.com
++ Daniel Gomez
 + here.makin.giants@gmail.com
