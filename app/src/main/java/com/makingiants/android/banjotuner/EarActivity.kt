@@ -45,6 +45,22 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import java.io.IOException
 
 class EarActivity : AppCompatActivity() {
@@ -100,21 +116,31 @@ class EarActivity : AppCompatActivity() {
 
     @Composable
     fun MainLayout() {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.SpaceEvenly,
-                horizontalAlignment = Alignment.CenterHorizontally,
+        val snackbarHostState = remember { SnackbarHostState() }
+
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            containerColor = colorResource(id = R.color.banjen_background),
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
             ) {
-                val selectedOption = remember { mutableIntStateOf(-1) }
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceEvenly,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    val selectedOption = remember { mutableIntStateOf(-1) }
+                    val isVolumeLow = remember { mutableStateOf(false) }
 
-                buttonsText.forEachIndexed { index, text ->
-                    Button(index, text, selectedOption)
+                    buttonsText.forEachIndexed { index, text ->
+                        Button(index, text, selectedOption, isVolumeLow, snackbarHostState)
+                    }
+
+                    AdView()
                 }
-
-                AdView()
             }
         }
     }
@@ -140,8 +166,12 @@ class EarActivity : AppCompatActivity() {
         index: Int,
         text: Int,
         selectedOption: MutableState<Int>,
+        isVolumeLow: MutableState<Boolean>,
+        snackbarHostState: SnackbarHostState,
     ) {
         val isSelected = selectedOption.value == text
+        val scope = rememberCoroutineScope()
+        val volumeLowMessage = stringResource(id = R.string.volume_low_message)
 
         val scaleAnimation by animateFloatAsState(
             targetValue = if (isSelected) 3f else 1f,
@@ -158,6 +188,22 @@ class EarActivity : AppCompatActivity() {
             label = "shake animation",
         )
 
+        val showVolumeIcon = isSelected && isVolumeLow.value
+        val iconShakeAnimation = if (showVolumeIcon) {
+            rememberInfiniteTransition(label = "icon-infinite").animateFloat(
+                initialValue = -5f,
+                targetValue = 5f,
+                animationSpec =
+                    infiniteRepeatable(
+                        animation = tween(100, easing = FastOutLinearInEasing),
+                        repeatMode = RepeatMode.Reverse,
+                    ),
+                label = "icon shake animation",
+            ).value
+        } else {
+            0f
+        }
+
         TextButton(
             modifier =
                 Modifier
@@ -173,6 +219,7 @@ class EarActivity : AppCompatActivity() {
 
                 if (selectedValue != text) {
                     selectedOption.value = text
+                    isVolumeLow.value = player.isVolumeLow()
 
                     try {
                         player.playWithLoop(index)
@@ -182,18 +229,43 @@ class EarActivity : AppCompatActivity() {
                 } else {
                     player.stop()
                     selectedOption.value = -1
+                    isVolumeLow.value = false
                 }
             },
         ) {
-            Text(
-                text = getString(text),
-                style =
-                    TextStyle(
-                        fontSize = 20.sp, // Corresponding to TextAppearance.AppCompat.Large
-                        color = colorResource(id = R.color.banjen_accent),
-                        textAlign = TextAlign.Center,
-                    ),
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (showVolumeIcon) {
+                    IconButton(
+                        onClick = {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(volumeLowMessage)
+                            }
+                        },
+                        modifier = Modifier
+                            .size(48.dp)
+                            .graphicsLayer(translationX = iconShakeAnimation),
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.VolumeOff,
+                            contentDescription = volumeLowMessage,
+                            tint = Color.Red,
+                            modifier = Modifier.size(24.dp),
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(4.dp))
+                }
+                Text(
+                    text = getString(text),
+                    style =
+                        TextStyle(
+                            fontSize = 20.sp,
+                            color = colorResource(id = R.color.banjen_accent),
+                            textAlign = TextAlign.Center,
+                        ),
+                )
+            }
         }
     }
 }

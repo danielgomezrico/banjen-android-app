@@ -16,6 +16,13 @@ class SoundPlayer(
     private var mediaPlayer: MediaPlayer? = null
     val isPlaying: Boolean get() = mediaPlayer?.isPlaying == true
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+    fun isVolumeLow(): Boolean {
+        val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        return current < max / 2
+    }
+
     private val soundsPath = "b_sounds"
     private val sounds = arrayOf("1.mp3", "2.mp3", "3.mp3", "4.mp3")
 
