@@ -16,4 +16,5 @@
   <string name="ear_button_4_description">Corda 4, nota Re, a mais grossa. Toque para reproduzir.</string>
 
   <string name="volume_low_message">O volume está baixo. Aumente para ouvir os tons de afinação.</string>
+  <string name="reference_pitch_label">Tom de referência</string>
 </resources>

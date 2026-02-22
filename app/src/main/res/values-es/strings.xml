@@ -16,4 +16,5 @@
   <string name="ear_button_4_description">Cuerda 4, nota Re, la más gruesa. Toca para reproducir.</string>
 
   <string name="volume_low_message">El volumen está bajo. Súbelo para escuchar los tonos de afinación.</string>
+  <string name="reference_pitch_label">Tono de referencia</string>
 </resources>

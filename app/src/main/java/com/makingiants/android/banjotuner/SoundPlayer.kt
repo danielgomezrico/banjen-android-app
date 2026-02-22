@@ -5,6 +5,21 @@ import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.MediaPlayer.OnCompletionListener
 import android.media.MediaPlayer.OnPreparedListener
+import android.media.PlaybackParams
+
+const val DEFAULT_PITCH = 440
+const val MIN_PITCH = 432
+const val MAX_PITCH = 446
+const val PREFS_NAME = "banjen_prefs"
+const val KEY_REFERENCE_PITCH = "reference_pitch"
+
+fun calculatePitchRatio(referencePitch: Int): Float = referencePitch / 440f
+
+fun clampPitch(pitch: Int): Int = pitch.coerceIn(MIN_PITCH, MAX_PITCH)
+
+fun canDecreasePitch(pitch: Int): Boolean = pitch > MIN_PITCH
+
+fun canIncreasePitch(pitch: Int): Boolean = pitch < MAX_PITCH
 
 /**
  * Sound player for android
@@ -16,6 +31,7 @@ class SoundPlayer(
     private var mediaPlayer: MediaPlayer? = null
     val isPlaying: Boolean get() = mediaPlayer?.isPlaying == true
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    var pitchRatio: Float = 1.0f
 
     fun isVolumeLow(): Boolean {
         val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
@@ -79,6 +95,7 @@ class SoundPlayer(
 
     override fun onPrepared(player: MediaPlayer) {
         mediaPlayer?.start()
+        mediaPlayer?.playbackParams = PlaybackParams().setPitch(pitchRatio)
     }
 
     override fun onCompletion(arg0: MediaPlayer) {
