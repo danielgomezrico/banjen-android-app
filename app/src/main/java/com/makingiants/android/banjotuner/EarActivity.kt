@@ -51,8 +51,10 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -251,8 +253,8 @@ class EarActivity : AppCompatActivity() {
         MaterialTheme(
             colorScheme =
                 lightColorScheme(
-                    primary = colorResource(id = R.color.banjen_primary),
-                    onPrimary = colorResource(id = R.color.banjen_accent),
+                    primary = Color(0xFF6d94a1),
+                    onPrimary = Color.White,
                     secondary = colorResource(id = R.color.banjen_gray),
                     onSecondary = colorResource(id = R.color.banjen_accent),
                     background = colorResource(id = R.color.banjen_background),
@@ -963,17 +965,14 @@ class EarActivity : AppCompatActivity() {
                 0f
             }
 
-        TextButton(
+        ElevatedButton(
             modifier =
                 Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .defaultMinSize(minHeight = 48.dp)
-                    .graphicsLayer(
-                        scaleX = scaleAnimation,
-                        scaleY = scaleAnimation,
-                        translationX = shakeAnimation,
-                    ).testTag("button_${index + 1}")
+                    .defaultMinSize(minHeight = 80.dp)
+                    .graphicsLayer(scaleX = scaleAnimation, scaleY = scaleAnimation, translationX = shakeAnimation)
+                    .testTag("button_${index + 1}")
                     .semantics { contentDescription = buttonDescription },
             onClick = {
                 // If in pitch check mode, exit it and resume tone
@@ -990,7 +989,7 @@ class EarActivity : AppCompatActivity() {
                     } else {
                         toneGenerator.play(note.frequency)
                     }
-                    return@TextButton
+                    return@ElevatedButton
                 }
 
                 if (selectedOption.value != index) {
@@ -1005,6 +1004,19 @@ class EarActivity : AppCompatActivity() {
                     isVolumeLow.value = false
                 }
             },
+            colors = ButtonDefaults.elevatedButtonColors(
+                containerColor = if (isSelected && !pitchCheckMode.value)
+                    colorResource(id = R.color.banjen_accent)
+                else
+                    colorResource(id = R.color.banjen_primary),
+                contentColor = if (isSelected && !pitchCheckMode.value)
+                    colorResource(id = R.color.banjen_background)
+                else
+                    colorResource(id = R.color.banjen_accent),
+            ),
+            elevation = ButtonDefaults.elevatedButtonElevation(
+                defaultElevation = if (isSelected && !pitchCheckMode.value) 8.dp else 2.dp,
+            ),
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
