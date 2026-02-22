@@ -30,8 +30,8 @@ class EarActivityIntentTest {
     }
 
     @Test
-    fun `validateStringIndex returns -1 for index above 3`() {
-        assertEquals(-1, EarActivity.validateStringIndex(4))
+    fun `validateStringIndex returns -1 for index above 4`() {
+        assertEquals(-1, EarActivity.validateStringIndex(5))
     }
 
     @Test
