@@ -1,6 +1,7 @@
 package com.makingiants.android.banjotuner
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.animation.Animation
@@ -89,6 +90,19 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 
 class EarActivity : AppCompatActivity() {
+    companion object {
+        const val EXTRA_STRING_INDEX = "string_index"
+        private const val MAX_STRING_INDEX = 3
+        private const val KEY_TUNING = "banjen_selected_tuning"
+
+        fun parseStringIndex(intent: Intent?): Int {
+            val index = intent?.getIntExtra(EXTRA_STRING_INDEX, -1) ?: -1
+            return validateStringIndex(index)
+        }
+
+        fun validateStringIndex(index: Int): Int = if (index in 0..MAX_STRING_INDEX) index else -1
+    }
+
     @VisibleForTesting
     internal val player by lazy { SoundPlayer(this) }
 
@@ -160,7 +174,8 @@ class EarActivity : AppCompatActivity() {
         )
 
         MobileAds.initialize(this)
-        setContent { Contents() }
+        val autoPlayIndex = parseStringIndex(intent)
+        setContent { Contents(autoPlayIndex) }
     }
 
     override fun onPause() {
@@ -179,7 +194,7 @@ class EarActivity : AppCompatActivity() {
 
     @Composable
     @Preview
-    fun Contents() {
+    fun Contents(autoPlayIndex: Int = -1) {
         MaterialTheme(
             colorScheme =
                 lightColorScheme(
@@ -195,12 +210,12 @@ class EarActivity : AppCompatActivity() {
                     onError = Color.White,
                 ),
         ) {
-            MainLayout()
+            MainLayout(autoPlayIndex)
         }
     }
 
     @Composable
-    fun MainLayout() {
+    fun MainLayout(autoPlayIndex: Int = -1) {
         val snackbarHostState = remember { SnackbarHostState() }
         val referencePitch = remember { mutableIntStateOf(savedPitch) }
         val selectedTuning = remember { mutableStateOf(loadSavedTuning()) }
@@ -208,7 +223,7 @@ class EarActivity : AppCompatActivity() {
         if (sessionModeActive.value) {
             SessionModeLayout(snackbarHostState, selectedTuning)
         } else {
-            NormalLayout(snackbarHostState, referencePitch, selectedTuning)
+            NormalLayout(snackbarHostState, referencePitch, selectedTuning, autoPlayIndex)
         }
     }
 
@@ -217,6 +232,7 @@ class EarActivity : AppCompatActivity() {
         snackbarHostState: SnackbarHostState,
         referencePitch: MutableIntState,
         selectedTuning: MutableState<TuningPreset>,
+        autoPlayIndex: Int = -1,
     ) {
         val scope = rememberCoroutineScope()
         val noHeadphonesMsg = stringResource(id = R.string.session_no_headphones)
@@ -236,8 +252,12 @@ class EarActivity : AppCompatActivity() {
                     verticalArrangement = Arrangement.SpaceEvenly,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    val selectedOption = remember { mutableIntStateOf(-1) }
+                    val selectedOption = remember { mutableIntStateOf(if (autoPlayIndex in 0..3) autoPlayIndex else -1) }
                     val isVolumeLow = remember { mutableStateOf(false) }
+
+                    if (autoPlayIndex in 0..3) {
+                        LaunchedAutoPlay(autoPlayIndex, isVolumeLow, selectedTuning)
+                    }
 
                     TuningSelector(selectedTuning, selectedOption)
 
@@ -285,6 +305,23 @@ class EarActivity : AppCompatActivity() {
 
                     AdView()
                 }
+            }
+        }
+    }
+
+    @Composable
+    private fun LaunchedAutoPlay(
+        index: Int,
+        isVolumeLow: MutableState<Boolean>,
+        selectedTuning: MutableState<TuningPreset>,
+    ) {
+        LaunchedEffect(Unit) {
+            isVolumeLow.value = player.isVolumeLow()
+            try {
+                player.volume = 1.0f
+                player.playWithLoop(selectedTuning.value.assetFiles[index])
+            } catch (e: IOException) {
+                Log.e("EarActivity", "Auto-playing sound", e)
             }
         }
     }
@@ -730,9 +767,5 @@ class EarActivity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    companion object {
-        private const val KEY_TUNING = "banjen_selected_tuning"
     }
 }
