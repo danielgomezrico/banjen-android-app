@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.animation.Animation
 import android.view.animation.AnimationUtils
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
@@ -16,6 +17,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,28 +32,38 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableFloatState
+import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.colorResource
@@ -69,6 +81,7 @@ import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.IOException
 
@@ -103,10 +116,20 @@ class EarActivity : AppCompatActivity() {
             R.string.ear_button_1_description,
         )
 
+    private val sessionStringNames =
+        listOf(
+            R.string.session_string_1,
+            R.string.session_string_2,
+            R.string.session_string_3,
+            R.string.session_string_4,
+        )
+
     @VisibleForTesting
     internal val clickAnimation: Animation by lazy {
         AnimationUtils.loadAnimation(this, R.anim.shake_animation)
     }
+
+    private var sessionModeActive = mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -114,13 +137,36 @@ class EarActivity : AppCompatActivity() {
         savedPitch = prefs.getInt(KEY_REFERENCE_PITCH, DEFAULT_PITCH)
         player.pitchRatio = calculatePitchRatio(savedPitch)
 
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (sessionModeActive.value) {
+                        exitSessionMode()
+                    } else {
+                        isEnabled = false
+                        onBackPressedDispatcher.onBackPressed()
+                    }
+                }
+            },
+        )
+
         MobileAds.initialize(this)
         setContent { Contents() }
     }
 
     override fun onPause() {
+        if (sessionModeActive.value) {
+            exitSessionMode()
+        }
         player.stop()
         super.onPause()
+    }
+
+    private fun exitSessionMode() {
+        sessionModeActive.value = false
+        player.stop()
+        player.volume = 1.0f
     }
 
     @Composable
@@ -149,6 +195,18 @@ class EarActivity : AppCompatActivity() {
     fun MainLayout() {
         val snackbarHostState = remember { SnackbarHostState() }
         val referencePitch = remember { mutableIntStateOf(savedPitch) }
+
+        if (sessionModeActive.value) {
+            SessionModeLayout(snackbarHostState)
+        } else {
+            NormalLayout(snackbarHostState, referencePitch)
+        }
+    }
+
+    @Composable
+    private fun NormalLayout(snackbarHostState: SnackbarHostState, referencePitch: MutableIntState) {
+        val scope = rememberCoroutineScope()
+        val noHeadphonesMsg = stringResource(id = R.string.session_no_headphones)
 
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -181,6 +239,19 @@ class EarActivity : AppCompatActivity() {
                                 }
                             }
                         }
+                    }
+
+                    SessionModeToggle {
+                        if (!player.isHeadphoneConnected()) {
+                            scope.launch {
+                                snackbarHostState.showSnackbar(noHeadphonesMsg)
+                            }
+                        }
+                        val savedVol = prefs.getFloat(KEY_SESSION_VOLUME, DEFAULT_SESSION_VOLUME)
+                        player.volume = savedVol
+                        player.stop()
+                        selectedOption.intValue = -1
+                        sessionModeActive.value = true
                     }
 
                     buttonsText.forEachIndexed { index, text ->
@@ -258,6 +329,187 @@ class EarActivity : AppCompatActivity() {
                     tint = colorResource(id = R.color.banjen_accent),
                 )
             }
+        }
+    }
+
+    @Composable
+    private fun SessionModeToggle(onActivate: () -> Unit) {
+        val label = stringResource(id = R.string.session_mode_label)
+
+        TextButton(
+            onClick = onActivate,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Headphones,
+                    contentDescription = label,
+                    tint = colorResource(id = R.color.banjen_accent),
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = label,
+                    style =
+                        TextStyle(
+                            fontSize = 14.sp,
+                            color = colorResource(id = R.color.banjen_accent),
+                        ),
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun SessionModeLayout(snackbarHostState: SnackbarHostState) {
+        val currentStringIndex = remember { mutableIntStateOf(0) }
+        val sessionRunning = remember { mutableStateOf(true) }
+        val savedVol = prefs.getFloat(KEY_SESSION_VOLUME, DEFAULT_SESSION_VOLUME)
+        val sessionVolume = remember { mutableFloatStateOf(savedVol) }
+        val stopLabel = stringResource(id = R.string.session_stop)
+
+        LaunchedEffect(sessionRunning.value) {
+            if (!sessionRunning.value) return@LaunchedEffect
+
+            var index = 0
+            while (index <= 3 && sessionRunning.value) {
+                currentStringIndex.intValue = index
+                player.volume = sessionVolume.floatValue
+                try {
+                    player.playWithLoop(index)
+                } catch (e: IOException) {
+                    Log.e("EarActivity", "Session mode playback", e)
+                }
+                delay(SECONDS_PER_STRING * 1000L)
+                val next = autoAdvanceNextIndex(index)
+                if (next != null) {
+                    index = next
+                } else {
+                    sessionRunning.value = false
+                    player.stop()
+                }
+            }
+        }
+
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            containerColor = Color.Black,
+        ) { paddingValues ->
+            Column(
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = getString(sessionStringNames[currentStringIndex.intValue]),
+                    style =
+                        TextStyle(
+                            fontSize = 48.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center,
+                        ),
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                ProgressDots(currentStringIndex)
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                VolumeSlider(sessionVolume)
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                TextButton(
+                    onClick = {
+                        exitSessionMode()
+                    },
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Stop,
+                            contentDescription = stopLabel,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stopLabel,
+                            style =
+                                TextStyle(
+                                    fontSize = 18.sp,
+                                    color = Color.White,
+                                ),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun ProgressDots(currentStringIndex: MutableIntState) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            for (i in 0..3) {
+                val isActive = i <= currentStringIndex.intValue
+                Box(
+                    modifier =
+                        Modifier
+                            .size(12.dp)
+                            .clip(CircleShape)
+                            .background(if (isActive) Color.White else Color.DarkGray),
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun VolumeSlider(sessionVolume: MutableFloatState) {
+        val volumeLabel = stringResource(id = R.string.session_volume_label)
+
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 48.dp),
+        ) {
+            Text(
+                text = volumeLabel,
+                style =
+                    TextStyle(
+                        fontSize = 14.sp,
+                        color = Color.Gray,
+                    ),
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Slider(
+                value = sessionVolume.floatValue,
+                onValueChange = { newVolume ->
+                    val clamped = clampVolume(newVolume)
+                    sessionVolume.floatValue = clamped
+                    player.volume = clamped
+                    prefs.edit().putFloat(KEY_SESSION_VOLUME, clamped).apply()
+                },
+                valueRange = 0.05f..1.0f,
+                colors =
+                    SliderDefaults.colors(
+                        thumbColor = Color.White,
+                        activeTrackColor = Color.White,
+                        inactiveTrackColor = Color.DarkGray,
+                    ),
+            )
         }
     }
 
@@ -344,6 +596,7 @@ class EarActivity : AppCompatActivity() {
                     isVolumeLow.value = player.isVolumeLow()
 
                     try {
+                        player.volume = 1.0f
                         player.playWithLoop(index)
                     } catch (e: IOException) {
                         Log.e("EarActivity", "Playing sound", e)

@@ -17,4 +17,12 @@
 
   <string name="volume_low_message">El volumen está bajo. Súbelo para escuchar los tonos de afinación.</string>
   <string name="reference_pitch_label">Tono de referencia</string>
+  <string name="session_mode_label">Modo sesión</string>
+  <string name="session_stop">Detener</string>
+  <string name="session_no_headphones">No se detectaron auriculares. Conecta auriculares para afinar discretamente.</string>
+  <string name="session_volume_label">Volumen</string>
+  <string name="session_string_1">4 - Re</string>
+  <string name="session_string_2">3 - Sol</string>
+  <string name="session_string_3">2 - Si</string>
+  <string name="session_string_4">1 - Re</string>
 </resources>

@@ -1,6 +1,7 @@
 package com.makingiants.android.banjotuner
 
 import android.content.Context
+import android.media.AudioDeviceInfo
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.media.MediaPlayer.OnCompletionListener
@@ -21,6 +22,23 @@ fun canDecreasePitch(pitch: Int): Boolean = pitch > MIN_PITCH
 
 fun canIncreasePitch(pitch: Int): Boolean = pitch < MAX_PITCH
 
+// SESSION_PREFS_NAME unified with PREFS_NAME above
+const val KEY_SESSION_VOLUME = "session_volume"
+const val DEFAULT_SESSION_VOLUME = 0.3f
+const val SECONDS_PER_STRING = 5
+
+fun clampVolume(v: Float): Float = v.coerceIn(0.0f, 1.0f)
+
+fun autoAdvanceNextIndex(current: Int): Int? = if (current < 3) current + 1 else null
+
+private val HEADPHONE_TYPES =
+    setOf(
+        AudioDeviceInfo.TYPE_WIRED_HEADSET,
+        AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+        AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+        AudioDeviceInfo.TYPE_USB_HEADSET,
+    )
+
 /**
  * Sound player for android
  */
@@ -32,6 +50,7 @@ class SoundPlayer(
     val isPlaying: Boolean get() = mediaPlayer?.isPlaying == true
     private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
     var pitchRatio: Float = 1.0f
+    var volume: Float = 1.0f
 
     fun isVolumeLow(): Boolean {
         val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
@@ -61,7 +80,7 @@ class SoundPlayer(
         mediaPlayer =
             MediaPlayer().apply {
                 setAudioStreamType(AudioManager.STREAM_MUSIC)
-                setVolume(1.0f, 1.0f)
+                setVolume(volume, volume)
                 setOnPreparedListener(this@SoundPlayer)
                 setOnCompletionListener(this@SoundPlayer)
 
@@ -89,6 +108,11 @@ class SoundPlayer(
 
         mediaPlayer = null
         audioManager.setStreamMute(AudioManager.STREAM_MUSIC, false)
+    }
+
+    fun isHeadphoneConnected(): Boolean {
+        val devices = audioManager.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
+        return devices.any { it.type in HEADPHONE_TYPES }
     }
 
     // <editor-fold desc="OnPreparedListener, OnCompletionListener implements">
