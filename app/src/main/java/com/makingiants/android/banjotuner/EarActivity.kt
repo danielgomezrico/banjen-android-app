@@ -117,7 +117,6 @@ class EarActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_STRING_INDEX = "string_index"
         private const val MAX_STRING_INDEX = 4  // 5-string banjo has 5 strings (0..4)
-        private const val KEY_TUNING = "banjen_selected_tuning"
 
         fun parseStringIndex(intent: Intent?): Int {
             val index = intent?.getIntExtra(EXTRA_STRING_INDEX, -1) ?: -1
@@ -184,19 +183,6 @@ class EarActivity : AppCompatActivity() {
 
     private var sessionModeActive = mutableStateOf(false)
     private var audioRecord: AudioRecord? = null
-
-    private fun loadSavedTuning(): TuningPreset {
-        val savedName = prefs.getString(KEY_TUNING, null) ?: return TuningPreset.STANDARD
-        return try {
-            TuningPreset.valueOf(savedName)
-        } catch (_: IllegalArgumentException) {
-            TuningPreset.STANDARD
-        }
-    }
-
-    private fun saveTuning(preset: TuningPreset) {
-        prefs.edit().putString(KEY_TUNING, preset.name).apply()
-    }
 
     private fun stopAudioCapture() {
         try {
@@ -290,12 +276,11 @@ class EarActivity : AppCompatActivity() {
     fun MainLayout(autoPlayIndex: Int = -1) {
         val snackbarHostState = remember { SnackbarHostState() }
         val referencePitch = remember { mutableIntStateOf(savedPitch) }
-        val selectedTuning = remember { mutableStateOf(loadSavedTuning()) }
 
         if (sessionModeActive.value) {
-            SessionModeLayout(snackbarHostState, selectedTuning)
+            SessionModeLayout(snackbarHostState)
         } else {
-            NormalLayout(snackbarHostState, referencePitch, selectedTuning, autoPlayIndex)
+            NormalLayout(snackbarHostState, referencePitch, autoPlayIndex)
         }
     }
 
@@ -303,7 +288,6 @@ class EarActivity : AppCompatActivity() {
     private fun NormalLayout(
         snackbarHostState: SnackbarHostState,
         referencePitch: MutableIntState,
-        selectedTuning: MutableState<TuningPreset>,
         autoPlayIndex: Int = -1,
     ) {
         val scope = rememberCoroutineScope()
@@ -344,8 +328,8 @@ class EarActivity : AppCompatActivity() {
                     val selectedOption = remember { mutableIntStateOf(if (autoPlayIndex in 0..3) autoPlayIndex else -1) }
                     val isVolumeLow = remember { mutableStateOf(false) }
 
-                    if (autoPlayIndex in 0..3) {
-                        LaunchedAutoPlay(autoPlayIndex, isVolumeLow, selectedTuning)
+                    if (autoPlayIndex in currentTuningModel.notes.indices) {
+                        LaunchedAutoPlay(autoPlayIndex, isVolumeLow, currentTuningModel.notes[autoPlayIndex])
                     }
 
                     // Instrument/Tuning selector row (5-string support)
@@ -386,7 +370,7 @@ class EarActivity : AppCompatActivity() {
                             val currentIndex = selectedOption.intValue
                             if (currentIndex >= 0) {
                                 try {
-                                    player.playWithLoop(selectedTuning.value.assetFiles[currentIndex])
+                                    player.playWithLoop(currentIndex)
                                 } catch (e: IOException) {
                                     Log.e("EarActivity", "Restarting sound with new pitch", e)
                                 }
@@ -446,16 +430,11 @@ class EarActivity : AppCompatActivity() {
     private fun LaunchedAutoPlay(
         index: Int,
         isVolumeLow: MutableState<Boolean>,
-        selectedTuning: MutableState<TuningPreset>,
+        note: Note,
     ) {
         LaunchedEffect(Unit) {
             isVolumeLow.value = player.isVolumeLow()
-            try {
-                player.volume = 1.0f
-                player.playWithLoop(selectedTuning.value.assetFiles[index])
-            } catch (e: IOException) {
-                Log.e("EarActivity", "Auto-playing sound", e)
-            }
+            toneGenerator.play(note.frequency)
         }
     }
 
@@ -773,13 +752,17 @@ class EarActivity : AppCompatActivity() {
     @Composable
     private fun SessionModeLayout(
         snackbarHostState: SnackbarHostState,
-        selectedTuning: MutableState<TuningPreset>,
     ) {
         val currentStringIndex = remember { mutableIntStateOf(0) }
         val sessionRunning = remember { mutableStateOf(true) }
         val savedVol = prefs.getFloat(KEY_SESSION_VOLUME, DEFAULT_SESSION_VOLUME)
         val sessionVolume = remember { mutableFloatStateOf(savedVol) }
         val stopLabel = stringResource(id = R.string.session_stop)
+        val currentTuningModel = remember {
+            val instIdx = prefs.getInt(KEY_INSTRUMENT_INDEX, 0).coerceIn(0, ALL_INSTRUMENTS.size - 1)
+            val tuningIdx = prefs.getInt(KEY_TUNING_INDEX, 0).coerceIn(0, ALL_INSTRUMENTS[instIdx].tunings.size - 1)
+            ALL_INSTRUMENTS[instIdx].tunings[tuningIdx]
+        }
 
         LaunchedEffect(sessionRunning.value) {
             if (!sessionRunning.value) return@LaunchedEffect
@@ -787,12 +770,9 @@ class EarActivity : AppCompatActivity() {
             var index = 0
             while (index <= 3 && sessionRunning.value) {
                 currentStringIndex.intValue = index
+                player.stop()
                 player.volume = sessionVolume.floatValue
-                try {
-                    player.playWithLoop(selectedTuning.value.assetFiles[index])
-                } catch (e: IOException) {
-                    Log.e("EarActivity", "Session mode playback", e)
-                }
+                toneGenerator.play(currentTuningModel.notes[index].frequency)
                 delay(SECONDS_PER_STRING * 1000L)
                 val next = autoAdvanceNextIndex(index)
                 if (next != null) {
