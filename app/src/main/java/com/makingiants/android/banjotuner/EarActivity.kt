@@ -3,8 +3,10 @@ package com.makingiants.android.banjotuner
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.media.AudioFormat
+import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Bundle
@@ -49,12 +51,14 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -75,6 +79,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -105,10 +110,13 @@ import java.io.IOException
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+private const val KEY_INSTRUMENT_INDEX = "instrument_index"
+private const val KEY_TUNING_INDEX = "tuning_index"
+
 class EarActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_STRING_INDEX = "string_index"
-        private const val MAX_STRING_INDEX = 3
+        private const val MAX_STRING_INDEX = 4  // 5-string banjo has 5 strings (0..4)
         private const val KEY_TUNING = "banjen_selected_tuning"
 
         fun parseStringIndex(intent: Intent?): Int {
@@ -122,9 +130,19 @@ class EarActivity : AppCompatActivity() {
     @VisibleForTesting
     internal val player by lazy { SoundPlayer(this) }
 
+    @VisibleForTesting
+    internal val toneGenerator by lazy { ToneGenerator() }
+
     private val pitchDetector by lazy { PitchDetector() }
 
-    private val prefs by lazy { getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
+    private val prefs: SharedPreferences by lazy {
+        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
+
+    private val audioManager: AudioManager by lazy {
+        getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    }
+
     private var savedPitch: Int = DEFAULT_PITCH
 
     private val buttonsSubtitle =
@@ -195,6 +213,22 @@ class EarActivity : AppCompatActivity() {
         player.volume = 1.0f
     }
 
+    private fun shareTuning(tuning: Tuning) {
+        val encoded = encodeTuning(tuning)
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "Banjen Tuning: ${tuning.name}")
+            putExtra(Intent.EXTRA_TEXT, "Banjen Tuning: $encoded")
+        }
+        startActivity(Intent.createChooser(shareIntent, getString(R.string.share_tuning)))
+    }
+
+    private fun isVolumeLow(): Boolean {
+        val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+        val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        return current < max / 2
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -225,6 +259,7 @@ class EarActivity : AppCompatActivity() {
             exitSessionMode()
         }
         player.stop()
+        toneGenerator.stop()
         stopAudioCapture()
         super.onPause()
     }
@@ -277,6 +312,20 @@ class EarActivity : AppCompatActivity() {
         val pitchResult = remember { mutableStateOf<PitchResult?>(null) }
         val selectedStringIndex = remember { mutableIntStateOf(-1) }
 
+        val savedInstrumentIndex = prefs.getInt(KEY_INSTRUMENT_INDEX, 0)
+            .coerceIn(0, ALL_INSTRUMENTS.size - 1)
+        val savedTuningModelIndex = prefs.getInt(KEY_TUNING_INDEX, 0)
+
+        var instrumentIndex by remember { mutableIntStateOf(savedInstrumentIndex) }
+        var tuningModelIndex by remember {
+            mutableIntStateOf(
+                savedTuningModelIndex.coerceIn(0, ALL_INSTRUMENTS[savedInstrumentIndex].tunings.size - 1),
+            )
+        }
+
+        val currentInstrument = ALL_INSTRUMENTS[instrumentIndex]
+        val currentTuningModel = currentInstrument.tunings[tuningModelIndex]
+
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = colorResource(id = R.color.banjen_background),
@@ -299,6 +348,38 @@ class EarActivity : AppCompatActivity() {
                         LaunchedAutoPlay(autoPlayIndex, isVolumeLow, selectedTuning)
                     }
 
+                    // Instrument/Tuning selector row (5-string support)
+                    SelectorRow(
+                        instrumentName = currentInstrument.name,
+                        tuningName = currentTuningModel.name,
+                        instruments = ALL_INSTRUMENTS,
+                        onInstrumentSelected = { newIndex ->
+                            toneGenerator.stop()
+                            player.stop()
+                            selectedOption.intValue = -1
+                            isVolumeLow.value = false
+                            instrumentIndex = newIndex
+                            tuningModelIndex = 0
+                            prefs.edit()
+                                .putInt(KEY_INSTRUMENT_INDEX, newIndex)
+                                .putInt(KEY_TUNING_INDEX, 0)
+                                .apply()
+                        },
+                        tunings = currentInstrument.tunings,
+                        onTuningSelected = { newIndex ->
+                            toneGenerator.stop()
+                            player.stop()
+                            selectedOption.intValue = -1
+                            isVolumeLow.value = false
+                            tuningModelIndex = newIndex
+                            prefs.edit()
+                                .putInt(KEY_TUNING_INDEX, newIndex)
+                                .apply()
+                        },
+                        onShareTuning = { shareTuning(currentTuningModel) },
+                    )
+
+                    // 4-string TuningPreset selector (for MP3-based reference tones)
                     TuningSelector(selectedTuning, selectedOption)
 
                     PitchControl(referencePitch) { newPitch ->
@@ -329,20 +410,21 @@ class EarActivity : AppCompatActivity() {
                         sessionModeActive.value = true
                     }
 
-                    (0 until 4).forEach { index ->
-                        val label = selectedTuning.value.buttonLabel(index)
-                        Button(
-                            index,
-                            label,
-                            buttonsSubtitle[index],
-                            buttonsDescription[index],
-                            selectedOption,
-                            isVolumeLow,
-                            snackbarHostState,
-                            selectedTuning.value,
-                            pitchCheckMode,
-                            pitchResult,
-                            selectedStringIndex,
+                    // Dynamic note buttons from TuningModel (supports 4-string and 5-string)
+                    currentTuningModel.notes.forEachIndexed { index, note ->
+                        val subtitle = if (index < buttonsSubtitle.size) buttonsSubtitle[index] else R.string.ear_button_1_subtitle
+                        val description = if (index < buttonsDescription.size) buttonsDescription[index] else R.string.ear_button_1_description
+                        NoteButton(
+                            index = index,
+                            note = note,
+                            subtitle = subtitle,
+                            description = description,
+                            selectedOption = selectedOption,
+                            isVolumeLow = isVolumeLow,
+                            snackbarHostState = snackbarHostState,
+                            pitchCheckMode = pitchCheckMode,
+                            pitchResult = pitchResult,
+                            selectedStringIndex = selectedStringIndex,
                         )
                     }
 
@@ -350,14 +432,15 @@ class EarActivity : AppCompatActivity() {
                         TuningIndicator(pitchResult.value)
                     }
 
-                    AdView()
+                    AdBanner()
                 }
             }
         }
 
-        // Audio capture effect
+        // Audio capture effect for visual tuning feedback
         if (pitchCheckMode.value && selectedStringIndex.intValue >= 0) {
-            val targetString = banjoStrings[selectedStringIndex.intValue]
+            val stringIndex = selectedStringIndex.intValue
+            val targetString = if (stringIndex < banjoStrings.size) banjoStrings[stringIndex] else banjoStrings[0]
             AudioCaptureEffect(targetString, pitchResult)
         }
     }
@@ -470,7 +553,6 @@ class EarActivity : AppCompatActivity() {
                         TuningStatus.NO_SIGNAL -> Color.Gray
                     }
 
-                // Direction arrow
                 if (result.status == TuningStatus.SHARP || (result.status == TuningStatus.CLOSE && result.centDeviation > 0)) {
                     Text(
                         text = stringResource(R.string.tune_down),
@@ -485,7 +567,6 @@ class EarActivity : AppCompatActivity() {
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Colored indicator bar
                 Box(
                     modifier =
                         Modifier
@@ -496,7 +577,6 @@ class EarActivity : AppCompatActivity() {
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Status text
                 val statusText =
                     when (result.status) {
                         TuningStatus.IN_TUNE -> stringResource(R.string.in_tune)
@@ -516,6 +596,85 @@ class EarActivity : AppCompatActivity() {
                             color = indicatorColor,
                         ),
                 )
+            }
+        }
+    }
+
+    @Composable
+    private fun SelectorRow(
+        instrumentName: String,
+        tuningName: String,
+        instruments: List<Instrument>,
+        onInstrumentSelected: (Int) -> Unit,
+        tunings: List<Tuning>,
+        onTuningSelected: (Int) -> Unit,
+        onShareTuning: () -> Unit,
+    ) {
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            DropdownSelector(
+                label = instrumentName,
+                items = instruments.map { it.name },
+                onSelected = onInstrumentSelected,
+            )
+            DropdownSelector(
+                label = tuningName,
+                items = tunings.map { it.name },
+                onSelected = onTuningSelected,
+            )
+            IconButton(onClick = onShareTuning) {
+                Icon(
+                    imageVector = Icons.Default.Share,
+                    contentDescription = stringResource(id = R.string.share_tuning),
+                    tint = colorResource(id = R.color.banjen_accent),
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun DropdownSelector(
+        label: String,
+        items: List<String>,
+        onSelected: (Int) -> Unit,
+    ) {
+        var expanded by remember { mutableStateOf(false) }
+
+        Box {
+            OutlinedButton(onClick = { expanded = true }) {
+                Text(
+                    text = label,
+                    style =
+                        TextStyle(
+                            fontSize = 14.sp,
+                            color = colorResource(id = R.color.banjen_accent),
+                        ),
+                )
+                Icon(
+                    imageVector = Icons.Default.ArrowDropDown,
+                    contentDescription = null,
+                    tint = colorResource(id = R.color.banjen_accent),
+                )
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+            ) {
+                items.forEachIndexed { index, item ->
+                    DropdownMenuItem(
+                        text = { Text(item) },
+                        onClick = {
+                            expanded = false
+                            onSelected(index)
+                        },
+                    )
+                }
             }
         }
     }
@@ -816,7 +975,7 @@ class EarActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun AdView() {
+    private fun AdBanner() {
         val adsAppId = stringResource(id = R.string.ads_unit_id_banner)
 
         AndroidView(
@@ -832,15 +991,14 @@ class EarActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun ColumnScope.Button(
+    private fun ColumnScope.NoteButton(
         index: Int,
-        label: String,
+        note: Note,
         subtitle: Int,
         description: Int,
         selectedOption: MutableState<Int>,
         isVolumeLow: MutableState<Boolean>,
         snackbarHostState: SnackbarHostState,
-        tuning: TuningPreset,
         pitchCheckMode: MutableState<Boolean>,
         pitchResult: MutableState<PitchResult?>,
         selectedStringIndex: MutableState<Int>,
@@ -855,7 +1013,7 @@ class EarActivity : AppCompatActivity() {
                 ActivityResultContracts.RequestPermission(),
             ) { granted ->
                 if (granted) {
-                    player.stop()
+                    toneGenerator.stop()
                     pitchCheckMode.value = true
                     pitchResult.value = null
                     selectedStringIndex.value = index
@@ -916,21 +1074,10 @@ class EarActivity : AppCompatActivity() {
                     if (selectedOption.value != index) {
                         selectedOption.value = index
                         selectedStringIndex.value = index
-                        isVolumeLow.value = player.isVolumeLow()
-                        try {
-                            player.volume = 1.0f
-                            player.playWithLoop(tuning.assetFiles[index])
-                        } catch (e: IOException) {
-                            Log.e("EarActivity", "Playing sound", e)
-                        }
+                        isVolumeLow.value = isVolumeLow()
+                        toneGenerator.play(note.frequency)
                     } else {
-                        // Resume playing the same string
-                        try {
-                            player.volume = 1.0f
-                            player.playWithLoop(tuning.assetFiles[index])
-                        } catch (e: IOException) {
-                            Log.e("EarActivity", "Playing sound", e)
-                        }
+                        toneGenerator.play(note.frequency)
                     }
                     return@TextButton
                 }
@@ -938,16 +1085,10 @@ class EarActivity : AppCompatActivity() {
                 if (selectedOption.value != index) {
                     selectedOption.value = index
                     selectedStringIndex.value = index
-                    isVolumeLow.value = player.isVolumeLow()
-
-                    try {
-                        player.volume = 1.0f
-                        player.playWithLoop(tuning.assetFiles[index])
-                    } catch (e: IOException) {
-                        Log.e("EarActivity", "Playing sound", e)
-                    }
+                    isVolumeLow.value = isVolumeLow()
+                    toneGenerator.play(note.frequency)
                 } else {
-                    player.stop()
+                    toneGenerator.stop()
                     selectedOption.value = -1
                     selectedStringIndex.value = -1
                     isVolumeLow.value = false
@@ -982,7 +1123,7 @@ class EarActivity : AppCompatActivity() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        text = label,
+                        text = note.name,
                         style =
                             TextStyle(
                                 fontSize = 24.sp,
@@ -1016,7 +1157,7 @@ class EarActivity : AppCompatActivity() {
                                 ) == PackageManager.PERMISSION_GRANTED
 
                             if (hasPermission) {
-                                player.stop()
+                                toneGenerator.stop()
                                 pitchCheckMode.value = true
                                 pitchResult.value = null
                                 selectedStringIndex.value = index
