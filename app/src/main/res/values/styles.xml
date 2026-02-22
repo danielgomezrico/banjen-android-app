@@ -8,15 +8,4 @@
     <item name="colorControlHighlight">@color/banjen_accent</item>
   </style>
 
-  <style name="EarButton" parent="Widget.AppCompat.Button.Borderless">
-    <item name="android:gravity">center</item>
-    <item name="android:textAppearance">@style/TextAppearance.AppCompat.Large</item>
-
-    <item name="android:drawSelectorOnTop">true</item>
-    <item name="android:background">@drawable/button</item>
-    <item name="android:foreground">?attr/selectableItemBackground</item>
-    <item name="android:clickable">true</item>
-    <item name="android:focusable">true</item>
-  </style>
-
 </resources>

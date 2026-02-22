@@ -11,8 +11,6 @@ import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Bundle
 import android.util.Log
-import android.view.animation.Animation
-import android.view.animation.AnimationUtils
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -175,11 +173,6 @@ class EarActivity : AppCompatActivity() {
             BanjoString.B3,
             BanjoString.D4,
         )
-
-    @VisibleForTesting
-    internal val clickAnimation: Animation by lazy {
-        AnimationUtils.loadAnimation(this, R.anim.shake_animation)
-    }
 
     private var sessionModeActive = mutableStateOf(false)
     private var audioRecord: AudioRecord? = null
