@@ -253,8 +253,8 @@ class EarActivity : AppCompatActivity() {
         MaterialTheme(
             colorScheme =
                 lightColorScheme(
-                    primary = Color(0xFF6d94a1),
-                    onPrimary = Color.White,
+                    primary = colorResource(id = R.color.banjen_accent),
+                    onPrimary = colorResource(id = R.color.banjen_background),
                     secondary = colorResource(id = R.color.banjen_gray),
                     onSecondary = colorResource(id = R.color.banjen_accent),
                     background = colorResource(id = R.color.banjen_background),
@@ -1049,7 +1049,6 @@ class EarActivity : AppCompatActivity() {
                         text = note.name,
                         style =
                             MaterialTheme.typography.headlineSmall.copy(
-                                color = colorResource(id = R.color.banjen_accent),
                                 textAlign = TextAlign.Center,
                             ),
                         maxLines = 1,
