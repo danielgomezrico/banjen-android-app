@@ -27,4 +27,11 @@
   <string name="session_string_4">1 - Re</string>
   <string name="tuning_selector_label">Afinación</string>
   <string name="widget_description">Botones de afinación de banjo de acceso rápido</string>
+  <string name="check_tuning_button">Verificar Afinación</string>
+  <string name="mic_permission_rationale">Se necesita acceso al micrófono para verificar tu afinación.</string>
+  <string name="tune_up">Sube \u25B2</string>
+  <string name="tune_down">Baja \u25BC</string>
+  <string name="in_tune">\u00A1Afinado!</string>
+  <string name="no_signal">Toca la cuerda\u2026</string>
+  <string name="stop_checking">Dejar de Verificar</string>
 </resources>
