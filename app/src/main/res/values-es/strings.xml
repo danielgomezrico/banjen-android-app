@@ -36,4 +36,5 @@
   <string name="instrument_label">Instrumento</string>
   <string name="tuning_label">Afinación</string>
   <string name="share_tuning">Compartir afinación</string>
+  <string name="settings_label">Ajustes</string>
 </resources>
