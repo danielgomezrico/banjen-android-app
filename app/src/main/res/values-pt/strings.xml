@@ -5,4 +5,7 @@
   <string name="ear_button_3_text">3 - Sol</string>
   <string name="ear_button_4_text">4 - Re</string>
   <string name="volume_low_message">O volume está baixo. Aumente para ouvir os tons de afinação.</string>
+  <string name="instrument_label">Instrumento</string>
+  <string name="tuning_label">Afinação</string>
+  <string name="share_tuning">Compartilhar afinação</string>
 </resources>
