@@ -931,15 +931,15 @@ class EarActivity : AppCompatActivity() {
             }
 
         val scaleAnimation by animateFloatAsState(
-            targetValue = if (isSelected && !pitchCheckMode.value) 3f else 1f,
+            targetValue = if (isSelected && !pitchCheckMode.value) 1.05f else 1f,
             label = "scale animation",
         )
         val shakeAnimation by rememberInfiniteTransition(label = "infinite").animateFloat(
-            initialValue = if (isSelected && !pitchCheckMode.value) -10f else 0f,
-            targetValue = if (isSelected && !pitchCheckMode.value) 10f else 0f,
+            initialValue = if (isSelected && !pitchCheckMode.value) -5f else 0f,
+            targetValue = if (isSelected && !pitchCheckMode.value) 5f else 0f,
             animationSpec =
                 infiniteRepeatable(
-                    animation = tween(100, easing = FastOutLinearInEasing),
+                    animation = tween(250, easing = FastOutLinearInEasing),
                     repeatMode = RepeatMode.Reverse,
                 ),
             label = "shake animation",
@@ -950,11 +950,11 @@ class EarActivity : AppCompatActivity() {
             if (showVolumeIcon) {
                 rememberInfiniteTransition(label = "icon-infinite")
                     .animateFloat(
-                        initialValue = -5f,
-                        targetValue = 5f,
+                        initialValue = -3f,
+                        targetValue = 3f,
                         animationSpec =
                             infiniteRepeatable(
-                                animation = tween(100, easing = FastOutLinearInEasing),
+                                animation = tween(250, easing = FastOutLinearInEasing),
                                 repeatMode = RepeatMode.Reverse,
                             ),
                         label = "icon shake animation",
