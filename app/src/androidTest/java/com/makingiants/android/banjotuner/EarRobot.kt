@@ -2,7 +2,7 @@ package com.makingiants.android.banjotuner
 
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.junit4.AndroidComposeTestRule
-import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import org.junit.Assert.assertFalse
@@ -13,7 +13,7 @@ class EarRobot(
 ) {
     fun click(buttonIndex: Int) {
         composeTestRule
-            .onNodeWithText("$buttonIndex - ", substring = true)
+            .onNodeWithTag("button_$buttonIndex")
             .performSemanticsAction(SemanticsActions.OnClick)
         composeTestRule.waitForIdle()
     }
@@ -25,12 +25,12 @@ class EarRobot(
     ) {
         fun checkIsPlaying() {
             waitForPlayer(playing = true)
-            assertTrue(activity.player.isPlaying)
+            assertTrue(activity.toneGenerator.isPlaying)
         }
 
         fun checkIsNotPlaying() {
             waitForPlayer(playing = false)
-            assertFalse(activity.player.isPlaying)
+            assertFalse(activity.toneGenerator.isPlaying)
         }
 
         private fun waitForPlayer(
@@ -38,7 +38,7 @@ class EarRobot(
             timeoutMs: Long = 3000,
         ) {
             val start = System.currentTimeMillis()
-            while (activity.player.isPlaying != playing) {
+            while (activity.toneGenerator.isPlaying != playing) {
                 if (System.currentTimeMillis() - start > timeoutMs) break
                 Thread.sleep(100)
             }

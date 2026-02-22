@@ -85,6 +85,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -983,7 +984,8 @@ class EarActivity : AppCompatActivity() {
                         scaleX = scaleAnimation,
                         scaleY = scaleAnimation,
                         translationX = shakeAnimation,
-                    ).semantics { contentDescription = buttonDescription },
+                    ).testTag("button_${index + 1}")
+                    .semantics { contentDescription = buttonDescription },
             onClick = {
                 // If in pitch check mode, exit it and resume tone
                 if (pitchCheckMode.value) {
