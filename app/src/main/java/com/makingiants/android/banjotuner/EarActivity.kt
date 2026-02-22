@@ -175,14 +175,6 @@ class EarActivity : AppCompatActivity() {
             R.string.session_string_4,
         )
 
-    private val banjoStrings =
-        listOf(
-            BanjoString.D3,
-            BanjoString.G3,
-            BanjoString.B3,
-            BanjoString.D4,
-        )
-
     private var sessionModeActive = mutableStateOf(false)
     private var audioRecord: AudioRecord? = null
 
@@ -296,7 +288,6 @@ class EarActivity : AppCompatActivity() {
     ) {
         val scope = rememberCoroutineScope()
         var showSettings by remember { mutableStateOf(false) }
-        val noHeadphonesMsg = stringResource(id = R.string.session_no_headphones)
         val pitchCheckMode = remember { mutableStateOf(false) }
         val pitchResult = remember { mutableStateOf<PitchResult?>(null) }
         val selectedStringIndex = remember { mutableIntStateOf(-1) }
@@ -331,9 +322,6 @@ class EarActivity : AppCompatActivity() {
                 ) {
                     // Headphone icon — session mode activation
                     IconButton(onClick = {
-                        if (!player.isHeadphoneConnected()) {
-                            scope.launch { snackbarHostState.showSnackbar(noHeadphonesMsg) }
-                        }
                         val savedVol = prefs.getFloat(KEY_SESSION_VOLUME, DEFAULT_SESSION_VOLUME)
                         player.volume = savedVol
                         player.stop()
@@ -467,8 +455,8 @@ class EarActivity : AppCompatActivity() {
         // Audio capture effect for visual tuning feedback
         if (pitchCheckMode.value && selectedStringIndex.intValue >= 0) {
             val stringIndex = selectedStringIndex.intValue
-            val targetString = if (stringIndex < banjoStrings.size) banjoStrings[stringIndex] else banjoStrings[0]
-            AudioCaptureEffect(targetString, pitchResult)
+            val targetFrequency = currentTuningModel.notes.getOrElse(stringIndex) { currentTuningModel.notes[0] }.frequency.toDouble()
+            AudioCaptureEffect(targetFrequency, pitchResult)
         }
     }
 
@@ -486,19 +474,19 @@ class EarActivity : AppCompatActivity() {
 
     @Composable
     private fun AudioCaptureEffect(
-        targetString: BanjoString,
+        targetFrequency: Double,
         pitchResult: MutableState<PitchResult?>,
     ) {
         val sampleRate = 44100
         val bufferSize = 4096
 
-        DisposableEffect(targetString) {
+        DisposableEffect(targetFrequency) {
             onDispose {
                 stopAudioCapture()
             }
         }
 
-        LaunchedEffect(targetString) {
+        LaunchedEffect(targetFrequency) {
             withContext(Dispatchers.IO) {
                 val minBufferSize =
                     AudioRecord.getMinBufferSize(
@@ -526,17 +514,17 @@ class EarActivity : AppCompatActivity() {
                         val detected = pitchDetector.detectPitch(audioBuffer)
                         val result =
                             if (detected > 0) {
-                                val cents = pitchDetector.centsFromTarget(detected, targetString.frequencyHz)
+                                val cents = pitchDetector.centsFromTarget(detected, targetFrequency)
                                 PitchResult(
                                     detectedHz = detected,
-                                    targetHz = targetString.frequencyHz,
+                                    targetHz = targetFrequency,
                                     centDeviation = cents,
                                     status = pitchDetector.classifyTuning(cents),
                                 )
                             } else {
                                 PitchResult(
                                     detectedHz = 0.0,
-                                    targetHz = targetString.frequencyHz,
+                                    targetHz = targetFrequency,
                                     centDeviation = 0.0,
                                     status = TuningStatus.NO_SIGNAL,
                                 )
@@ -778,13 +766,14 @@ class EarActivity : AppCompatActivity() {
             if (!sessionRunning.value) return@LaunchedEffect
 
             var index = 0
-            while (index <= 3 && sessionRunning.value) {
+            val totalStrings = currentTuningModel.notes.size
+            while (index < totalStrings && sessionRunning.value) {
                 currentStringIndex.intValue = index
                 player.stop()
                 player.volume = sessionVolume.floatValue
                 toneGenerator.play(currentTuningModel.notes[index].frequency)
                 delay(SECONDS_PER_STRING * 1000L)
-                val next = autoAdvanceNextIndex(index)
+                val next = if (index < totalStrings - 1) index + 1 else null
                 if (next != null) {
                     index = next
                 } else {
@@ -819,7 +808,7 @@ class EarActivity : AppCompatActivity() {
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                ProgressDots(currentStringIndex)
+                ProgressDots(currentStringIndex, currentTuningModel.notes.size)
 
                 Spacer(modifier = Modifier.height(32.dp))
 
@@ -853,11 +842,11 @@ class EarActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun ProgressDots(currentStringIndex: MutableIntState) {
+    private fun ProgressDots(currentStringIndex: MutableIntState, totalStrings: Int) {
         Row(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            for (i in 0..3) {
+            for (i in 0 until totalStrings) {
                 val isActive = i <= currentStringIndex.intValue
                 Box(
                     modifier =
@@ -1013,6 +1002,9 @@ class EarActivity : AppCompatActivity() {
                     selectedStringIndex.value = index
                     isVolumeLow.value = isVolumeLow()
                     toneGenerator.play(note.frequency)
+                    if (isVolumeLow.value) {
+                        scope.launch { snackbarHostState.showSnackbar(volumeLowMessage) }
+                    }
                 } else {
                     toneGenerator.stop()
                     selectedOption.value = -1
@@ -1038,24 +1030,12 @@ class EarActivity : AppCompatActivity() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (showVolumeIcon) {
-                    IconButton(
-                        onClick = {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(volumeLowMessage)
-                            }
-                        },
-                        modifier =
-                            Modifier
-                                .size(48.dp)
-                                .graphicsLayer(translationX = iconShakeAnimation),
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.VolumeOff,
-                            contentDescription = volumeLowMessage,
-                            tint = Color.Red,
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.VolumeOff,
+                        contentDescription = volumeLowMessage,
+                        tint = Color.Red,
+                        modifier = Modifier.size(24.dp).graphicsLayer(translationX = iconShakeAnimation),
+                    )
                     Spacer(modifier = Modifier.width(4.dp))
                 }
                 Column(
