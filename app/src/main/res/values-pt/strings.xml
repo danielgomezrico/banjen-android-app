@@ -29,9 +29,12 @@
   <string name="widget_description">Botões de afinação de banjo de acesso rápido</string>
   <string name="check_tuning_button">Verificar Afinação</string>
   <string name="mic_permission_rationale">Acesso ao microfone é necessário para verificar sua afinação.</string>
-  <string name="tune_up">Suba \u25B2</string>
-  <string name="tune_down">Baixe \u25BC</string>
+  <string name="tune_up">Suba &#x25B2;</string>
+  <string name="tune_down">Baixe &#x25BC;</string>
   <string name="in_tune">Afinado!</string>
-  <string name="no_signal">Toque a corda\u2026</string>
+  <string name="no_signal">Toque a corda&#x2026;</string>
   <string name="stop_checking">Parar de Verificar</string>
+  <string name="instrument_label">Instrumento</string>
+  <string name="tuning_label">Afinação</string>
+  <string name="share_tuning">Compartilhar afinação</string>
 </resources>
