@@ -195,6 +195,7 @@ class EarActivity : AppCompatActivity() {
 
     private fun exitSessionMode() {
         sessionModeActive.value = false
+        toneGenerator.stop()
         player.stop()
         player.volume = 1.0f
     }
@@ -325,7 +326,7 @@ class EarActivity : AppCompatActivity() {
                     verticalArrangement = Arrangement.SpaceEvenly,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    val selectedOption = remember { mutableIntStateOf(if (autoPlayIndex in 0..3) autoPlayIndex else -1) }
+                    val selectedOption = remember { mutableIntStateOf(if (autoPlayIndex in currentTuningModel.notes.indices) autoPlayIndex else -1) }
                     val isVolumeLow = remember { mutableStateOf(false) }
 
                     if (autoPlayIndex in currentTuningModel.notes.indices) {
@@ -779,7 +780,7 @@ class EarActivity : AppCompatActivity() {
                     index = next
                 } else {
                     sessionRunning.value = false
-                    player.stop()
+                    toneGenerator.stop()
                 }
             }
         }
