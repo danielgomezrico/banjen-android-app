@@ -29,4 +29,11 @@
   <string name="session_string_4">1 - D</string>
   <string name="tuning_selector_label">Tuning</string>
   <string name="widget_description">Quick-access banjo tuning buttons</string>
+  <string name="check_tuning_button">Check My Tuning</string>
+  <string name="mic_permission_rationale">Microphone access is needed to check your tuning.</string>
+  <string name="tune_up">Tune Up \u25B2</string>
+  <string name="tune_down">Tune Down \u25BC</string>
+  <string name="in_tune">In Tune!</string>
+  <string name="no_signal">Play your string\u2026</string>
+  <string name="stop_checking">Stop Checking</string>
 </resources>
