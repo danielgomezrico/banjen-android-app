@@ -259,7 +259,7 @@ class EarActivity : AppCompatActivity() {
                     onBackground = colorResource(id = R.color.banjen_accent),
                     surface = colorResource(id = R.color.banjen_gray_light),
                     onSurface = colorResource(id = R.color.banjen_accent),
-                    error = Color.Blue,
+                    error = Color(0xFFF44336),
                     onError = Color.White,
                 ),
         ) {
@@ -622,8 +622,7 @@ class EarActivity : AppCompatActivity() {
                 Text(
                     text = label,
                     style =
-                        TextStyle(
-                            fontSize = 14.sp,
+                        MaterialTheme.typography.bodyLarge.copy(
                             color = colorResource(id = R.color.banjen_accent),
                         ),
                 )
@@ -684,8 +683,7 @@ class EarActivity : AppCompatActivity() {
             Text(
                 text = "A=${referencePitch.value}",
                 style =
-                    TextStyle(
-                        fontSize = 16.sp,
+                    MaterialTheme.typography.bodyLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = colorResource(id = R.color.banjen_accent),
                         textAlign = TextAlign.Center,
@@ -1047,8 +1045,7 @@ class EarActivity : AppCompatActivity() {
                     Text(
                         text = note.name,
                         style =
-                            TextStyle(
-                                fontSize = 24.sp,
+                            MaterialTheme.typography.headlineSmall.copy(
                                 color = colorResource(id = R.color.banjen_accent),
                                 textAlign = TextAlign.Center,
                             ),
@@ -1058,8 +1055,7 @@ class EarActivity : AppCompatActivity() {
                         Text(
                             text = stringResource(id = subtitle),
                             style =
-                                TextStyle(
-                                    fontSize = 14.sp,
+                                MaterialTheme.typography.bodyMedium.copy(
                                     color = colorResource(id = R.color.banjen_gray_light),
                                     textAlign = TextAlign.Center,
                                 ),
