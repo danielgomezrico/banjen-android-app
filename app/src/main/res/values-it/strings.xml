@@ -5,4 +5,12 @@
   <string name="ear_button_3_text">3 - Sol</string>
   <string name="ear_button_4_text">4 - Re</string>
   <string name="volume_low_message">Il volume è basso. Alzalo per sentire i toni di accordatura.</string>
+  <string name="session_mode_label">Modalità sessione</string>
+  <string name="session_stop">Ferma</string>
+  <string name="session_no_headphones">Nessuna cuffia rilevata. Collega gli auricolari per accordare discretamente.</string>
+  <string name="session_volume_label">Volume</string>
+  <string name="session_string_1">4 - Re</string>
+  <string name="session_string_2">3 - Sol</string>
+  <string name="session_string_3">2 - Si</string>
+  <string name="session_string_4">1 - Re</string>
 </resources>

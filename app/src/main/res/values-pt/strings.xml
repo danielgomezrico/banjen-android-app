@@ -5,4 +5,12 @@
   <string name="ear_button_3_text">3 - Sol</string>
   <string name="ear_button_4_text">4 - Re</string>
   <string name="volume_low_message">O volume está baixo. Aumente para ouvir os tons de afinação.</string>
+  <string name="session_mode_label">Modo sessão</string>
+  <string name="session_stop">Parar</string>
+  <string name="session_no_headphones">Nenhum fone detectado. Conecte fones de ouvido para afinar discretamente.</string>
+  <string name="session_volume_label">Volume</string>
+  <string name="session_string_1">4 - Ré</string>
+  <string name="session_string_2">3 - Sol</string>
+  <string name="session_string_3">2 - Si</string>
+  <string name="session_string_4">1 - Ré</string>
 </resources>

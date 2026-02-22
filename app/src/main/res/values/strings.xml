@@ -7,4 +7,12 @@
   <string name="ear_button_3_text">3 - G</string>
   <string name="ear_button_4_text">4 - D</string>
   <string name="volume_low_message">Volume is low. Turn it up to hear the tuning tones.</string>
+  <string name="session_mode_label">Session mode</string>
+  <string name="session_stop">Stop</string>
+  <string name="session_no_headphones">No headphones detected. Plug in earbuds for discreet tuning.</string>
+  <string name="session_volume_label">Volume</string>
+  <string name="session_string_1">4 - D</string>
+  <string name="session_string_2">3 - G</string>
+  <string name="session_string_3">2 - B</string>
+  <string name="session_string_4">1 - D</string>
 </resources>
