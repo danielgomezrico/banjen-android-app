@@ -365,7 +365,7 @@ class EarActivity : AppCompatActivity() {
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.SpaceEvenly,
+                    verticalArrangement = Arrangement.Top,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     if (autoPlayIndex in currentTuningModel.notes.indices) {
@@ -394,6 +394,8 @@ class EarActivity : AppCompatActivity() {
                         TuningIndicator(pitchResult.value)
                     }
 
+                    Spacer(modifier = Modifier.weight(1f))
+                    Spacer(modifier = Modifier.height(8.dp))
                     AdBanner()
                 }
             }
@@ -752,39 +754,6 @@ class EarActivity : AppCompatActivity() {
                     imageVector = Icons.Filled.Add,
                     contentDescription = "$pitchLabel +1",
                     tint = colorResource(id = R.color.banjen_accent),
-                )
-            }
-        }
-    }
-
-    @Composable
-    private fun SessionModeToggle(onActivate: () -> Unit) {
-        val label = stringResource(id = R.string.session_mode_label)
-
-        TextButton(
-            onClick = onActivate,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .height(48.dp),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Headphones,
-                    contentDescription = label,
-                    tint = colorResource(id = R.color.banjen_accent),
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = label,
-                    style =
-                        MaterialTheme.typography.bodyMedium.copy(
-                            color = colorResource(id = R.color.banjen_accent),
-                        ),
                 )
             }
         }
