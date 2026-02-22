@@ -25,8 +25,7 @@
   <string name="session_string_2">3 - Sol</string>
   <string name="session_string_3">2 - Si</string>
   <string name="session_string_4">1 - Re</string>
-  <string name="tuning_selector_label">Afinación</string>
-  <string name="widget_description">Botones de afinación de banjo de acceso rápido</string>
+<string name="widget_description">Botones de afinación de banjo de acceso rápido</string>
   <string name="check_tuning_button">Verificar Afinación</string>
   <string name="mic_permission_rationale">Se necesita acceso al micrófono para verificar tu afinación.</string>
   <string name="tune_up">Sube &#x25B2;</string>
