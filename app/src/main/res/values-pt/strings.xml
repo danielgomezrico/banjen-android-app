@@ -4,5 +4,16 @@
   <string name="ear_button_2_text">2 - Si</string>
   <string name="ear_button_3_text">3 - Sol</string>
   <string name="ear_button_4_text">4 - Re</string>
+
+  <string name="ear_button_1_subtitle">Corda 1 (a mais fina)</string>
+  <string name="ear_button_2_subtitle">Corda 2</string>
+  <string name="ear_button_3_subtitle">Corda 3</string>
+  <string name="ear_button_4_subtitle">Corda 4 (a mais grossa)</string>
+
+  <string name="ear_button_1_description">Corda 1, nota Re, a mais fina. Toque para reproduzir.</string>
+  <string name="ear_button_2_description">Corda 2, nota Si. Toque para reproduzir.</string>
+  <string name="ear_button_3_description">Corda 3, nota Sol. Toque para reproduzir.</string>
+  <string name="ear_button_4_description">Corda 4, nota Re, a mais grossa. Toque para reproduzir.</string>
+
   <string name="volume_low_message">O volume está baixo. Aumente para ouvir os tons de afinação.</string>
 </resources>

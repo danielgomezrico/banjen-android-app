@@ -6,5 +6,16 @@
   <string name="ear_button_2_text">2 - B</string>
   <string name="ear_button_3_text">3 - G</string>
   <string name="ear_button_4_text">4 - D</string>
+
+  <string name="ear_button_1_subtitle">String 1 (thinnest)</string>
+  <string name="ear_button_2_subtitle">String 2</string>
+  <string name="ear_button_3_subtitle">String 3</string>
+  <string name="ear_button_4_subtitle">String 4 (thickest)</string>
+
+  <string name="ear_button_1_description">String 1, note D, thinnest. Tap to play.</string>
+  <string name="ear_button_2_description">String 2, note B. Tap to play.</string>
+  <string name="ear_button_3_description">String 3, note G. Tap to play.</string>
+  <string name="ear_button_4_description">String 4, note D, thickest. Tap to play.</string>
+
   <string name="volume_low_message">Volume is low. Turn it up to hear the tuning tones.</string>
 </resources>

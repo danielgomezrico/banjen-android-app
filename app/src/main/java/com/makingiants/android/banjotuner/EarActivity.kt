@@ -7,6 +7,7 @@ import android.view.animation.AnimationUtils
 import androidx.activity.compose.setContent
 import androidx.annotation.VisibleForTesting
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -18,10 +19,23 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.lightColorScheme
@@ -29,37 +43,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.MobileAds
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeOff
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import java.io.IOException
 
@@ -73,6 +77,22 @@ class EarActivity : AppCompatActivity() {
             R.string.ear_button_3_text,
             R.string.ear_button_2_text,
             R.string.ear_button_1_text,
+        )
+
+    private val buttonsSubtitle =
+        listOf(
+            R.string.ear_button_4_subtitle,
+            R.string.ear_button_3_subtitle,
+            R.string.ear_button_2_subtitle,
+            R.string.ear_button_1_subtitle,
+        )
+
+    private val buttonsDescription =
+        listOf(
+            R.string.ear_button_4_description,
+            R.string.ear_button_3_description,
+            R.string.ear_button_2_description,
+            R.string.ear_button_1_description,
         )
 
     @VisibleForTesting
@@ -123,9 +143,10 @@ class EarActivity : AppCompatActivity() {
             containerColor = colorResource(id = R.color.banjen_background),
         ) { paddingValues ->
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                modifier =
+                    Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
             ) {
                 Column(
                     modifier = Modifier.fillMaxSize(),
@@ -136,7 +157,15 @@ class EarActivity : AppCompatActivity() {
                     val isVolumeLow = remember { mutableStateOf(false) }
 
                     buttonsText.forEachIndexed { index, text ->
-                        Button(index, text, selectedOption, isVolumeLow, snackbarHostState)
+                        Button(
+                            index,
+                            text,
+                            buttonsSubtitle[index],
+                            buttonsDescription[index],
+                            selectedOption,
+                            isVolumeLow,
+                            snackbarHostState,
+                        )
                     }
 
                     AdView()
@@ -165,6 +194,8 @@ class EarActivity : AppCompatActivity() {
     private fun ColumnScope.Button(
         index: Int,
         text: Int,
+        subtitle: Int,
+        description: Int,
         selectedOption: MutableState<Int>,
         isVolumeLow: MutableState<Boolean>,
         snackbarHostState: SnackbarHostState,
@@ -172,6 +203,7 @@ class EarActivity : AppCompatActivity() {
         val isSelected = selectedOption.value == text
         val scope = rememberCoroutineScope()
         val volumeLowMessage = stringResource(id = R.string.volume_low_message)
+        val buttonDescription = stringResource(id = description)
 
         val scaleAnimation by animateFloatAsState(
             targetValue = if (isSelected) 3f else 1f,
@@ -189,31 +221,34 @@ class EarActivity : AppCompatActivity() {
         )
 
         val showVolumeIcon = isSelected && isVolumeLow.value
-        val iconShakeAnimation = if (showVolumeIcon) {
-            rememberInfiniteTransition(label = "icon-infinite").animateFloat(
-                initialValue = -5f,
-                targetValue = 5f,
-                animationSpec =
-                    infiniteRepeatable(
-                        animation = tween(100, easing = FastOutLinearInEasing),
-                        repeatMode = RepeatMode.Reverse,
-                    ),
-                label = "icon shake animation",
-            ).value
-        } else {
-            0f
-        }
+        val iconShakeAnimation =
+            if (showVolumeIcon) {
+                rememberInfiniteTransition(label = "icon-infinite")
+                    .animateFloat(
+                        initialValue = -5f,
+                        targetValue = 5f,
+                        animationSpec =
+                            infiniteRepeatable(
+                                animation = tween(100, easing = FastOutLinearInEasing),
+                                repeatMode = RepeatMode.Reverse,
+                            ),
+                        label = "icon shake animation",
+                    ).value
+            } else {
+                0f
+            }
 
         TextButton(
             modifier =
                 Modifier
                     .weight(1f)
                     .fillMaxWidth()
+                    .defaultMinSize(minHeight = 48.dp)
                     .graphicsLayer(
                         scaleX = scaleAnimation,
                         scaleY = scaleAnimation,
                         translationX = shakeAnimation,
-                    ),
+                    ).semantics { contentDescription = buttonDescription },
             onClick = {
                 val selectedValue = selectedOption.value
 
@@ -243,9 +278,10 @@ class EarActivity : AppCompatActivity() {
                                 snackbarHostState.showSnackbar(volumeLowMessage)
                             }
                         },
-                        modifier = Modifier
-                            .size(48.dp)
-                            .graphicsLayer(translationX = iconShakeAnimation),
+                        modifier =
+                            Modifier
+                                .size(48.dp)
+                                .graphicsLayer(translationX = iconShakeAnimation),
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.VolumeOff,
@@ -256,15 +292,32 @@ class EarActivity : AppCompatActivity() {
                     }
                     Spacer(modifier = Modifier.width(4.dp))
                 }
-                Text(
-                    text = getString(text),
-                    style =
-                        TextStyle(
-                            fontSize = 20.sp,
-                            color = colorResource(id = R.color.banjen_accent),
-                            textAlign = TextAlign.Center,
-                        ),
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = stringResource(id = text),
+                        style =
+                            TextStyle(
+                                fontSize = 24.sp,
+                                color = colorResource(id = R.color.banjen_accent),
+                                textAlign = TextAlign.Center,
+                            ),
+                        maxLines = 1,
+                    )
+                    AnimatedVisibility(visible = !isSelected) {
+                        Text(
+                            text = stringResource(id = subtitle),
+                            style =
+                                TextStyle(
+                                    fontSize = 14.sp,
+                                    color = colorResource(id = R.color.banjen_gray_light),
+                                    textAlign = TextAlign.Center,
+                                ),
+                            maxLines = 1,
+                        )
+                    }
+                }
             }
         }
     }

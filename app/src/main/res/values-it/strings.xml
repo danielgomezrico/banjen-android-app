@@ -4,5 +4,16 @@
   <string name="ear_button_2_text">2 - Si</string>
   <string name="ear_button_3_text">3 - Sol</string>
   <string name="ear_button_4_text">4 - Re</string>
+
+  <string name="ear_button_1_subtitle">Corda 1 (la più sottile)</string>
+  <string name="ear_button_2_subtitle">Corda 2</string>
+  <string name="ear_button_3_subtitle">Corda 3</string>
+  <string name="ear_button_4_subtitle">Corda 4 (la più spessa)</string>
+
+  <string name="ear_button_1_description">Corda 1, nota Re, la più sottile. Tocca per riprodurre.</string>
+  <string name="ear_button_2_description">Corda 2, nota Si. Tocca per riprodurre.</string>
+  <string name="ear_button_3_description">Corda 3, nota Sol. Tocca per riprodurre.</string>
+  <string name="ear_button_4_description">Corda 4, nota Re, la più spessa. Tocca per riprodurre.</string>
+
   <string name="volume_low_message">Il volume è basso. Alzalo per sentire i toni di accordatura.</string>
 </resources>
