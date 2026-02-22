@@ -513,7 +513,7 @@ class EarActivity : AppCompatActivity() {
             if (result == null || result.status == TuningStatus.NO_SIGNAL) {
                 Text(
                     text = stringResource(R.string.no_signal),
-                    style = TextStyle(fontSize = 16.sp, color = accentColor),
+                    style = MaterialTheme.typography.bodyLarge.copy(color = accentColor),
                 )
             } else {
                 val indicatorColor =
@@ -527,12 +527,12 @@ class EarActivity : AppCompatActivity() {
                 if (result.status == TuningStatus.SHARP || (result.status == TuningStatus.CLOSE && result.centDeviation > 0)) {
                     Text(
                         text = stringResource(R.string.tune_down),
-                        style = TextStyle(fontSize = 14.sp, color = indicatorColor),
+                        style = MaterialTheme.typography.bodyMedium.copy(color = indicatorColor),
                     )
                 } else if (result.status == TuningStatus.FLAT || (result.status == TuningStatus.CLOSE && result.centDeviation < 0)) {
                     Text(
                         text = stringResource(R.string.tune_up),
-                        style = TextStyle(fontSize = 14.sp, color = indicatorColor),
+                        style = MaterialTheme.typography.bodyMedium.copy(color = indicatorColor),
                     )
                 }
 
@@ -561,8 +561,7 @@ class EarActivity : AppCompatActivity() {
                 Text(
                     text = statusText,
                     style =
-                        TextStyle(
-                            fontSize = 18.sp,
+                        MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = indicatorColor,
                         ),
@@ -734,8 +733,7 @@ class EarActivity : AppCompatActivity() {
                 Text(
                     text = label,
                     style =
-                        TextStyle(
-                            fontSize = 14.sp,
+                        MaterialTheme.typography.bodyMedium.copy(
                             color = colorResource(id = R.color.banjen_accent),
                         ),
                 )
@@ -828,11 +826,7 @@ class EarActivity : AppCompatActivity() {
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = stopLabel,
-                            style =
-                                TextStyle(
-                                    fontSize = 18.sp,
-                                    color = Color.White,
-                                ),
+                            style = MaterialTheme.typography.titleMedium.copy(color = Color.White),
                         )
                     }
                 }
@@ -868,11 +862,7 @@ class EarActivity : AppCompatActivity() {
         ) {
             Text(
                 text = volumeLabel,
-                style =
-                    TextStyle(
-                        fontSize = 14.sp,
-                        color = Color.Gray,
-                    ),
+                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
             )
             Spacer(modifier = Modifier.height(8.dp))
             Slider(
@@ -1099,11 +1089,7 @@ class EarActivity : AppCompatActivity() {
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = stringResource(R.string.stop_checking),
-                        style =
-                            TextStyle(
-                                fontSize = 12.sp,
-                                color = Color(0xFFF44336),
-                            ),
+                        style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFFF44336)),
                     )
                 }
             }
