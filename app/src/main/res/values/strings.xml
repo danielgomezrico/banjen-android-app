@@ -7,4 +7,5 @@
   <string name="ear_button_3_text">3 - G</string>
   <string name="ear_button_4_text">4 - D</string>
   <string name="volume_low_message">Volume is low. Turn it up to hear the tuning tones.</string>
+  <string name="tuning_selector_label">Tuning</string>
 </resources>
