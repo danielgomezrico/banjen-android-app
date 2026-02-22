@@ -5,4 +5,5 @@
   <string name="ear_button_3_text">3 - Sol</string>
   <string name="ear_button_4_text">4 - Re</string>
   <string name="volume_low_message">O volume está baixo. Aumente para ouvir os tons de afinação.</string>
+  <string name="widget_description">Botões de afinação de banjo de acesso rápido</string>
 </resources>
