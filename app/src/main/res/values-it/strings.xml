@@ -5,4 +5,7 @@
   <string name="ear_button_3_text">3 - Sol</string>
   <string name="ear_button_4_text">4 - Re</string>
   <string name="volume_low_message">Il volume è basso. Alzalo per sentire i toni di accordatura.</string>
+  <string name="instrument_label">Strumento</string>
+  <string name="tuning_label">Accordatura</string>
+  <string name="share_tuning">Condividi accordatura</string>
 </resources>
