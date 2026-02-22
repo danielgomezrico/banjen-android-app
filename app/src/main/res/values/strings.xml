@@ -38,4 +38,5 @@
   <string name="instrument_label">Instrument</string>
   <string name="tuning_label">Tuning</string>
   <string name="share_tuning">Share tuning</string>
+  <string name="settings_label">Settings</string>
 </resources>

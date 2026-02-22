@@ -27,6 +27,8 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -49,6 +51,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.ButtonDefaults
@@ -58,6 +61,8 @@ import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -67,6 +72,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -281,6 +287,7 @@ class EarActivity : AppCompatActivity() {
         }
     }
 
+    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun NormalLayout(
         snackbarHostState: SnackbarHostState,
@@ -288,6 +295,7 @@ class EarActivity : AppCompatActivity() {
         autoPlayIndex: Int = -1,
     ) {
         val scope = rememberCoroutineScope()
+        var showSettings by remember { mutableStateOf(false) }
         val noHeadphonesMsg = stringResource(id = R.string.session_no_headphones)
         val pitchCheckMode = remember { mutableStateOf(false) }
         val pitchResult = remember { mutableStateOf<PitchResult?>(null) }
@@ -307,9 +315,47 @@ class EarActivity : AppCompatActivity() {
         val currentInstrument = ALL_INSTRUMENTS[instrumentIndex]
         val currentTuningModel = currentInstrument.tunings[tuningModelIndex]
 
+        val selectedOption = remember { mutableIntStateOf(if (autoPlayIndex in currentTuningModel.notes.indices) autoPlayIndex else -1) }
+        val isVolumeLow = remember { mutableStateOf(false) }
+
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = colorResource(id = R.color.banjen_background),
+            topBar = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    // Headphone icon — session mode activation
+                    IconButton(onClick = {
+                        if (!player.isHeadphoneConnected()) {
+                            scope.launch { snackbarHostState.showSnackbar(noHeadphonesMsg) }
+                        }
+                        val savedVol = prefs.getFloat(KEY_SESSION_VOLUME, DEFAULT_SESSION_VOLUME)
+                        player.volume = savedVol
+                        player.stop()
+                        selectedOption.intValue = -1
+                        sessionModeActive.value = true
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.Headphones,
+                            contentDescription = stringResource(id = R.string.session_mode_label),
+                            tint = colorResource(id = R.color.banjen_accent),
+                        )
+                    }
+                    // Gear icon — opens settings bottom sheet
+                    IconButton(onClick = { showSettings = true }) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = stringResource(id = R.string.settings_label),
+                            tint = colorResource(id = R.color.banjen_accent),
+                        )
+                    }
+                }
+            },
         ) { paddingValues ->
             Box(
                 modifier =
@@ -322,70 +368,8 @@ class EarActivity : AppCompatActivity() {
                     verticalArrangement = Arrangement.SpaceEvenly,
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    val selectedOption = remember { mutableIntStateOf(if (autoPlayIndex in currentTuningModel.notes.indices) autoPlayIndex else -1) }
-                    val isVolumeLow = remember { mutableStateOf(false) }
-
                     if (autoPlayIndex in currentTuningModel.notes.indices) {
                         LaunchedAutoPlay(autoPlayIndex, isVolumeLow, currentTuningModel.notes[autoPlayIndex])
-                    }
-
-                    // Instrument/Tuning selector row (5-string support)
-                    SelectorRow(
-                        instrumentName = currentInstrument.name,
-                        tuningName = currentTuningModel.name,
-                        instruments = ALL_INSTRUMENTS,
-                        onInstrumentSelected = { newIndex ->
-                            toneGenerator.stop()
-                            player.stop()
-                            selectedOption.intValue = -1
-                            isVolumeLow.value = false
-                            instrumentIndex = newIndex
-                            tuningModelIndex = 0
-                            prefs.edit()
-                                .putInt(KEY_INSTRUMENT_INDEX, newIndex)
-                                .putInt(KEY_TUNING_INDEX, 0)
-                                .apply()
-                        },
-                        tunings = currentInstrument.tunings,
-                        onTuningSelected = { newIndex ->
-                            toneGenerator.stop()
-                            player.stop()
-                            selectedOption.intValue = -1
-                            isVolumeLow.value = false
-                            tuningModelIndex = newIndex
-                            prefs.edit()
-                                .putInt(KEY_TUNING_INDEX, newIndex)
-                                .apply()
-                        },
-                        onShareTuning = { shareTuning(currentTuningModel) },
-                    )
-
-                    PitchControl(referencePitch) { newPitch ->
-                        prefs.edit().putInt(KEY_REFERENCE_PITCH, newPitch).apply()
-                        player.pitchRatio = calculatePitchRatio(newPitch)
-                        if (player.isPlaying) {
-                            val currentIndex = selectedOption.intValue
-                            if (currentIndex >= 0) {
-                                try {
-                                    player.playWithLoop(currentIndex)
-                                } catch (e: IOException) {
-                                    Log.e("EarActivity", "Restarting sound with new pitch", e)
-                                }
-                            }
-                        }
-                    }
-
-                    SessionModeToggle {
-                        if (!player.isHeadphoneConnected()) {
-                            scope.launch {
-                                snackbarHostState.showSnackbar(noHeadphonesMsg)
-                            }
-                        }
-                        val savedVol = prefs.getFloat(KEY_SESSION_VOLUME, DEFAULT_SESSION_VOLUME)
-                        player.volume = savedVol
-                        player.stop()
-                        selectedOption.intValue = -1
-                        sessionModeActive.value = true
                     }
 
                     // Dynamic note buttons from TuningModel (supports 4-string and 5-string)
@@ -411,6 +395,69 @@ class EarActivity : AppCompatActivity() {
                     }
 
                     AdBanner()
+                }
+            }
+        }
+
+        if (showSettings) {
+            ModalBottomSheet(
+                onDismissRequest = { showSettings = false },
+                sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                containerColor = colorResource(id = R.color.banjen_background),
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                ) {
+                    SelectorRow(
+                        instrumentName = currentInstrument.name,
+                        tuningName = currentTuningModel.name,
+                        instruments = ALL_INSTRUMENTS,
+                        onInstrumentSelected = { newIndex ->
+                            showSettings = false
+                            toneGenerator.stop()
+                            player.stop()
+                            selectedOption.intValue = -1
+                            isVolumeLow.value = false
+                            instrumentIndex = newIndex
+                            tuningModelIndex = 0
+                            prefs.edit()
+                                .putInt(KEY_INSTRUMENT_INDEX, newIndex)
+                                .putInt(KEY_TUNING_INDEX, 0)
+                                .apply()
+                        },
+                        tunings = currentInstrument.tunings,
+                        onTuningSelected = { newIndex ->
+                            showSettings = false
+                            toneGenerator.stop()
+                            player.stop()
+                            selectedOption.intValue = -1
+                            isVolumeLow.value = false
+                            tuningModelIndex = newIndex
+                            prefs.edit()
+                                .putInt(KEY_TUNING_INDEX, newIndex)
+                                .apply()
+                        },
+                        onShareTuning = { shareTuning(currentTuningModel) },
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    PitchControl(referencePitch) { newPitch ->
+                        prefs.edit().putInt(KEY_REFERENCE_PITCH, newPitch).apply()
+                        player.pitchRatio = calculatePitchRatio(newPitch)
+                        if (player.isPlaying) {
+                            val currentIndex = selectedOption.intValue
+                            if (currentIndex >= 0) {
+                                try {
+                                    player.playWithLoop(currentIndex)
+                                } catch (e: IOException) {
+                                    Log.e("EarActivity", "Restarting sound with new pitch", e)
+                                }
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }
