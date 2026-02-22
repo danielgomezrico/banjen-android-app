@@ -18,4 +18,5 @@
   <string name="ear_button_4_description">String 4, note D, thickest. Tap to play.</string>
 
   <string name="volume_low_message">Volume is low. Turn it up to hear the tuning tones.</string>
+  <string name="reference_pitch_label">Reference pitch</string>
 </resources>

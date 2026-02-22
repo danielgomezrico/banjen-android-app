@@ -1,5 +1,6 @@
 package com.makingiants.android.banjotuner
 
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.animation.Animation
@@ -24,12 +25,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -55,6 +59,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -70,6 +75,9 @@ import java.io.IOException
 class EarActivity : AppCompatActivity() {
     @VisibleForTesting
     internal val player by lazy { SoundPlayer(this) }
+
+    private val prefs by lazy { getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
+    private var savedPitch: Int = DEFAULT_PITCH
 
     private val buttonsText =
         listOf(
@@ -102,6 +110,9 @@ class EarActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        savedPitch = prefs.getInt(KEY_REFERENCE_PITCH, DEFAULT_PITCH)
+        player.pitchRatio = calculatePitchRatio(savedPitch)
 
         MobileAds.initialize(this)
         setContent { Contents() }
@@ -137,6 +148,7 @@ class EarActivity : AppCompatActivity() {
     @Composable
     fun MainLayout() {
         val snackbarHostState = remember { SnackbarHostState() }
+        val referencePitch = remember { mutableIntStateOf(savedPitch) }
 
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -156,6 +168,21 @@ class EarActivity : AppCompatActivity() {
                     val selectedOption = remember { mutableIntStateOf(-1) }
                     val isVolumeLow = remember { mutableStateOf(false) }
 
+                    PitchControl(referencePitch) { newPitch ->
+                        prefs.edit().putInt(KEY_REFERENCE_PITCH, newPitch).apply()
+                        player.pitchRatio = calculatePitchRatio(newPitch)
+                        if (player.isPlaying) {
+                            val currentIndex = buttonsText.indexOf(selectedOption.value)
+                            if (currentIndex >= 0) {
+                                try {
+                                    player.playWithLoop(currentIndex)
+                                } catch (e: IOException) {
+                                    Log.e("EarActivity", "Restarting sound with new pitch", e)
+                                }
+                            }
+                        }
+                    }
+
                     buttonsText.forEachIndexed { index, text ->
                         Button(
                             index,
@@ -170,6 +197,66 @@ class EarActivity : AppCompatActivity() {
 
                     AdView()
                 }
+            }
+        }
+    }
+
+    @Composable
+    private fun PitchControl(
+        referencePitch: MutableState<Int>,
+        onPitchChanged: (Int) -> Unit,
+    ) {
+        val pitchLabel = stringResource(id = R.string.reference_pitch_label)
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .height(48.dp),
+        ) {
+            IconButton(
+                onClick = {
+                    val newPitch = clampPitch(referencePitch.value - 1)
+                    referencePitch.value = newPitch
+                    onPitchChanged(newPitch)
+                },
+                enabled = canDecreasePitch(referencePitch.value),
+                modifier = Modifier.size(40.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Remove,
+                    contentDescription = "$pitchLabel -1",
+                    tint = colorResource(id = R.color.banjen_accent),
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "A=${referencePitch.value}",
+                style =
+                    TextStyle(
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = colorResource(id = R.color.banjen_accent),
+                        textAlign = TextAlign.Center,
+                    ),
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            IconButton(
+                onClick = {
+                    val newPitch = clampPitch(referencePitch.value + 1)
+                    referencePitch.value = newPitch
+                    onPitchChanged(newPitch)
+                },
+                enabled = canIncreasePitch(referencePitch.value),
+                modifier = Modifier.size(40.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = "$pitchLabel +1",
+                    tint = colorResource(id = R.color.banjen_accent),
+                )
             }
         }
     }
