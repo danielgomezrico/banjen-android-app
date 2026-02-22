@@ -71,11 +71,15 @@ class SoundPlayer(
      * @throws java.io.IOException
      */
     fun playWithLoop(index: Int) {
+        playWithLoop(sounds[index])
+    }
+
+    fun playWithLoop(assetFileName: String) {
         if (mediaPlayer?.isPlaying == true) {
             stop()
         }
 
-        val afd = context.assets.openFd("$soundsPath/${sounds[index]}")
+        val afd = context.assets.openFd("$soundsPath/$assetFileName")
 
         mediaPlayer =
             MediaPlayer().apply {

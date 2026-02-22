@@ -36,9 +36,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Headphones
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Stop
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -92,14 +95,6 @@ class EarActivity : AppCompatActivity() {
     private val prefs by lazy { getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE) }
     private var savedPitch: Int = DEFAULT_PITCH
 
-    private val buttonsText =
-        listOf(
-            R.string.ear_button_4_text,
-            R.string.ear_button_3_text,
-            R.string.ear_button_2_text,
-            R.string.ear_button_1_text,
-        )
-
     private val buttonsSubtitle =
         listOf(
             R.string.ear_button_4_subtitle,
@@ -130,6 +125,19 @@ class EarActivity : AppCompatActivity() {
     }
 
     private var sessionModeActive = mutableStateOf(false)
+
+    private fun loadSavedTuning(): TuningPreset {
+        val savedName = prefs.getString(KEY_TUNING, null) ?: return TuningPreset.STANDARD
+        return try {
+            TuningPreset.valueOf(savedName)
+        } catch (_: IllegalArgumentException) {
+            TuningPreset.STANDARD
+        }
+    }
+
+    private fun saveTuning(preset: TuningPreset) {
+        prefs.edit().putString(KEY_TUNING, preset.name).apply()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -195,16 +203,21 @@ class EarActivity : AppCompatActivity() {
     fun MainLayout() {
         val snackbarHostState = remember { SnackbarHostState() }
         val referencePitch = remember { mutableIntStateOf(savedPitch) }
+        val selectedTuning = remember { mutableStateOf(loadSavedTuning()) }
 
         if (sessionModeActive.value) {
-            SessionModeLayout(snackbarHostState)
+            SessionModeLayout(snackbarHostState, selectedTuning)
         } else {
-            NormalLayout(snackbarHostState, referencePitch)
+            NormalLayout(snackbarHostState, referencePitch, selectedTuning)
         }
     }
 
     @Composable
-    private fun NormalLayout(snackbarHostState: SnackbarHostState, referencePitch: MutableIntState) {
+    private fun NormalLayout(
+        snackbarHostState: SnackbarHostState,
+        referencePitch: MutableIntState,
+        selectedTuning: MutableState<TuningPreset>,
+    ) {
         val scope = rememberCoroutineScope()
         val noHeadphonesMsg = stringResource(id = R.string.session_no_headphones)
 
@@ -226,14 +239,16 @@ class EarActivity : AppCompatActivity() {
                     val selectedOption = remember { mutableIntStateOf(-1) }
                     val isVolumeLow = remember { mutableStateOf(false) }
 
+                    TuningSelector(selectedTuning, selectedOption)
+
                     PitchControl(referencePitch) { newPitch ->
                         prefs.edit().putInt(KEY_REFERENCE_PITCH, newPitch).apply()
                         player.pitchRatio = calculatePitchRatio(newPitch)
                         if (player.isPlaying) {
-                            val currentIndex = buttonsText.indexOf(selectedOption.value)
+                            val currentIndex = selectedOption.intValue
                             if (currentIndex >= 0) {
                                 try {
-                                    player.playWithLoop(currentIndex)
+                                    player.playWithLoop(selectedTuning.value.assetFiles[currentIndex])
                                 } catch (e: IOException) {
                                     Log.e("EarActivity", "Restarting sound with new pitch", e)
                                 }
@@ -254,19 +269,72 @@ class EarActivity : AppCompatActivity() {
                         sessionModeActive.value = true
                     }
 
-                    buttonsText.forEachIndexed { index, text ->
+                    (0 until 4).forEach { index ->
+                        val label = selectedTuning.value.buttonLabel(index)
                         Button(
                             index,
-                            text,
+                            label,
                             buttonsSubtitle[index],
                             buttonsDescription[index],
                             selectedOption,
                             isVolumeLow,
                             snackbarHostState,
+                            selectedTuning.value,
                         )
                     }
 
                     AdView()
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun ColumnScope.TuningSelector(
+        selectedTuning: MutableState<TuningPreset>,
+        selectedOption: MutableState<Int>,
+    ) {
+        val expanded = remember { mutableStateOf(false) }
+        val accentColor = colorResource(id = R.color.banjen_accent)
+
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            TextButton(
+                onClick = { expanded.value = true },
+            ) {
+                Text(
+                    text = "${stringResource(R.string.tuning_selector_label)}: ${selectedTuning.value.displayName}",
+                    style = TextStyle(fontSize = 16.sp, color = accentColor),
+                )
+                Icon(
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = null,
+                    tint = accentColor,
+                )
+            }
+
+            DropdownMenu(
+                expanded = expanded.value,
+                onDismissRequest = { expanded.value = false },
+            ) {
+                TuningPreset.entries.forEach { preset ->
+                    DropdownMenuItem(
+                        text = { Text(preset.displayName) },
+                        onClick = {
+                            if (selectedTuning.value != preset) {
+                                player.stop()
+                                selectedOption.value = -1
+                                selectedTuning.value = preset
+                                saveTuning(preset)
+                            }
+                            expanded.value = false
+                        },
+                    )
                 }
             }
         }
@@ -367,7 +435,10 @@ class EarActivity : AppCompatActivity() {
     }
 
     @Composable
-    private fun SessionModeLayout(snackbarHostState: SnackbarHostState) {
+    private fun SessionModeLayout(
+        snackbarHostState: SnackbarHostState,
+        selectedTuning: MutableState<TuningPreset>,
+    ) {
         val currentStringIndex = remember { mutableIntStateOf(0) }
         val sessionRunning = remember { mutableStateOf(true) }
         val savedVol = prefs.getFloat(KEY_SESSION_VOLUME, DEFAULT_SESSION_VOLUME)
@@ -382,7 +453,7 @@ class EarActivity : AppCompatActivity() {
                 currentStringIndex.intValue = index
                 player.volume = sessionVolume.floatValue
                 try {
-                    player.playWithLoop(index)
+                    player.playWithLoop(selectedTuning.value.assetFiles[index])
                 } catch (e: IOException) {
                     Log.e("EarActivity", "Session mode playback", e)
                 }
@@ -532,14 +603,15 @@ class EarActivity : AppCompatActivity() {
     @Composable
     private fun ColumnScope.Button(
         index: Int,
-        text: Int,
+        label: String,
         subtitle: Int,
         description: Int,
         selectedOption: MutableState<Int>,
         isVolumeLow: MutableState<Boolean>,
         snackbarHostState: SnackbarHostState,
+        tuning: TuningPreset,
     ) {
-        val isSelected = selectedOption.value == text
+        val isSelected = selectedOption.value == index
         val scope = rememberCoroutineScope()
         val volumeLowMessage = stringResource(id = R.string.volume_low_message)
         val buttonDescription = stringResource(id = description)
@@ -589,15 +661,13 @@ class EarActivity : AppCompatActivity() {
                         translationX = shakeAnimation,
                     ).semantics { contentDescription = buttonDescription },
             onClick = {
-                val selectedValue = selectedOption.value
-
-                if (selectedValue != text) {
-                    selectedOption.value = text
+                if (selectedOption.value != index) {
+                    selectedOption.value = index
                     isVolumeLow.value = player.isVolumeLow()
 
                     try {
                         player.volume = 1.0f
-                        player.playWithLoop(index)
+                        player.playWithLoop(tuning.assetFiles[index])
                     } catch (e: IOException) {
                         Log.e("EarActivity", "Playing sound", e)
                     }
@@ -636,7 +706,7 @@ class EarActivity : AppCompatActivity() {
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        text = stringResource(id = text),
+                        text = label,
                         style =
                             TextStyle(
                                 fontSize = 24.sp,
@@ -660,5 +730,9 @@ class EarActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    companion object {
+        private const val KEY_TUNING = "banjen_selected_tuning"
     }
 }
