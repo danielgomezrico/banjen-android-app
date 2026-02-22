@@ -623,6 +623,7 @@ class EarActivity : AppCompatActivity() {
                     text = label,
                     style =
                         MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.Medium,
                             color = colorResource(id = R.color.banjen_accent),
                         ),
                 )
