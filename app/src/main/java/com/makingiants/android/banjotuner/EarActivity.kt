@@ -379,9 +379,6 @@ class EarActivity : AppCompatActivity() {
                         onShareTuning = { shareTuning(currentTuningModel) },
                     )
 
-                    // 4-string TuningPreset selector (for MP3-based reference tones)
-                    TuningSelector(selectedTuning, selectedOption)
-
                     PitchControl(referencePitch) { newPitch ->
                         prefs.edit().putInt(KEY_REFERENCE_PITCH, newPitch).apply()
                         player.pitchRatio = calculatePitchRatio(newPitch)
@@ -672,57 +669,6 @@ class EarActivity : AppCompatActivity() {
                         onClick = {
                             expanded = false
                             onSelected(index)
-                        },
-                    )
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun ColumnScope.TuningSelector(
-        selectedTuning: MutableState<TuningPreset>,
-        selectedOption: MutableState<Int>,
-    ) {
-        val expanded = remember { mutableStateOf(false) }
-        val accentColor = colorResource(id = R.color.banjen_accent)
-
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            TextButton(
-                onClick = { expanded.value = true },
-            ) {
-                Text(
-                    text = "${stringResource(R.string.tuning_selector_label)}: ${selectedTuning.value.displayName}",
-                    style = TextStyle(fontSize = 16.sp, color = accentColor),
-                )
-                Icon(
-                    imageVector = Icons.Filled.ArrowDropDown,
-                    contentDescription = null,
-                    tint = accentColor,
-                )
-            }
-
-            DropdownMenu(
-                expanded = expanded.value,
-                onDismissRequest = { expanded.value = false },
-            ) {
-                TuningPreset.entries.forEach { preset ->
-                    DropdownMenuItem(
-                        text = { Text(preset.displayName) },
-                        onClick = {
-                            if (selectedTuning.value != preset) {
-                                player.stop()
-                                selectedOption.value = -1
-                                selectedTuning.value = preset
-                                saveTuning(preset)
-                            }
-                            expanded.value = false
                         },
                     )
                 }
