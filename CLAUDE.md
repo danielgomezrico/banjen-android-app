@@ -51,16 +51,25 @@ Instrumented tests use a Robot pattern (`EarRobot`/`withEarRobot`) for Compose U
 
 Full product documentation lives in `docs/product/`:
 
-- **`ux-report.md`** — 5 user personas with fit analysis. Beachhead: Harold M. (67, retired beginner, DGBD). Weak fit: Siobhan K. (Irish GDAE), Betty L. (plectrum CGBD). No fit: Jake R. (5-string). Key insight: ads are the #1 dealbreaker; 4-string banjo market is underserved.
+- **`ux-report.md`** — SUPERSEDED by the v2 UX investigation below. Kept for historical reference.
 - **`codebase-investigation.md`** — Technical deep-dive: architecture patterns, deprecated APIs, build deps, test gaps.
-- **`features/`** — Each planned feature has a `1-investigation.md` and `2-plan.md`:
-  - Alternate tuning support (DGBD, GDAE, CGBD, CGBE presets) — needs 3 new WAV files
-  - Home screen widget (Glance API, one-tap play)
-  - Accessibility improvements (subtitles, semantics, larger text)
-  - Adjustable reference pitch (A=432–446 Hz via `PlaybackParams`)
-  - Visual tuning feedback (microphone + YIN pitch detection)
-  - Session mode (auto-advance through strings, headphone-optimized)
-  - 5-string banjo support (AudioTrack sine synthesis, replaces MP3 assets)
+- **`features/`** — Each planned feature has a `1-investigation.md` and `2-plan.md` (see features.md for updated prioritization).
+
+## UX Investigation (v2 — February 2026)
+
+UX research has been conducted for this project. Before building features or making product decisions, agents MUST read these files:
+
+- **User Personas:** `docs/product/user-personas.md` — 5 evidence-grounded personas with interview insights. **Jake R. (5-string) replaced by Rafael S. (cavaquinho, DGBD hidden fit).** 5-string banjo support deprioritized accordingly.
+- **User Pains:** `docs/product/pains.md` — 47 pains, 7 cross-persona patterns, 7 design principles. The tuning screen is sacred: ads during tuning = permanent deletion across all personas.
+- **Feature Opportunities:** `docs/product/features.md` — 14 prioritized features across 4 tiers, 6-sprint sequencing plan. Top priority: Ad Placement Redesign (score 10.0, 5/5 personas affected).
+
+**Primary persona:** Harold M. (67, retired beginner, DGBD) — confirmed beachhead. Hidden motivation: cognitive health (fighting dementia). Tuning friction threatens his daily brain-health discipline.
+
+**Highest-leverage zero-code opportunity:** Add "cavaquinho" + Portuguese keywords to Play Store listing. Unlocks millions of DGBD players in Brazilian diaspora who currently search "afinador de cavaquinho" and never find Banjen.
+
+**Universal dealbreaker:** Ad layout shift during active tuning caused rage-quit and permanent deletion across all 5 personas. The tuning screen must be ad-free.
+
+Every feature built should reference at least one persona and one pain from these documents.
 
 ## CI/CD
 

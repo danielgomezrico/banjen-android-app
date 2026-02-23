@@ -3,7 +3,7 @@
 KTLINT_VERSION := 1.5.0
 KTLINT := .ktlint/ktlint
 
-.PHONY: help build run test format
+.PHONY: help build run test format deploy-metadata
 
 help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -27,3 +27,6 @@ $(KTLINT):
 
 format: $(KTLINT) ## Format all Kotlin code with ktlint
 	$(KTLINT) --format "app/src/**/*.kt"
+
+deploy-metadata: ## Upload metadata to Play Store via fastlane (no build)
+	bundle exec fastlane upload_metadata
