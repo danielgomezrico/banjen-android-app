@@ -4,11 +4,36 @@ platform :android do
 
   desc "Build release AAB and deploy to Google Play Store (internal track, draft)"
   lane :deploy do
+    # Analyze commits since the last version tag (e.g. 1.7.0) to determine next version.
+    # Conventional commit types drive the bump: feat→minor, fix/perf→patch, BREAKING→major.
+    is_releasable = analyze_commits(match: '[0-9]*.[0-9]*.[0-9]*')
+
+    next_version = lane_context[SharedValues::RELEASE_NEXT_VERSION]
+    UI.user_error!("No releasable commits since last tag. Use conventional commit messages (feat:, fix:, etc.)") unless next_version
+
+    # Version code: total commit count — always increasing, no manual bookkeeping.
+    version_code = sh("git rev-list HEAD --count").strip.to_i
+    UI.message("Releasing #{next_version} (versionCode #{version_code})")
+
+    # Patch versionName and versionCode in build.gradle before building.
+    gradle_path = "../app/build.gradle"
+    gradle_content = File.read(gradle_path)
+    gradle_content.gsub!(/def appVersionName = "[^"]+"/, "def appVersionName = \"#{next_version}\"")
+    gradle_content.gsub!(/def appVersionCode = \d+/, "def appVersionCode = #{version_code}")
+    File.write(gradle_path, gradle_content)
+
     gradle(
       task: "bundle",
       build_type: "Release",
       project_dir: "./"
     )
+
+    notes = conventional_changelog(
+      format: 'plain',
+      title: "Banjen #{next_version}",
+      display_links: false
+    )
+
     upload_to_play_store(
       package_name: "com.makingiants.android.banjotuner",
       json_key_data: ENV["PLAY_STORE_SERVICE_ACCOUNT_JSON"],
@@ -21,6 +46,49 @@ platform :android do
       skip_upload_images: false,
       skip_upload_screenshots: false
     )
+
+    add_git_tag(tag: next_version)
+    push_git_tags
+
+    set_github_release(
+      repository_name: ENV["GITHUB_REPOSITORY"],
+      api_token: ENV["GITHUB_TOKEN"],
+      name: "v#{next_version}",
+      tag_name: next_version,
+      description: notes,
+      is_draft: false,
+      is_prerelease: false,
+      upload_assets: ["app/build/outputs/bundle/release/app-release.aab"]
+    )
+  end
+
+  desc "Preview next version and changelog from conventional commits (dry-run, no build)"
+  lane :next_version do
+    analyze_commits(match: '[0-9]*.[0-9]*.[0-9]*')
+
+    next_version = lane_context[SharedValues::RELEASE_NEXT_VERSION]
+    last_version = lane_context[SharedValues::RELEASE_LAST_VERSION]
+    is_higher    = lane_context[SharedValues::RELEASE_IS_NEXT_VERSION_HIGHER]
+
+    unless next_version
+      UI.important("No releasable conventional commits found since last tag.")
+      UI.important("Last tag: #{last_version}")
+      next
+    end
+
+    version_code = sh("git rev-list HEAD --count").strip.to_i
+    notes = conventional_changelog(
+      format: 'plain',
+      title: "Banjen #{next_version}",
+      display_links: false
+    )
+
+    UI.header("Next release preview")
+    UI.message("Last version : #{last_version}")
+    UI.message("Next version : #{next_version}  (versionCode #{version_code})")
+    UI.message("Is releasable: #{is_higher}")
+    UI.message("---")
+    UI.message(notes)
   end
 
   desc "Upload only metadata and screenshots without building"

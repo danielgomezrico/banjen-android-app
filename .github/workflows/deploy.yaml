@@ -1,16 +1,18 @@
 name: Deploy to Play Store
 
 on:
-  push:
-    branches:
-      - 'master'
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -49,9 +51,11 @@ jobs:
           echo "$GOOGLE_SERVICES" | base64 -d > app/google-services.json
           echo "$KEY" | base64 -d > app/key.keystore
 
-      - name: Deploy to Play Store
+      - name: Deploy to Play Store and create GitHub release
         env:
           PLAY_STORE_SERVICE_ACCOUNT_JSON_B64: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           export PLAY_STORE_SERVICE_ACCOUNT_JSON=$(echo "$PLAY_STORE_SERVICE_ACCOUNT_JSON_B64" | base64 -d)
           bundle exec fastlane android deploy

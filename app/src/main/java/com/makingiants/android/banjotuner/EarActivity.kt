@@ -113,6 +113,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import app.rive.runtime.kotlin.core.Rive
 import java.io.IOException
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -230,6 +231,7 @@ class EarActivity : AppCompatActivity() {
             },
         )
 
+        Rive.init(this)
         MobileAds.initialize(this)
         val autoPlayIndex = parseStringIndex(intent)
         setContent { Contents(autoPlayIndex) }
@@ -308,6 +310,7 @@ class EarActivity : AppCompatActivity() {
 
         val selectedOption = remember { mutableIntStateOf(if (autoPlayIndex in currentTuningModel.notes.indices) autoPlayIndex else -1) }
         val isVolumeLow = remember { mutableStateOf(false) }
+        val volumeLowMessage = stringResource(id = R.string.volume_low_message)
 
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -351,40 +354,47 @@ class EarActivity : AppCompatActivity() {
                         .fillMaxSize()
                         .padding(paddingValues),
             ) {
-                Column(
+                if (autoPlayIndex in currentTuningModel.notes.indices) {
+                    LaunchedAutoPlay(autoPlayIndex, isVolumeLow, currentTuningModel.notes[autoPlayIndex])
+                }
+
+                BanjoStringCanvas(
+                    selectedString = selectedOption.intValue,
+                    onStringSelected = { index ->
+                        if (pitchCheckMode.value) {
+                            pitchCheckMode.value = false
+                            pitchResult.value = null
+                            stopAudioCapture()
+                        }
+                        if (index == -1) {
+                            toneGenerator.stop()
+                            selectedOption.intValue = -1
+                            selectedStringIndex.intValue = -1
+                            isVolumeLow.value = false
+                        } else {
+                            toneGenerator.stop()
+                            val note = currentTuningModel.notes.getOrNull(index) ?: return@BanjoStringCanvas
+                            toneGenerator.play(note.frequency)
+                            selectedOption.intValue = index
+                            selectedStringIndex.intValue = index
+                            isVolumeLow.value = isVolumeLow()
+                            if (isVolumeLow.value) {
+                                scope.launch { snackbarHostState.showSnackbar(volumeLowMessage) }
+                            }
+                        }
+                    },
                     modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.Top,
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    if (autoPlayIndex in currentTuningModel.notes.indices) {
-                        LaunchedAutoPlay(autoPlayIndex, isVolumeLow, currentTuningModel.notes[autoPlayIndex])
-                    }
+                )
 
-                    // Dynamic note buttons from TuningModel (supports 4-string and 5-string)
-                    currentTuningModel.notes.forEachIndexed { index, note ->
-                        val subtitle = if (index < buttonsSubtitle.size) buttonsSubtitle[index] else R.string.ear_button_1_subtitle
-                        val description = if (index < buttonsDescription.size) buttonsDescription[index] else R.string.ear_button_1_description
-                        NoteButton(
-                            index = index,
-                            note = note,
-                            subtitle = subtitle,
-                            description = description,
-                            selectedOption = selectedOption,
-                            isVolumeLow = isVolumeLow,
-                            snackbarHostState = snackbarHostState,
-                            pitchCheckMode = pitchCheckMode,
-                            pitchResult = pitchResult,
-                            selectedStringIndex = selectedStringIndex,
-                        )
+                // Show ad banner only when no string is active
+                if (selectedOption.intValue == -1) {
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .padding(bottom = 8.dp),
+                    ) {
+                        AdBanner()
                     }
-
-                    if (pitchCheckMode.value) {
-                        TuningIndicator(pitchResult.value)
-                    }
-
-                    Spacer(modifier = Modifier.weight(1f))
-                    Spacer(modifier = Modifier.height(8.dp))
-                    AdBanner()
                 }
             }
         }
@@ -937,21 +947,6 @@ class EarActivity : AppCompatActivity() {
                 }
             }
 
-        val scaleAnimation by animateFloatAsState(
-            targetValue = if (isSelected && !pitchCheckMode.value) 1.05f else 1f,
-            label = "scale animation",
-        )
-        val shakeAnimation by rememberInfiniteTransition(label = "infinite").animateFloat(
-            initialValue = if (isSelected && !pitchCheckMode.value) -5f else 0f,
-            targetValue = if (isSelected && !pitchCheckMode.value) 5f else 0f,
-            animationSpec =
-                infiniteRepeatable(
-                    animation = tween(250, easing = FastOutLinearInEasing),
-                    repeatMode = RepeatMode.Reverse,
-                ),
-            label = "shake animation",
-        )
-
         val showVolumeIcon = isSelected && isVolumeLow.value && !pitchCheckMode.value
         val iconShakeAnimation =
             if (showVolumeIcon) {
@@ -976,7 +971,6 @@ class EarActivity : AppCompatActivity() {
                     .weight(1f)
                     .fillMaxWidth()
                     .defaultMinSize(minHeight = 80.dp)
-                    .graphicsLayer(scaleX = scaleAnimation, scaleY = scaleAnimation, translationX = shakeAnimation)
                     .testTag("button_${index + 1}")
                     .semantics { contentDescription = buttonDescription },
             onClick = {
