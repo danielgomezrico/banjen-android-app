@@ -58,6 +58,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -65,22 +66,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableFloatState
 import androidx.compose.runtime.MutableIntState
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -166,14 +162,6 @@ class EarActivity : AppCompatActivity() {
             R.string.ear_button_3_description,
             R.string.ear_button_2_description,
             R.string.ear_button_1_description,
-        )
-
-    private val sessionStringNames =
-        listOf(
-            R.string.session_string_1,
-            R.string.session_string_2,
-            R.string.session_string_3,
-            R.string.session_string_4,
         )
 
     private var sessionModeActive = mutableStateOf(false)
@@ -274,11 +262,7 @@ class EarActivity : AppCompatActivity() {
         val snackbarHostState = remember { SnackbarHostState() }
         val referencePitch = remember { mutableIntStateOf(savedPitch) }
 
-        if (sessionModeActive.value) {
-            SessionModeLayout(snackbarHostState)
-        } else {
-            NormalLayout(snackbarHostState, referencePitch, autoPlayIndex)
-        }
+        NormalLayout(snackbarHostState, referencePitch, autoPlayIndex)
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -312,9 +296,47 @@ class EarActivity : AppCompatActivity() {
         val isVolumeLow = remember { mutableStateOf(false) }
         val volumeLowMessage = stringResource(id = R.string.volume_low_message)
 
+        // Session mode: auto-plays through each string while keeping the main UI visible
+        LaunchedEffect(sessionModeActive.value) {
+            if (!sessionModeActive.value) {
+                selectedOption.intValue = -1
+                return@LaunchedEffect
+            }
+            val savedVol = prefs.getFloat(KEY_SESSION_VOLUME, DEFAULT_SESSION_VOLUME)
+            player.volume = savedVol
+            var index = 0
+            val totalStrings = currentTuningModel.notes.size
+            while (index < totalStrings && sessionModeActive.value) {
+                selectedOption.intValue = index
+                toneGenerator.stop()
+                toneGenerator.play(currentTuningModel.notes[index].frequency)
+                delay(SECONDS_PER_STRING * 1000L)
+                if (index < totalStrings - 1) {
+                    index++
+                } else {
+                    exitSessionMode()
+                    break
+                }
+            }
+        }
+
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = colorResource(id = R.color.banjen_background),
+            floatingActionButton = {
+                if (sessionModeActive.value) {
+                    FloatingActionButton(
+                        onClick = { exitSessionMode() },
+                        containerColor = colorResource(id = R.color.banjen_accent),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Stop,
+                            contentDescription = stringResource(id = R.string.session_stop),
+                            tint = colorResource(id = R.color.banjen_background),
+                        )
+                    }
+                }
+            },
             topBar = {
                 Row(
                     modifier = Modifier
@@ -323,19 +345,20 @@ class EarActivity : AppCompatActivity() {
                     horizontalArrangement = Arrangement.End,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    // Headphone icon — session mode activation
-                    IconButton(onClick = {
-                        val savedVol = prefs.getFloat(KEY_SESSION_VOLUME, DEFAULT_SESSION_VOLUME)
-                        player.volume = savedVol
-                        player.stop()
-                        selectedOption.intValue = -1
-                        sessionModeActive.value = true
-                    }) {
-                        Icon(
-                            imageVector = Icons.Filled.Headphones,
-                            contentDescription = stringResource(id = R.string.session_mode_label),
-                            tint = colorResource(id = R.color.banjen_accent),
-                        )
+                    // Headphone icon — session mode activation (hidden while session is active)
+                    if (!sessionModeActive.value) {
+                        IconButton(onClick = {
+                            toneGenerator.stop()
+                            player.stop()
+                            selectedOption.intValue = -1
+                            sessionModeActive.value = true
+                        }) {
+                            Icon(
+                                imageVector = Icons.Filled.Headphones,
+                                contentDescription = stringResource(id = R.string.session_mode_label),
+                                tint = colorResource(id = R.color.banjen_accent),
+                            )
+                        }
                     }
                     // Gear icon — opens settings bottom sheet
                     IconButton(onClick = { showSettings = true }) {
@@ -361,6 +384,7 @@ class EarActivity : AppCompatActivity() {
                 BanjoStringCanvas(
                     selectedString = selectedOption.intValue,
                     onStringSelected = { index ->
+                        if (sessionModeActive.value) return@BanjoStringCanvas
                         if (pitchCheckMode.value) {
                             pitchCheckMode.value = false
                             pitchResult.value = null
@@ -754,150 +778,6 @@ class EarActivity : AppCompatActivity() {
                     tint = colorResource(id = R.color.banjen_accent),
                 )
             }
-        }
-    }
-
-    @Composable
-    private fun SessionModeLayout(
-        snackbarHostState: SnackbarHostState,
-    ) {
-        val currentStringIndex = remember { mutableIntStateOf(0) }
-        val sessionRunning = remember { mutableStateOf(true) }
-        val savedVol = prefs.getFloat(KEY_SESSION_VOLUME, DEFAULT_SESSION_VOLUME)
-        val sessionVolume = remember { mutableFloatStateOf(savedVol) }
-        val stopLabel = stringResource(id = R.string.session_stop)
-        val currentTuningModel = remember {
-            val instIdx = prefs.getInt(KEY_INSTRUMENT_INDEX, 0).coerceIn(0, ALL_INSTRUMENTS.size - 1)
-            val tuningIdx = prefs.getInt(KEY_TUNING_INDEX, 0).coerceIn(0, ALL_INSTRUMENTS[instIdx].tunings.size - 1)
-            ALL_INSTRUMENTS[instIdx].tunings[tuningIdx]
-        }
-
-        LaunchedEffect(sessionRunning.value) {
-            if (!sessionRunning.value) return@LaunchedEffect
-
-            var index = 0
-            val totalStrings = currentTuningModel.notes.size
-            while (index < totalStrings && sessionRunning.value) {
-                currentStringIndex.intValue = index
-                player.stop()
-                player.volume = sessionVolume.floatValue
-                toneGenerator.play(currentTuningModel.notes[index].frequency)
-                delay(SECONDS_PER_STRING * 1000L)
-                val next = if (index < totalStrings - 1) index + 1 else null
-                if (next != null) {
-                    index = next
-                } else {
-                    sessionRunning.value = false
-                    toneGenerator.stop()
-                }
-            }
-        }
-
-        Scaffold(
-            snackbarHost = { SnackbarHost(snackbarHostState) },
-            containerColor = Color.Black,
-        ) { paddingValues ->
-            Column(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = getString(sessionStringNames[currentStringIndex.intValue]),
-                    style =
-                        TextStyle(
-                            fontSize = 48.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White,
-                            textAlign = TextAlign.Center,
-                        ),
-                )
-
-                Spacer(modifier = Modifier.height(24.dp))
-
-                ProgressDots(currentStringIndex, currentTuningModel.notes.size)
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                VolumeSlider(sessionVolume)
-
-                Spacer(modifier = Modifier.height(32.dp))
-
-                TextButton(
-                    onClick = {
-                        exitSessionMode()
-                    },
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Filled.Stop,
-                            contentDescription = stopLabel,
-                            tint = Color.White,
-                            modifier = Modifier.size(24.dp),
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = stopLabel,
-                            style = MaterialTheme.typography.titleMedium.copy(color = Color.White),
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    @Composable
-    private fun ProgressDots(currentStringIndex: MutableIntState, totalStrings: Int) {
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            for (i in 0 until totalStrings) {
-                val isActive = i <= currentStringIndex.intValue
-                Box(
-                    modifier =
-                        Modifier
-                            .size(12.dp)
-                            .clip(CircleShape)
-                            .background(if (isActive) Color.White else Color.DarkGray),
-                )
-            }
-        }
-    }
-
-    @Composable
-    private fun VolumeSlider(sessionVolume: MutableFloatState) {
-        val volumeLabel = stringResource(id = R.string.session_volume_label)
-
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(horizontal = 48.dp),
-        ) {
-            Text(
-                text = volumeLabel,
-                style = MaterialTheme.typography.bodyMedium.copy(color = Color.Gray),
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Slider(
-                value = sessionVolume.floatValue,
-                onValueChange = { newVolume ->
-                    val clamped = clampVolume(newVolume)
-                    sessionVolume.floatValue = clamped
-                    player.volume = clamped
-                    prefs.edit().putFloat(KEY_SESSION_VOLUME, clamped).apply()
-                },
-                valueRange = 0.05f..1.0f,
-                colors =
-                    SliderDefaults.colors(
-                        thumbColor = Color.White,
-                        activeTrackColor = Color.White,
-                        inactiveTrackColor = Color.DarkGray,
-                    ),
-            )
         }
     }
 
