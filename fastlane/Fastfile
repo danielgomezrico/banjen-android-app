@@ -1,0 +1,42 @@
+default_platform(:android)
+
+platform :android do
+
+  desc "Build release AAB and deploy to Google Play Store (internal track, draft)"
+  lane :deploy do
+    gradle(
+      task: "bundle",
+      build_type: "Release",
+      project_dir: "./"
+    )
+    upload_to_play_store(
+      package_name: "com.makingiants.android.banjotuner",
+      json_key_data: ENV["PLAY_STORE_SERVICE_ACCOUNT_JSON"],
+      track: "internal",
+      release_status: "draft",
+      aab: "app/build/outputs/bundle/release/app-release.aab",
+      metadata_path: "fastlane/metadata/android",
+      skip_upload_metadata: false,
+      skip_upload_changelogs: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false
+    )
+  end
+
+  desc "Upload only metadata and screenshots without building"
+  lane :upload_metadata do
+    upload_to_play_store(
+      package_name: "com.makingiants.android.banjotuner",
+      json_key_data: ENV["PLAY_STORE_SERVICE_ACCOUNT_JSON"],
+      track: "internal",
+      skip_upload_aab: true,
+      skip_upload_apk: true,
+      skip_upload_metadata: false,
+      skip_upload_changelogs: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false,
+      metadata_path: "fastlane/metadata/android"
+    )
+  end
+
+end
