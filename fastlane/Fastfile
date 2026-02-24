@@ -11,13 +11,13 @@ platform :android do
     next_version = lane_context[SharedValues::RELEASE_NEXT_VERSION]
     UI.user_error!("No releasable commits since last tag. Use conventional commit messages (feat:, fix:, etc.)") unless next_version
 
-    # Version code: total commit count — always increasing, no manual bookkeeping.
-    version_code = sh("git rev-list HEAD --count").strip.to_i
-    UI.message("Releasing #{next_version} (versionCode #{version_code})")
-
     # Patch versionName and versionCode in build.gradle before building.
+    # Version code: current value + 1.
     gradle_path = "../app/build.gradle"
     gradle_content = File.read(gradle_path)
+    current_version_code = gradle_content.match(/def appVersionCode = (\d+)/)[1].to_i
+    version_code = current_version_code + 1
+    UI.message("Releasing #{next_version} (versionCode #{version_code})")
     gradle_content.gsub!(/def appVersionName = "[^"]+"/, "def appVersionName = \"#{next_version}\"")
     gradle_content.gsub!(/def appVersionCode = \d+/, "def appVersionCode = #{version_code}")
     File.write(gradle_path, gradle_content)
