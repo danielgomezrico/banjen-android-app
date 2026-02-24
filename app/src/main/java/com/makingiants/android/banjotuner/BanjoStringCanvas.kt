@@ -3,6 +3,8 @@ package com.makingiants.android.banjotuner
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseInOutSine
 import androidx.compose.animation.core.EaseOutCubic
+import androidx.compose.animation.core.EaseOutQuad
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.InfiniteTransition
 import androidx.compose.animation.core.LinearEasing
@@ -17,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -29,6 +32,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextMeasurer
@@ -39,7 +43,12 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.exp
+import kotlin.math.pow
+import kotlin.math.sign
 import kotlin.math.sin
+import kotlinx.coroutines.launch
 
 // --- Color Palette ---
 
@@ -77,8 +86,14 @@ private val activeThicknessDp = floatArrayOf(5.5f, 4.5f, 3.6f, 2.8f)
 
 // Vibration parameters per string
 private val vibrationAmplitudeDp = floatArrayOf(8.0f, 6.5f, 5.0f, 4.0f)
-private val vibrationFrequencyHz = floatArrayOf(3.0f, 4.0f, 5.5f, 7.0f)
+private val vibrationFrequencyHz = floatArrayOf(3.0f, 4.0f, 5.5f, 6.0f)
 private val vibrationWavePeaks = floatArrayOf(2.5f, 3.0f, 3.5f, 4.0f)
+
+private val springStiffness = floatArrayOf(300f, 350f, 400f, 500f)      // D3→D4
+private val springDamping = floatArrayOf(0.50f, 0.55f, 0.60f, 0.65f)
+private val releaseDurationMs = intArrayOf(400, 350, 300, 220)          // D3→D4
+private val initialSharpness = floatArrayOf(0.7f, 0.8f, 1.0f, 1.2f)   // D3→D4
+private val sharpnessTransMs = intArrayOf(250, 200, 160, 120)
 
 private val fretPositions = floatArrayOf(0.18f, 0.33f, 0.45f, 0.55f, 0.65f)
 
@@ -87,6 +102,10 @@ private const val BREATHING_PERIOD_MS = 2400
 private const val BREATHING_OPACITY_MIN = 0.70f
 private const val BREATHING_OPACITY_MAX = 1.0f
 private const val DIMMED_OPACITY = 0.35f
+private const val BLUR_WIDTH_RATIO = 2.0f
+private const val HAZE_WIDTH_RATIO = 3.5f
+private val breathingAmplitude = floatArrayOf(0.09f, 0.08f, 0.05f, 0.04f)  // D3→D4
+private val breathingPeriodS = floatArrayOf(2.8f, 2.4f, 3.2f, 1.8f)        // incommensurate
 private const val NUT_BRIDGE_HEIGHT_DP = 12f
 private const val SAFE_PADDING_DP = 16f
 
@@ -121,17 +140,6 @@ fun BanjoStringCanvas(
         label = "shimmer-phase",
     )
 
-    // Glow pulse for active string
-    val glowPulse by infiniteTransition.animateFloat(
-        initialValue = 14f,
-        targetValue = 18f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(333, easing = EaseInOutSine), // ~1.5Hz
-            repeatMode = RepeatMode.Reverse,
-        ),
-        label = "glow-pulse",
-    )
-
     // Per-string vibration amplitude animatable
     val vibrationAmplitudes = remember {
         Array(NUM_STRINGS) { Animatable(0f) }
@@ -146,6 +154,22 @@ fun BanjoStringCanvas(
     val stringOpacities = remember {
         Array(NUM_STRINGS) { Animatable(1f) }
     }
+
+    // Per-string wave sharpness (3.0=pure sine, ~0.7=angular at D3 pluck)
+    val waveSharpness = remember { Array(NUM_STRINGS) { Animatable(3.0f) } }
+
+    // Tap zone: 0=nut, 1=center, 2=bridge (set during tap, used in sharpness offset)
+    val tapZone = remember { mutableIntStateOf(1) }
+
+    // Per-string attack progress (0=biased envelope, 1=symmetric)
+    val attackProgress = remember { Array(NUM_STRINGS) { Animatable(1f) } }
+
+    // Per-string last tap Y normalized (0=nut, 1=bridge)
+    val touchYNorms = remember { FloatArray(NUM_STRINGS) { 0.5f } }
+
+    // String geometry refs for pointerInput scope (updated each draw frame)
+    val stringTopPx = remember { mutableFloatStateOf(0f) }
+    val stringBottomPx = remember { mutableFloatStateOf(0f) }
 
     // Continuous phase for sine wave animation
     var wavePhase by remember { mutableFloatStateOf(0f) }
@@ -168,17 +192,25 @@ fun BanjoStringCanvas(
     for (i in 0 until NUM_STRINGS) {
         LaunchedEffect(selectedString, i) {
             if (selectedString == i) {
-                // This string is now active
-                vibrationAmplitudes[i].snapTo(1f)
+                // This string is now active — spring onset (parallel with color + sharpness)
+                launch { vibrationAmplitudes[i].animateTo(1f, spring(stiffness = springStiffness[i], dampingRatio = springDamping[i])) }
+                val sharpnessOffset = when (tapZone.intValue) { 0 -> 0.05f; 2 -> 0.10f; else -> 0f }
+                launch {
+                    waveSharpness[i].snapTo(initialSharpness[i] + sharpnessOffset)
+                    waveSharpness[i].animateTo(3.0f, tween(sharpnessTransMs[i], easing = EaseOutCubic))
+                }
+                launch { attackProgress[i].snapTo(0f); attackProgress[i].animateTo(1f, tween(300, easing = EaseOutCubic)) }
                 colorFactors[i].animateTo(1f, tween(200, easing = EaseOutCubic))
             } else if (selectedString >= 0) {
                 // Another string is active — decay and dim
-                vibrationAmplitudes[i].animateTo(0f, tween(400, easing = FastOutSlowInEasing))
+                val easing = if (i < 2) EaseOutCubic else EaseOutQuad
+                vibrationAmplitudes[i].animateTo(0f, tween(releaseDurationMs[i], easing = easing))
                 colorFactors[i].animateTo(0f, tween(350, easing = EaseOutCubic))
                 stringOpacities[i].animateTo(DIMMED_OPACITY, tween(300, easing = EaseOutCubic))
             } else {
                 // No string selected — return to idle
-                vibrationAmplitudes[i].animateTo(0f, tween(400, easing = FastOutSlowInEasing))
+                val easing = if (i < 2) EaseOutCubic else EaseOutQuad
+                vibrationAmplitudes[i].animateTo(0f, tween(releaseDurationMs[i], easing = easing))
                 colorFactors[i].animateTo(0f, tween(350, easing = EaseOutCubic))
                 stringOpacities[i].animateTo(1f, tween(300, easing = EaseOutCubic))
             }
@@ -202,6 +234,17 @@ fun BanjoStringCanvas(
                     val relX = offset.x - hPad
                     if (relX < 0 || relX > availableWidth) return@detectTapGestures
                     val tappedIndex = (relX / bandWidth).toInt().coerceIn(0, NUM_STRINGS - 1)
+
+                    // Precise Y normalization using string geometry refs
+                    val sTop = stringTopPx.floatValue
+                    val sBottom = stringBottomPx.floatValue
+                    val sLength = sBottom - sTop
+                    val yNorm = if (sLength > 0f) {
+                        ((offset.y.coerceIn(sTop, sBottom) - sTop) / sLength).coerceIn(0.05f, 0.95f)
+                    } else 0.5f
+                    touchYNorms[tappedIndex] = yNorm
+                    tapZone.intValue = when { yNorm < 0.3f -> 0; yNorm > 0.7f -> 2; else -> 1 }
+
                     if (tappedIndex == selectedString) {
                         onStringSelected(-1)
                     } else {
@@ -272,6 +315,10 @@ fun BanjoStringCanvas(
         val stringBottom = bridgeY
         val stringLength = stringBottom - stringTop
 
+        // Update refs for pointerInput scope
+        stringTopPx.floatValue = stringTop
+        stringBottomPx.floatValue = stringBottom
+
         for (fretPos in fretPositions) {
             val fretY = stringTop + stringLength * fretPos
             drawRect(
@@ -312,11 +359,18 @@ fun BanjoStringCanvas(
             val maxAmplitudePx = vibrationAmplitudeDp[i] * density * vibAmp
             val shimmerAmpPx = 0.3f * density
 
-            // Draw glow layers (3 layers with increasing width and decreasing alpha)
+            // Breathing width factor during sustain
             val isActive = vibAmp > 0.01f
-            val glowRadius = if (isActive) glowPulse * density else 3f * density
-            val glowAlpha = if (isActive) 0.45f * effectiveAlpha else 0.20f * effectiveAlpha
+            val breathFactor = if (isActive) {
+                1f + breathingAmplitude[i] * sin(2f * PI.toFloat() * wavePhase / breathingPeriodS[i])
+            } else 1f
+            val glowAlpha = if (isActive) 0.45f else 0.20f
 
+            val coreWidth = currentThick * breathFactor
+            val blurWidth = coreWidth * BLUR_WIDTH_RATIO
+            val hazeWidth = coreWidth * HAZE_WIDTH_RATIO
+
+            // Layer 1: haze (outermost, faintest)
             drawStringPath(
                 centerX = centerX,
                 stringTop = stringTop,
@@ -328,9 +382,10 @@ fun BanjoStringCanvas(
                 wavePeaks = vibrationWavePeaks[i],
                 waveFreqHz = vibrationFrequencyHz[i],
                 color = glowColor,
-                alpha = glowAlpha * 0.3f,
-                strokeWidth = currentThick + glowRadius * 2,
+                alpha = glowAlpha * 0.15f * effectiveAlpha,
+                strokeWidth = hazeWidth,
             )
+            // Layer 2: blur
             drawStringPath(
                 centerX = centerX,
                 stringTop = stringTop,
@@ -342,11 +397,11 @@ fun BanjoStringCanvas(
                 wavePeaks = vibrationWavePeaks[i],
                 waveFreqHz = vibrationFrequencyHz[i],
                 color = glowColor,
-                alpha = glowAlpha * 0.5f,
-                strokeWidth = currentThick + glowRadius,
+                alpha = glowAlpha * 0.40f * effectiveAlpha,
+                strokeWidth = blurWidth,
             )
 
-            // Draw main string
+            // Layer 3: core (main string)
             drawStringPath(
                 centerX = centerX,
                 stringTop = stringTop,
@@ -359,7 +414,11 @@ fun BanjoStringCanvas(
                 waveFreqHz = vibrationFrequencyHz[i],
                 color = stringColor,
                 alpha = effectiveAlpha,
-                strokeWidth = currentThick,
+                strokeWidth = coreWidth,
+                sharpness = waveSharpness[i].value,
+                touchYNorm = touchYNorms[i],
+                attackProgress = attackProgress[i].value,
+                isWound = i < 2,
             )
 
             // --- Labels ---
@@ -394,6 +453,10 @@ private fun DrawScope.drawStringPath(
     color: Color,
     alpha: Float,
     strokeWidth: Float,
+    sharpness: Float = 3.0f,
+    touchYNorm: Float = 0.5f,
+    attackProgress: Float = 1.0f,
+    isWound: Boolean = false,
 ) {
     if (alpha <= 0.001f) return
 
@@ -405,24 +468,37 @@ private fun DrawScope.drawStringPath(
         val y = stringTop + s * segmentHeight
         val yNorm = if (stringLength > 0) (s.toFloat() / segments) else 0f
 
-        // Amplitude envelope: half-sine (0 at endpoints, max at center)
-        val envelope = sin(PI * yNorm).toFloat()
+        // Amplitude envelope with gaussian bias during attack
+        val symmetricEnv = sin(PI * yNorm).toFloat()
+        val gaussianBias = exp((-((yNorm - touchYNorm) * (yNorm - touchYNorm)) / (2f * 0.35f * 0.35f)).toDouble()).toFloat()
+        val biasedEnv = (symmetricEnv * gaussianBias).coerceAtLeast(0f)
+        val envelope = symmetricEnv * attackProgress + biasedEnv * (1f - attackProgress)
 
-        // Sine wave vibration
+        // Sine wave vibration with sharpness shaping
         val vibrationOffset = if (amplitude > 0.01f) {
-            amplitude * envelope * sin(
-                2.0 * PI * wavePeaks * yNorm + wavePhase * waveFreqHz * 2.0 * PI,
-            ).toFloat()
+            val rawSine = sin(2.0 * PI * wavePeaks * yNorm + wavePhase * waveFreqHz * 2.0 * PI)
+            val shapedSine = if (sharpness >= 2.9f) {
+                rawSine.toFloat()
+            } else {
+                val s = rawSine.toFloat()
+                sign(s) * abs(s).pow(1f / sharpness)
+            }
+            amplitude * envelope * shapedSine
         } else {
             0f
         }
+
+        // Wound-string micro-texture (D3/G3 only)
+        val microTexture = if (isWound && amplitude > 0.01f) {
+            sin(47.0 * yNorm * 2.0 * PI).toFloat() * 0.03f * amplitude
+        } else 0f
 
         // Idle shimmer
         val shimmerOffset = shimmerAmp * envelope * sin(
             2.0 * PI * yNorm + shimmerPhase.toDouble(),
         ).toFloat()
 
-        val x = centerX + vibrationOffset + shimmerOffset
+        val x = centerX + vibrationOffset + microTexture + shimmerOffset
 
         if (s == 0) {
             path.moveTo(x, y)
@@ -434,7 +510,7 @@ private fun DrawScope.drawStringPath(
     drawPath(
         path = path,
         color = color.copy(alpha = alpha.coerceIn(0f, 1f)),
-        style = Stroke(width = strokeWidth),
+        style = Stroke(width = strokeWidth, join = StrokeJoin.Round),
     )
 }
 
