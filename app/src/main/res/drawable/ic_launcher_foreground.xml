@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Banjo drum head (circle) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="
+            M54,22
+            C71.67,22 86,36.33 86,54
+            C86,71.67 71.67,86 54,86
+            C36.33,86 22,71.67 22,54
+            C22,36.33 36.33,22 54,22
+            Z" />
+
+    <!-- Inner drum head ring (teal cutout to create rim effect) -->
+    <path
+        android:fillColor="#6d94a1"
+        android:pathData="
+            M54,27
+            C68.91,27 81,39.09 81,54
+            C81,68.91 68.91,81 54,81
+            C39.09,81 27,68.91 27,54
+            C27,39.09 39.09,27 54,27
+            Z" />
+
+    <!-- Inner drum head fill (white, slightly smaller to show the rim) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.92"
+        android:pathData="
+            M54,29
+            C67.81,29 79,40.19 79,54
+            C79,67.81 67.81,79 54,79
+            C40.19,79 29,67.81 29,54
+            C29,40.19 40.19,29 54,29
+            Z" />
+
+    <!-- Bridge (horizontal bar across the lower third of the drum head) -->
+    <path
+        android:fillColor="#5a7f8b"
+        android:pathData="
+            M36,66
+            L72,66
+            L72,68.5
+            L36,68.5
+            Z" />
+
+    <!-- String 1 (D3) - leftmost -->
+    <path
+        android:fillColor="#5a7f8b"
+        android:pathData="
+            M44,30
+            L44,82
+            L45.2,82
+            L45.2,30
+            Z" />
+
+    <!-- String 2 (G3) -->
+    <path
+        android:fillColor="#5a7f8b"
+        android:pathData="
+            M50,28
+            L50,84
+            L51.2,84
+            L51.2,28
+            Z" />
+
+    <!-- String 3 (B3) -->
+    <path
+        android:fillColor="#5a7f8b"
+        android:pathData="
+            M56.8,28
+            L56.8,84
+            L58,84
+            L58,28
+            Z" />
+
+    <!-- String 4 (D4) - rightmost -->
+    <path
+        android:fillColor="#5a7f8b"
+        android:pathData="
+            M62.8,30
+            L62.8,82
+            L64,82
+            L64,30
+            Z" />
+
+    <!-- Tailpiece (small anchor at bottom of strings) -->
+    <path
+        android:fillColor="#5a7f8b"
+        android:pathData="
+            M43,78
+            L65,78
+            L65,80
+            L43,80
+            Z" />
+
+    <!-- Neck stub (extends above the drum head) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="
+            M47,18
+            L61,18
+            L61,28
+            L47,28
+            Z" />
+
+    <!-- Neck fretboard overlay -->
+    <path
+        android:fillColor="#5a7f8b"
+        android:pathData="
+            M49,18
+            L59,18
+            L59,30
+            L49,30
+            Z" />
+
+</vector>
