@@ -8,42 +8,45 @@ import kotlin.test.assertEquals
  * These test the logic defined in the animation design spec (synthesis.md Section 6).
  */
 class TuningAnimationStateTest {
-
     // --- State derivation tests ---
 
     @Test
     fun deriveState_idle_whenNoStringSelected() {
-        val state = deriveTuningAnimationState(
-            selectedOption = -1,
-            pitchCheckMode = false,
-            pitchResult = null,
-        )
+        val state =
+            deriveTuningAnimationState(
+                selectedOption = -1,
+                pitchCheckMode = false,
+                pitchResult = null,
+            )
         assertEquals(TuningAnimationState.IDLE, state)
     }
 
     @Test
     fun deriveState_idle_ignoresPitchResultWhenNoStringSelected() {
-        val state = deriveTuningAnimationState(
-            selectedOption = -1,
-            pitchCheckMode = true,
-            pitchResult = PitchResult(
-                detectedHz = 147.0,
-                targetHz = 146.83,
-                centDeviation = 5.0,
-                status = TuningStatus.IN_TUNE,
-            ),
-        )
+        val state =
+            deriveTuningAnimationState(
+                selectedOption = -1,
+                pitchCheckMode = true,
+                pitchResult =
+                    PitchResult(
+                        detectedHz = 147.0,
+                        targetHz = 146.83,
+                        centDeviation = 5.0,
+                        status = TuningStatus.IN_TUNE,
+                    ),
+            )
         assertEquals(TuningAnimationState.IDLE, state)
     }
 
     @Test
     fun deriveState_stringSelected_whenStringActiveAndNotPitchCheck() {
         for (stringIndex in 0..3) {
-            val state = deriveTuningAnimationState(
-                selectedOption = stringIndex,
-                pitchCheckMode = false,
-                pitchResult = null,
-            )
+            val state =
+                deriveTuningAnimationState(
+                    selectedOption = stringIndex,
+                    pitchCheckMode = false,
+                    pitchResult = null,
+                )
             assertEquals(
                 TuningAnimationState.STRING_SELECTED,
                 state,
@@ -54,86 +57,97 @@ class TuningAnimationStateTest {
 
     @Test
     fun deriveState_noSignal_whenPitchCheckWithNoSignal() {
-        val state = deriveTuningAnimationState(
-            selectedOption = 0,
-            pitchCheckMode = true,
-            pitchResult = PitchResult(
-                detectedHz = 0.0,
-                targetHz = 146.83,
-                centDeviation = 0.0,
-                status = TuningStatus.NO_SIGNAL,
-            ),
-        )
+        val state =
+            deriveTuningAnimationState(
+                selectedOption = 0,
+                pitchCheckMode = true,
+                pitchResult =
+                    PitchResult(
+                        detectedHz = 0.0,
+                        targetHz = 146.83,
+                        centDeviation = 0.0,
+                        status = TuningStatus.NO_SIGNAL,
+                    ),
+            )
         assertEquals(TuningAnimationState.NO_SIGNAL, state)
     }
 
     @Test
     fun deriveState_noSignal_whenPitchCheckWithNullResult() {
-        val state = deriveTuningAnimationState(
-            selectedOption = 0,
-            pitchCheckMode = true,
-            pitchResult = null,
-        )
+        val state =
+            deriveTuningAnimationState(
+                selectedOption = 0,
+                pitchCheckMode = true,
+                pitchResult = null,
+            )
         assertEquals(TuningAnimationState.NO_SIGNAL, state)
     }
 
     @Test
     fun deriveState_flat_whenStatusFlat() {
-        val state = deriveTuningAnimationState(
-            selectedOption = 0,
-            pitchCheckMode = true,
-            pitchResult = PitchResult(
-                detectedHz = 130.0,
-                targetHz = 146.83,
-                centDeviation = -30.0,
-                status = TuningStatus.FLAT,
-            ),
-        )
+        val state =
+            deriveTuningAnimationState(
+                selectedOption = 0,
+                pitchCheckMode = true,
+                pitchResult =
+                    PitchResult(
+                        detectedHz = 130.0,
+                        targetHz = 146.83,
+                        centDeviation = -30.0,
+                        status = TuningStatus.FLAT,
+                    ),
+            )
         assertEquals(TuningAnimationState.FLAT, state)
     }
 
     @Test
     fun deriveState_sharp_whenStatusSharp() {
-        val state = deriveTuningAnimationState(
-            selectedOption = 0,
-            pitchCheckMode = true,
-            pitchResult = PitchResult(
-                detectedHz = 165.0,
-                targetHz = 146.83,
-                centDeviation = 30.0,
-                status = TuningStatus.SHARP,
-            ),
-        )
+        val state =
+            deriveTuningAnimationState(
+                selectedOption = 0,
+                pitchCheckMode = true,
+                pitchResult =
+                    PitchResult(
+                        detectedHz = 165.0,
+                        targetHz = 146.83,
+                        centDeviation = 30.0,
+                        status = TuningStatus.SHARP,
+                    ),
+            )
         assertEquals(TuningAnimationState.SHARP, state)
     }
 
     @Test
     fun deriveState_close_whenStatusClose() {
-        val state = deriveTuningAnimationState(
-            selectedOption = 0,
-            pitchCheckMode = true,
-            pitchResult = PitchResult(
-                detectedHz = 149.0,
-                targetHz = 146.83,
-                centDeviation = 15.0,
-                status = TuningStatus.CLOSE,
-            ),
-        )
+        val state =
+            deriveTuningAnimationState(
+                selectedOption = 0,
+                pitchCheckMode = true,
+                pitchResult =
+                    PitchResult(
+                        detectedHz = 149.0,
+                        targetHz = 146.83,
+                        centDeviation = 15.0,
+                        status = TuningStatus.CLOSE,
+                    ),
+            )
         assertEquals(TuningAnimationState.CLOSE, state)
     }
 
     @Test
     fun deriveState_inTune_whenStatusInTune() {
-        val state = deriveTuningAnimationState(
-            selectedOption = 0,
-            pitchCheckMode = true,
-            pitchResult = PitchResult(
-                detectedHz = 147.0,
-                targetHz = 146.83,
-                centDeviation = 5.0,
-                status = TuningStatus.IN_TUNE,
-            ),
-        )
+        val state =
+            deriveTuningAnimationState(
+                selectedOption = 0,
+                pitchCheckMode = true,
+                pitchResult =
+                    PitchResult(
+                        detectedHz = 147.0,
+                        targetHz = 146.83,
+                        centDeviation = 5.0,
+                        status = TuningStatus.IN_TUNE,
+                    ),
+            )
         assertEquals(TuningAnimationState.IN_TUNE, state)
     }
 

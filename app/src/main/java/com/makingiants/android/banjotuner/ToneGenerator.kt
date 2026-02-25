@@ -12,9 +12,9 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlin.math.PI
 import kotlin.math.roundToInt
 import kotlin.math.sin
@@ -27,7 +27,11 @@ const val TONE_SAMPLE_RATE = 44100
 private const val FADE_DURATION_MS = 20L
 private const val FADE_STEPS = 20
 
-fun generateSineWaveSamples(frequency: Float, sampleRate: Int, numSamples: Int): ShortArray {
+fun generateSineWaveSamples(
+    frequency: Float,
+    sampleRate: Int,
+    numSamples: Int,
+): ShortArray {
     val samples = ShortArray(numSamples)
     val twoPiF = 2.0 * PI * frequency
     for (i in 0 until numSamples) {
@@ -38,7 +42,10 @@ fun generateSineWaveSamples(frequency: Float, sampleRate: Int, numSamples: Int):
     return samples
 }
 
-fun calculateLoopSampleCount(frequency: Float, sampleRate: Int): Int {
+fun calculateLoopSampleCount(
+    frequency: Float,
+    sampleRate: Int,
+): Int {
     val samplesPerCycle = sampleRate.toFloat() / frequency
     val cycles = (sampleRate / samplesPerCycle).roundToInt()
     val nominal = (cycles * samplesPerCycle).roundToInt()
@@ -50,7 +57,6 @@ fun calculateLoopSampleCount(frequency: Float, sampleRate: Int): Int {
 }
 
 class ToneGenerator {
-
     private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
     private val trackMutex = Mutex()
     private var audioTrack: AudioTrack? = null
@@ -65,51 +71,55 @@ class ToneGenerator {
      */
     fun play(frequency: Float) {
         activeJob?.cancel()
-        activeJob = scope.launch {
-            fadeOutAndRelease()
-            if (!isActive) return@launch
+        activeJob =
+            scope.launch {
+                fadeOutAndRelease()
+                if (!isActive) return@launch
 
-            val loopSamples = calculateLoopSampleCount(frequency, TONE_SAMPLE_RATE)
-            val samples = generateSineWaveSamples(frequency, TONE_SAMPLE_RATE, loopSamples)
-            val bufferSize = loopSamples * 2
-            val minBuf = AudioTrack.getMinBufferSize(
-                TONE_SAMPLE_RATE,
-                AudioFormat.CHANNEL_OUT_MONO,
-                AudioFormat.ENCODING_PCM_16BIT,
-            )
-            val track = AudioTrack.Builder()
-                .setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .build(),
-                )
-                .setAudioFormat(
-                    AudioFormat.Builder()
-                        .setSampleRate(TONE_SAMPLE_RATE)
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                        .build(),
-                )
-                .setBufferSizeInBytes(bufferSize.coerceAtLeast(minBuf))
-                .setTransferMode(AudioTrack.MODE_STATIC)
-                .build()
+                val loopSamples = calculateLoopSampleCount(frequency, TONE_SAMPLE_RATE)
+                val samples = generateSineWaveSamples(frequency, TONE_SAMPLE_RATE, loopSamples)
+                val bufferSize = loopSamples * 2
+                val minBuf =
+                    AudioTrack.getMinBufferSize(
+                        TONE_SAMPLE_RATE,
+                        AudioFormat.CHANNEL_OUT_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT,
+                    )
+                val track =
+                    AudioTrack
+                        .Builder()
+                        .setAudioAttributes(
+                            AudioAttributes
+                                .Builder()
+                                .setUsage(AudioAttributes.USAGE_MEDIA)
+                                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                                .build(),
+                        ).setAudioFormat(
+                            AudioFormat
+                                .Builder()
+                                .setSampleRate(TONE_SAMPLE_RATE)
+                                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                                .build(),
+                        ).setBufferSizeInBytes(bufferSize.coerceAtLeast(minBuf))
+                        .setTransferMode(AudioTrack.MODE_STATIC)
+                        .build()
 
-            track.write(samples, 0, samples.size)
-            track.setLoopPoints(0, loopSamples, -1)
+                track.write(samples, 0, samples.size)
+                track.setLoopPoints(0, loopSamples, -1)
 
-            if (!isActive) {
-                track.release()
-                return@launch
+                if (!isActive) {
+                    track.release()
+                    return@launch
+                }
+
+                track.setVolume(0f)
+                track.play()
+
+                trackMutex.withLock { audioTrack = track }
+
+                fadeIn(track)
             }
-
-            track.setVolume(0f)
-            track.play()
-
-            trackMutex.withLock { audioTrack = track }
-
-            fadeIn(track)
-        }
     }
 
     /**
@@ -118,9 +128,10 @@ class ToneGenerator {
      */
     fun stop() {
         activeJob?.cancel()
-        activeJob = scope.launch {
-            fadeOutAndRelease()
-        }
+        activeJob =
+            scope.launch {
+                fadeOutAndRelease()
+            }
     }
 
     /**
@@ -132,9 +143,10 @@ class ToneGenerator {
     }
 
     private suspend fun fadeOutAndRelease() {
-        val track = trackMutex.withLock {
-            audioTrack.also { audioTrack = null }
-        } ?: return
+        val track =
+            trackMutex.withLock {
+                audioTrack.also { audioTrack = null }
+            } ?: return
 
         withContext(NonCancellable) {
             if (track.playState == AudioTrack.PLAYSTATE_PLAYING) {

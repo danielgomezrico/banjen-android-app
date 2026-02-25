@@ -50,7 +50,9 @@ internal fun RiveTuningAnimation(
                         autoplay = true,
                     )
                     loaded = true
-                } catch (@Suppress("TooGenericExceptionCaught") e: Exception) {
+                } catch (
+                    @Suppress("TooGenericExceptionCaught") e: Exception,
+                ) {
                     onLoadFailed()
                 }
             }
@@ -58,16 +60,24 @@ internal fun RiveTuningAnimation(
         update = { view ->
             if (loaded) {
                 view.setNumberState(
-                    STATE_MACHINE_NAME, "tuningState", animState.ordinal.toFloat(),
+                    STATE_MACHINE_NAME,
+                    "tuningState",
+                    animState.ordinal.toFloat(),
                 )
                 view.setNumberState(
-                    STATE_MACHINE_NAME, "stringIndex", selectedString.toFloat(),
+                    STATE_MACHINE_NAME,
+                    "stringIndex",
+                    selectedString.toFloat(),
                 )
                 view.setNumberState(
-                    STATE_MACHINE_NAME, "centDeviation", centDeviation,
+                    STATE_MACHINE_NAME,
+                    "centDeviation",
+                    centDeviation,
                 )
                 view.setBooleanState(
-                    STATE_MACHINE_NAME, "isVolumeLow", isVolumeLow,
+                    STATE_MACHINE_NAME,
+                    "isVolumeLow",
+                    isVolumeLow,
                 )
             }
         },
@@ -80,6 +90,4 @@ internal fun RiveTuningAnimation(
  * Returns 0 if the file does not exist in res/raw/, allowing the build
  * to compile without a .riv file present.
  */
-internal fun resolveRiveResource(context: Context): Int {
-    return context.resources.getIdentifier("tuning_animation", "raw", context.packageName)
-}
+internal fun resolveRiveResource(context: Context): Int = context.resources.getIdentifier("tuning_animation", "raw", context.packageName)

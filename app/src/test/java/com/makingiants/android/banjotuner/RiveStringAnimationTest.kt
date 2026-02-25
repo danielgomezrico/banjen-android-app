@@ -17,7 +17,6 @@ import kotlin.test.assertNotEquals
  * since the Rive state machine relies on exact numeric values.
  */
 class RiveStringAnimationTest {
-
     // --- TuningAnimationState ordinal stability ---
     // The Rive state machine uses ordinal values (0-6) as its `tuningState` input.
     // If the enum order changes, the animation breaks. These tests catch that.
@@ -112,44 +111,48 @@ class RiveStringAnimationTest {
 
     @Test
     fun flatState_centDeviation_isNegative() {
-        val state = deriveTuningAnimationState(
-            selectedOption = 0,
-            pitchCheckMode = true,
-            pitchResult = PitchResult(130.0, 146.83, -30.0, TuningStatus.FLAT),
-        )
+        val state =
+            deriveTuningAnimationState(
+                selectedOption = 0,
+                pitchCheckMode = true,
+                pitchResult = PitchResult(130.0, 146.83, -30.0, TuningStatus.FLAT),
+            )
         assertEquals(TuningAnimationState.FLAT, state)
         assertEquals(3, state.ordinal, "FLAT should map to tuningState=3")
     }
 
     @Test
     fun sharpState_centDeviation_isPositive() {
-        val state = deriveTuningAnimationState(
-            selectedOption = 0,
-            pitchCheckMode = true,
-            pitchResult = PitchResult(165.0, 146.83, 30.0, TuningStatus.SHARP),
-        )
+        val state =
+            deriveTuningAnimationState(
+                selectedOption = 0,
+                pitchCheckMode = true,
+                pitchResult = PitchResult(165.0, 146.83, 30.0, TuningStatus.SHARP),
+            )
         assertEquals(TuningAnimationState.SHARP, state)
         assertEquals(4, state.ordinal, "SHARP should map to tuningState=4")
     }
 
     @Test
     fun closeState_centDeviation_isSmall() {
-        val state = deriveTuningAnimationState(
-            selectedOption = 0,
-            pitchCheckMode = true,
-            pitchResult = PitchResult(148.0, 146.83, 12.0, TuningStatus.CLOSE),
-        )
+        val state =
+            deriveTuningAnimationState(
+                selectedOption = 0,
+                pitchCheckMode = true,
+                pitchResult = PitchResult(148.0, 146.83, 12.0, TuningStatus.CLOSE),
+            )
         assertEquals(TuningAnimationState.CLOSE, state)
         assertEquals(5, state.ordinal, "CLOSE should map to tuningState=5")
     }
 
     @Test
     fun inTuneState_centDeviation_isVerySmall() {
-        val state = deriveTuningAnimationState(
-            selectedOption = 0,
-            pitchCheckMode = true,
-            pitchResult = PitchResult(147.0, 146.83, 2.0, TuningStatus.IN_TUNE),
-        )
+        val state =
+            deriveTuningAnimationState(
+                selectedOption = 0,
+                pitchCheckMode = true,
+                pitchResult = PitchResult(147.0, 146.83, 2.0, TuningStatus.IN_TUNE),
+            )
         assertEquals(TuningAnimationState.IN_TUNE, state)
         assertEquals(6, state.ordinal, "IN_TUNE should map to tuningState=6")
     }
@@ -162,7 +165,13 @@ class RiveStringAnimationTest {
     @Test
     fun neutralColor_isExpectedHex() {
         // Neutral cream color for IDLE state fallback
-        assertEquals(0xFFF5E6D3.toInt(), neutralColor.value.toLong().ushr(32).toInt())
+        assertEquals(
+            0xFFF5E6D3.toInt(),
+            neutralColor.value
+                .toLong()
+                .ushr(32)
+                .toInt(),
+        )
     }
 
     // --- Color palette stability ---
