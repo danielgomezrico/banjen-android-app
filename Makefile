@@ -11,12 +11,14 @@ help: ## Show this help
 build: ## Build release APK
 	./gradlew assembleRelease
 
-run: ## Install and run on connected device
-	./gradlew installDebug
+run: ## Uninstall, install and run on connected device (use DEVICE=<serial> for multiple devices)
+	adb $(if $(DEVICE),-s $(DEVICE)) uninstall com.makingiants.android.banjotuner || true
+	$(if $(DEVICE),ANDROID_SERIAL=$(DEVICE) )./gradlew installDebug
 
 
-run_release: ## Install and run on connected device on release
-	./gradlew installRelease
+run_release: ## Uninstall, install and run on connected device on release (use DEVICE=<serial> for multiple devices)
+	adb $(if $(DEVICE),-s $(DEVICE)) uninstall com.makingiants.android.banjotuner || true
+	$(if $(DEVICE),ANDROID_SERIAL=$(DEVICE) )./gradlew installRelease
 
 test: ## Run unit tests
 	./gradlew test
