@@ -16,16 +16,28 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
 const val TONE_SAMPLE_RATE = 44100
 
-// Fade duration: 20ms/20-step ramp — imperceptible to the ear but eliminates
-// waveform discontinuity clicks on start/stop. 20 steps gives a smooth ramp
-// even when the Android timer batches late (~4ms floor per step).
-private const val FADE_DURATION_MS = 20L
+// Fade duration: 200ms/20-step ramp. Each step is 10ms, well above Android's
+// ~4ms timer floor, ensuring the ramp completes reliably. 200ms covers the
+// hardware cold-start transient window (50–200ms) so the tone is silent when
+// the amplifier is noisy. The 200ms attack/release is imperceptible as a
+// "ramp" but eliminates the CRSHSHHH noise on all tested devices.
+private const val FADE_DURATION_MS = 200L
 private const val FADE_STEPS = 20
+
+// Amplitude scale: 0.7 = -3 dBFS. Leaves headroom for OEM DSP effects
+// (loudness enhancers, equalizers) in the hardware audio pipeline.
+internal const val AMPLITUDE_SCALE = 0.7f
+
+// Warm-up track buffer: 4096 frames at 44100 Hz = ~93ms per write() call.
+// Short enough to stay responsive to release(), long enough to avoid
+// excessive CPU wake-ups.
+private const val WARM_BUFFER_FRAMES = 4096
 
 fun generateSineWaveSamples(
     frequency: Float,
@@ -37,7 +49,7 @@ fun generateSineWaveSamples(
     for (i in 0 until numSamples) {
         val t = i.toDouble() / sampleRate
         val value = sin(twoPiF * t)
-        samples[i] = (value * Short.MAX_VALUE).toInt().toShort()
+        samples[i] = (value * Short.MAX_VALUE * AMPLITUDE_SCALE).toInt().toShort()
     }
     return samples
 }
@@ -52,7 +64,7 @@ fun calculateLoopSampleCount(
     val halfPeriod = maxOf(1, (samplesPerCycle / 2).toInt())
     val twoPiFOverFs = 2.0 * PI * frequency / sampleRate
     return (nominal - halfPeriod..nominal + halfPeriod).minByOrNull { n ->
-        if (n <= 0) Double.MAX_VALUE else kotlin.math.abs(sin(twoPiFOverFs * n))
+        if (n <= 0) Double.MAX_VALUE else abs(sin(twoPiFOverFs * n))
     } ?: nominal
 }
 
@@ -61,6 +73,23 @@ class ToneGenerator {
     private val trackMutex = Mutex()
     private var audioTrack: AudioTrack? = null
     private var activeJob: Job? = null
+
+    // Silent keep-alive track — keeps the audio hardware path active so that
+    // play() never triggers a cold-start transient (CRSHSHHH noise).
+    // Runs at volume 0 for the lifetime of this ToneGenerator instance.
+    private val warmTrack: AudioTrack = buildWarmTrack()
+    private val warmJob: Job
+
+    init {
+        warmTrack.play()
+        warmJob = scope.launch(Dispatchers.IO) {
+            val silence = ShortArray(WARM_BUFFER_FRAMES) // zero-filled by JVM
+            while (isActive) {
+                val written = warmTrack.write(silence, 0, silence.size)
+                if (written <= 0) break // error or track released
+            }
+        }
+    }
 
     val isPlaying: Boolean
         get() = audioTrack?.playState == AudioTrack.PLAYSTATE_PLAYING
@@ -139,7 +168,12 @@ class ToneGenerator {
      */
     fun release() {
         activeJob?.cancel()
+        warmJob.cancel()
         scope.cancel()
+        // Cancel the write loop before stopping/releasing to avoid
+        // writing into a released track.
+        warmTrack.stop()
+        warmTrack.release()
     }
 
     private suspend fun fadeOutAndRelease() {
@@ -153,8 +187,10 @@ class ToneGenerator {
                 fadeOut(track)
             }
             track.setVolume(0f)
-            delay(20L)
-            runCatching { track.pause() }
+            // 300ms drain (was 150ms). 2x safety margin over worst-case HAL buffer
+            // latency. Volume is already 0 during this window so no audio is heard.
+            delay(300L)
+            runCatching { track.stop() }
             track.release()
         }
     }
@@ -177,5 +213,35 @@ class ToneGenerator {
             track.setVolume(step.toFloat() / FADE_STEPS)
             if (step < FADE_STEPS) delay(stepDelayMs)
         }
+    }
+
+    private fun buildWarmTrack(): AudioTrack {
+        val bufferBytes = WARM_BUFFER_FRAMES * 2 // 16-bit = 2 bytes per frame
+        val minBuf = AudioTrack.getMinBufferSize(
+            TONE_SAMPLE_RATE,
+            AudioFormat.CHANNEL_OUT_MONO,
+            AudioFormat.ENCODING_PCM_16BIT,
+        )
+        return AudioTrack
+            .Builder()
+            .setAudioAttributes(
+                AudioAttributes
+                    .Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                    .build(),
+            )
+            .setAudioFormat(
+                AudioFormat
+                    .Builder()
+                    .setSampleRate(TONE_SAMPLE_RATE)
+                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                    .build(),
+            )
+            .setBufferSizeInBytes(bufferBytes.coerceAtLeast(minBuf))
+            .setTransferMode(AudioTrack.MODE_STREAM)
+            .build()
+            .also { it.setVolume(0f) }
     }
 }
