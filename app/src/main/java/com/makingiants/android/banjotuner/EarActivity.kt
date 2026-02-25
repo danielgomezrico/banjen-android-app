@@ -234,6 +234,11 @@ class EarActivity : AppCompatActivity() {
         super.onPause()
     }
 
+    override fun onDestroy() {
+        toneGenerator.release()
+        super.onDestroy()
+    }
+
     @Composable
     @Preview
     fun Contents(autoPlayIndex: Int = -1) {
