@@ -1,7 +1,5 @@
 package com.makingiants.android.banjotuner
 
-import androidx.compose.runtime.MutableIntState
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
@@ -27,7 +25,6 @@ import org.junit.runner.RunWith
 @MediumTest
 @RunWith(AndroidJUnit4::class)
 class TuningAnimationTest {
-
     companion object {
         private const val ANIMATION_TAG = "tuning_animation"
     }
@@ -74,12 +71,13 @@ class TuningAnimationTest {
         renderAnimationInState(
             selectedOption = 0,
             pitchCheckMode = true,
-            pitchResult = PitchResult(
-                detectedHz = 0.0,
-                targetHz = 146.83,
-                centDeviation = 0.0,
-                status = TuningStatus.NO_SIGNAL,
-            ),
+            pitchResult =
+                PitchResult(
+                    detectedHz = 0.0,
+                    targetHz = 146.83,
+                    centDeviation = 0.0,
+                    status = TuningStatus.NO_SIGNAL,
+                ),
         )
         composeTestRule.onNodeWithTag(ANIMATION_TAG).assertExists()
     }
@@ -89,12 +87,13 @@ class TuningAnimationTest {
         renderAnimationInState(
             selectedOption = 0,
             pitchCheckMode = true,
-            pitchResult = PitchResult(
-                detectedHz = 130.0,
-                targetHz = 146.83,
-                centDeviation = -30.0,
-                status = TuningStatus.FLAT,
-            ),
+            pitchResult =
+                PitchResult(
+                    detectedHz = 130.0,
+                    targetHz = 146.83,
+                    centDeviation = -30.0,
+                    status = TuningStatus.FLAT,
+                ),
         )
         composeTestRule.onNodeWithTag(ANIMATION_TAG).assertExists()
     }
@@ -104,12 +103,13 @@ class TuningAnimationTest {
         renderAnimationInState(
             selectedOption = 0,
             pitchCheckMode = true,
-            pitchResult = PitchResult(
-                detectedHz = 165.0,
-                targetHz = 146.83,
-                centDeviation = 30.0,
-                status = TuningStatus.SHARP,
-            ),
+            pitchResult =
+                PitchResult(
+                    detectedHz = 165.0,
+                    targetHz = 146.83,
+                    centDeviation = 30.0,
+                    status = TuningStatus.SHARP,
+                ),
         )
         composeTestRule.onNodeWithTag(ANIMATION_TAG).assertExists()
     }
@@ -119,12 +119,13 @@ class TuningAnimationTest {
         renderAnimationInState(
             selectedOption = 0,
             pitchCheckMode = true,
-            pitchResult = PitchResult(
-                detectedHz = 149.0,
-                targetHz = 146.83,
-                centDeviation = 15.0,
-                status = TuningStatus.CLOSE,
-            ),
+            pitchResult =
+                PitchResult(
+                    detectedHz = 149.0,
+                    targetHz = 146.83,
+                    centDeviation = 15.0,
+                    status = TuningStatus.CLOSE,
+                ),
         )
         composeTestRule.onNodeWithTag(ANIMATION_TAG).assertExists()
     }
@@ -134,12 +135,13 @@ class TuningAnimationTest {
         renderAnimationInState(
             selectedOption = 0,
             pitchCheckMode = true,
-            pitchResult = PitchResult(
-                detectedHz = 147.0,
-                targetHz = 146.83,
-                centDeviation = 5.0,
-                status = TuningStatus.IN_TUNE,
-            ),
+            pitchResult =
+                PitchResult(
+                    detectedHz = 147.0,
+                    targetHz = 146.83,
+                    centDeviation = 5.0,
+                    status = TuningStatus.IN_TUNE,
+                ),
         )
         composeTestRule.onNodeWithTag(ANIMATION_TAG).assertExists()
     }
@@ -284,7 +286,6 @@ class TuningAnimationTest {
 @MediumTest
 @RunWith(AndroidJUnit4::class)
 class TuningAnimationLayoutTest {
-
     @get:Rule
     val composeTestRule = createAndroidComposeRule<EarActivity>()
 

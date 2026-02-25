@@ -7,7 +7,6 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class TuningModelTest {
-
     @Test
     fun `noteFrequency for A4 returns 440`() {
         assertEquals(440.0f, noteFrequency(69), 0.01f)

@@ -8,7 +8,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ToneGeneratorTest {
-
     @Test
     fun `generateSineWaveSamples produces correct number of samples`() {
         val samples = generateSineWaveSamples(440.0f, TONE_SAMPLE_RATE, 44100)
@@ -51,7 +50,7 @@ class ToneGeneratorTest {
             val phaseError = abs(sin(2.0 * PI * frequency * loopSamples / TONE_SAMPLE_RATE))
             assertTrue(
                 phaseError < 0.01,
-                "Phase error $phaseError >= 0.01 for frequency ${frequency}Hz (loopSamples=$loopSamples)"
+                "Phase error $phaseError >= 0.01 for frequency ${frequency}Hz (loopSamples=$loopSamples)",
             )
         }
     }

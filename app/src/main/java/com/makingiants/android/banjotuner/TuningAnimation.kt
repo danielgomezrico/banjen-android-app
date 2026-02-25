@@ -85,12 +85,13 @@ object TuningAnimationConstants {
 }
 
 // Per-string accent colors (indexed by string position 0–3)
-internal val stringAccentColors = listOf(
-    Color(0xFFA67B5B), // Index 0: D3 — Deep Copper
-    Color(0xFF6D94A1), // Index 1: G3 — Muted Teal
-    Color(0xFFC4915A), // Index 2: B3 — Soft Amber
-    Color(0xFFD4A84B), // Index 3: D4 — Warm Gold
-)
+internal val stringAccentColors =
+    listOf(
+        Color(0xFFA67B5B), // Index 0: D3 — Deep Copper
+        Color(0xFF6D94A1), // Index 1: G3 — Muted Teal
+        Color(0xFFC4915A), // Index 2: B3 — Soft Amber
+        Color(0xFFD4A84B), // Index 3: D4 — Warm Gold
+    )
 internal val neutralColor = Color(0xFFF5E6D3)
 internal val coolShiftColor = Color(0xFF8BA6B3)
 internal val warmGoldColor = Color(0xFFD4A84B)
@@ -118,12 +119,11 @@ internal fun beatFrequencyHz(centDeviation: Float): Float {
         .coerceIn(TuningAnimationConstants.BEAT_HZ_MIN, TuningAnimationConstants.BEAT_HZ_MAX)
 }
 
-internal fun ringAsymmetryOffset(centDeviation: Float): Float {
-    return (centDeviation / 50f).coerceIn(
+internal fun ringAsymmetryOffset(centDeviation: Float): Float =
+    (centDeviation / 50f).coerceIn(
         -TuningAnimationConstants.MAX_ASYMMETRY_FRACTION,
         TuningAnimationConstants.MAX_ASYMMETRY_FRACTION,
     )
-}
 
 /**
  * Tuning animation wrapper. Tries to render via Rive state machine;
@@ -139,11 +139,12 @@ fun TuningAnimation(
     isVolumeLow: State<Boolean>,
     modifier: Modifier = Modifier,
 ) {
-    val animState = deriveTuningAnimationState(
-        selectedOption.value,
-        pitchCheckMode.value,
-        pitchResult.value,
-    )
+    val animState =
+        deriveTuningAnimationState(
+            selectedOption.value,
+            pitchCheckMode.value,
+            pitchResult.value,
+        )
 
     val context = LocalContext.current
     val riveResId = remember { resolveRiveResource(context) }
@@ -160,11 +161,12 @@ fun TuningAnimation(
             modifier = modifier,
         )
     } else {
-        val baseAccent = if (selectedOption.value in stringAccentColors.indices) {
-            stringAccentColors[selectedOption.value]
-        } else {
-            neutralColor
-        }
+        val baseAccent =
+            if (selectedOption.value in stringAccentColors.indices) {
+                stringAccentColors[selectedOption.value]
+            } else {
+                neutralColor
+            }
         CanvasFallbackAnimation(ringColor = baseAccent, modifier = modifier)
     }
 }
@@ -189,13 +191,15 @@ internal fun CanvasFallbackAnimation(
     val breatheScale by breatheTransition.animateFloat(
         initialValue = TuningAnimationConstants.IDLE_SCALE_MIN,
         targetValue = TuningAnimationConstants.IDLE_SCALE_MAX,
-        animationSpec = infiniteRepeatable(
-            animation = tween(
-                durationMillis = TuningAnimationConstants.IDLE_BREATHE_DURATION_MS / 2,
-                easing = FastOutSlowInEasing,
+        animationSpec =
+            infiniteRepeatable(
+                animation =
+                    tween(
+                        durationMillis = TuningAnimationConstants.IDLE_BREATHE_DURATION_MS / 2,
+                        easing = FastOutSlowInEasing,
+                    ),
+                repeatMode = RepeatMode.Reverse,
             ),
-            repeatMode = RepeatMode.Reverse,
-        ),
         label = "fallback breathe scale",
     )
 
