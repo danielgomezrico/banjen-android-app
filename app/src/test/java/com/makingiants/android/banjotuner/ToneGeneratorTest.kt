@@ -54,4 +54,11 @@ class ToneGeneratorTest {
             )
         }
     }
+
+    @Test
+    fun `generateSineWaveSamples amplitude does not exceed scaled maximum`() {
+        val samples = generateSineWaveSamples(196f, TONE_SAMPLE_RATE, 441)
+        val maxAllowed = (Short.MAX_VALUE * AMPLITUDE_SCALE).toInt()
+        assertTrue(samples.all { it.toInt() in -maxAllowed..maxAllowed })
+    }
 }
