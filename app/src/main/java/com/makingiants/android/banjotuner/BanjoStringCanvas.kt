@@ -468,7 +468,7 @@ fun BanjoStringCanvas(
 
             // --- Labels ---
             val labelColor = palette.label
-            val labelAlpha = if (isActive) 1f else effectiveAlpha * 0.65f
+            val labelAlpha = (if (isActive) 1f else effectiveAlpha * 0.65f) * revealProgress[i].value
             val labelY = bridgeY - 76f * density
 
             drawStringLabel(
