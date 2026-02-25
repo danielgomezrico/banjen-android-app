@@ -482,6 +482,7 @@ private fun DrawScope.drawStringPath(
     sharpness: Float = 3.0f,
     touchYNorm: Float = 0.5f,
     attackProgress: Float = 1.0f,
+    revealProgress: Float = 1.0f,
     isWound: Boolean = false,
 ) {
     if (alpha <= 0.001f) return
@@ -490,7 +491,9 @@ private fun DrawScope.drawStringPath(
     val segments = 80
     val segmentHeight = stringLength / segments
 
-    for (s in 0..segments) {
+    if (revealProgress <= 0f) return
+    val revealSegments = (revealProgress * segments).toInt().coerceAtLeast(1)
+    for (s in 0..revealSegments) {
         val y = stringTop + s * segmentHeight
         val yNorm = if (stringLength > 0) (s.toFloat() / segments) else 0f
 
