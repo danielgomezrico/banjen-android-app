@@ -110,7 +110,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import app.rive.runtime.kotlin.core.Rive
-import java.io.IOException
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -469,15 +468,13 @@ class EarActivity : AppCompatActivity() {
                     Spacer(modifier = Modifier.height(16.dp))
                     PitchControl(referencePitch) { newPitch ->
                         prefs.edit().putInt(KEY_REFERENCE_PITCH, newPitch).apply()
-                        player.pitchRatio = calculatePitchRatio(newPitch)
-                        if (player.isPlaying) {
-                            val currentIndex = selectedOption.intValue
-                            if (currentIndex >= 0) {
-                                try {
-                                    player.playWithLoop(currentIndex)
-                                } catch (e: IOException) {
-                                    Log.e("EarActivity", "Restarting sound with new pitch", e)
-                                }
+                        val pitchRatio = calculatePitchRatio(newPitch)
+                        player.pitchRatio = pitchRatio
+                        val currentIndex = selectedOption.intValue
+                        if (currentIndex >= 0) {
+                            val note = currentTuningModel.notes.getOrNull(currentIndex)
+                            if (note != null) {
+                                toneGenerator.play(note.frequency * pitchRatio)
                             }
                         }
                     }
