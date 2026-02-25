@@ -8,8 +8,8 @@ plugins {
 apply from: '../jacoco.gradle'
 
 def appId = "com.makingiants.android.banjotuner"
-def appVersionName = "1.7.0"
-def appVersionCode = 10700
+def appVersionName = "1.25.0"
+def appVersionCode = 122
 
 def customProperty(key) {
     if (project.hasProperty(key)) {
