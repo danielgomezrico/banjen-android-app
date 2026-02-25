@@ -24,8 +24,13 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -87,8 +92,10 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -98,6 +105,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import app.rive.runtime.kotlin.core.Rive
@@ -982,6 +990,45 @@ class EarActivity : AppCompatActivity() {
                         style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFFF44336)),
                     )
                 }
+            }
+        }
+    }
+
+    @Composable
+    private fun PillIconButton(
+        icon: ImageVector,
+        contentDescription: String,
+        onClick: () -> Unit,
+        modifier: Modifier = Modifier,
+    ) {
+        val interactionSource = remember { MutableInteractionSource() }
+        val pressed by interactionSource.collectIsPressedAsState()
+        val scale by animateFloatAsState(
+            targetValue = if (pressed) 0.92f else 1f,
+            animationSpec = tween(100),
+            label = "pill-scale",
+        )
+
+        Box(
+            modifier =
+                modifier
+                    .graphicsLayer(scaleX = scale, scaleY = scale)
+                    .clip(RoundedCornerShape(50))
+                    .background(Color(0xFF2A1F1A))
+                    .border(1.dp, Color(0xFF5C4A3E), RoundedCornerShape(50)),
+            contentAlignment = Alignment.Center,
+        ) {
+            IconButton(
+                onClick = onClick,
+                modifier = Modifier.size(40.dp),
+                interactionSource = interactionSource,
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = contentDescription,
+                    tint = Color(0xFFB89A86),
+                    modifier = Modifier.size(20.dp),
+                )
             }
         }
     }
