@@ -424,7 +424,7 @@ fun BanjoStringCanvas(
             // --- Labels ---
             val labelColor = palette.label
             val labelAlpha = if (isActive) 1f else effectiveAlpha * 0.65f
-            val labelY = bridgeY - 48f * density
+            val labelY = bridgeY - 76f * density
 
             drawStringLabel(
                 textMeasurer = textMeasurer,
@@ -435,6 +435,7 @@ fun BanjoStringCanvas(
                 color = labelColor,
                 alpha = labelAlpha,
                 density = density,
+                fontScale = colorFactor,
             )
         }
     }
@@ -523,15 +524,18 @@ private fun DrawScope.drawStringLabel(
     color: Color,
     alpha: Float,
     density: Float,
+    fontScale: Float,
 ) {
+    val primarySp = 22f + (28f - 22f) * fontScale.coerceIn(0f, 1f)
+    val secondarySp = 15f + (20f - 15f) * fontScale.coerceIn(0f, 1f)
     val primaryStyle = TextStyle(
-        fontSize = 16.sp,
+        fontSize = primarySp.sp,
         fontWeight = FontWeight.Medium,
         color = color.copy(alpha = alpha.coerceIn(0f, 1f)),
         letterSpacing = 1.5.sp,
     )
     val secondaryStyle = TextStyle(
-        fontSize = 11.sp,
+        fontSize = secondarySp.sp,
         fontWeight = FontWeight.Normal,
         color = color.copy(alpha = (alpha * 0.8f).coerceIn(0f, 1f)),
         letterSpacing = 0.5.sp,
