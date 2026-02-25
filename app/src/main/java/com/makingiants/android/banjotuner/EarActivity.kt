@@ -10,7 +10,6 @@ import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -110,7 +109,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import app.rive.runtime.kotlin.core.Rive
-import java.io.IOException
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -129,9 +127,6 @@ class EarActivity : AppCompatActivity() {
 
         fun validateStringIndex(index: Int): Int = if (index in 0..MAX_STRING_INDEX) index else -1
     }
-
-    @VisibleForTesting
-    internal val player by lazy { SoundPlayer(this) }
 
     @VisibleForTesting
     internal val toneGenerator by lazy { ToneGenerator() }
@@ -179,8 +174,6 @@ class EarActivity : AppCompatActivity() {
     private fun exitSessionMode() {
         sessionModeActive.value = false
         toneGenerator.stop()
-        player.stop()
-        player.volume = 1.0f
     }
 
     private fun shareTuning(tuning: Tuning) {
@@ -203,7 +196,6 @@ class EarActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
 
         savedPitch = prefs.getInt(KEY_REFERENCE_PITCH, DEFAULT_PITCH)
-        player.pitchRatio = calculatePitchRatio(savedPitch)
 
         onBackPressedDispatcher.addCallback(
             this,
@@ -229,7 +221,6 @@ class EarActivity : AppCompatActivity() {
         if (sessionModeActive.value) {
             exitSessionMode()
         }
-        player.stop()
         toneGenerator.stop()
         stopAudioCapture()
         super.onPause()
@@ -302,13 +293,10 @@ class EarActivity : AppCompatActivity() {
                 selectedOption.intValue = -1
                 return@LaunchedEffect
             }
-            val savedVol = prefs.getFloat(KEY_SESSION_VOLUME, DEFAULT_SESSION_VOLUME)
-            player.volume = savedVol
             var index = 0
             val totalStrings = currentTuningModel.notes.size
             while (index < totalStrings && sessionModeActive.value) {
                 selectedOption.intValue = index
-                toneGenerator.stop()
                 toneGenerator.play(currentTuningModel.notes[index].frequency)
                 delay(SECONDS_PER_STRING * 1000L)
                 if (index < totalStrings - 1) {
@@ -349,7 +337,6 @@ class EarActivity : AppCompatActivity() {
                     if (!sessionModeActive.value) {
                         IconButton(onClick = {
                             toneGenerator.stop()
-                            player.stop()
                             selectedOption.intValue = -1
                             sessionModeActive.value = true
                         }) {
@@ -396,7 +383,6 @@ class EarActivity : AppCompatActivity() {
                             selectedStringIndex.intValue = -1
                             isVolumeLow.value = false
                         } else {
-                            toneGenerator.stop()
                             val note = currentTuningModel.notes.getOrNull(index) ?: return@BanjoStringCanvas
                             toneGenerator.play(note.frequency)
                             selectedOption.intValue = index
@@ -442,7 +428,6 @@ class EarActivity : AppCompatActivity() {
                         onInstrumentSelected = { newIndex ->
                             showSettings = false
                             toneGenerator.stop()
-                            player.stop()
                             selectedOption.intValue = -1
                             isVolumeLow.value = false
                             instrumentIndex = newIndex
@@ -456,7 +441,6 @@ class EarActivity : AppCompatActivity() {
                         onTuningSelected = { newIndex ->
                             showSettings = false
                             toneGenerator.stop()
-                            player.stop()
                             selectedOption.intValue = -1
                             isVolumeLow.value = false
                             tuningModelIndex = newIndex
@@ -469,15 +453,12 @@ class EarActivity : AppCompatActivity() {
                     Spacer(modifier = Modifier.height(16.dp))
                     PitchControl(referencePitch) { newPitch ->
                         prefs.edit().putInt(KEY_REFERENCE_PITCH, newPitch).apply()
-                        player.pitchRatio = calculatePitchRatio(newPitch)
-                        if (player.isPlaying) {
-                            val currentIndex = selectedOption.intValue
-                            if (currentIndex >= 0) {
-                                try {
-                                    player.playWithLoop(currentIndex)
-                                } catch (e: IOException) {
-                                    Log.e("EarActivity", "Restarting sound with new pitch", e)
-                                }
+                        val pitchRatio = calculatePitchRatio(newPitch)
+                        val currentIndex = selectedOption.intValue
+                        if (currentIndex >= 0) {
+                            val note = currentTuningModel.notes.getOrNull(currentIndex)
+                            if (note != null) {
+                                toneGenerator.play(note.frequency * pitchRatio)
                             }
                         }
                     }
@@ -501,7 +482,7 @@ class EarActivity : AppCompatActivity() {
         note: Note,
     ) {
         LaunchedEffect(Unit) {
-            isVolumeLow.value = player.isVolumeLow()
+            isVolumeLow.value = isVolumeLow()
             toneGenerator.play(note.frequency)
         }
     }
