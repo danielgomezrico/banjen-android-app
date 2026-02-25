@@ -118,6 +118,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -344,40 +345,6 @@ class EarActivity : AppCompatActivity() {
                     }
                 }
             },
-            topBar = {
-                Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .windowInsetsPadding(WindowInsets.statusBars)
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    // Headphone icon — session mode activation (hidden while session is active)
-                    if (!sessionModeActive.value) {
-                        IconButton(onClick = {
-                            toneGenerator.stop()
-                            selectedOption.intValue = -1
-                            sessionModeActive.value = true
-                        }) {
-                            Icon(
-                                imageVector = Icons.Filled.Headphones,
-                                contentDescription = stringResource(id = R.string.session_mode_label),
-                                tint = colorResource(id = R.color.banjen_accent),
-                            )
-                        }
-                    }
-                    // Gear icon — opens settings bottom sheet
-                    IconButton(onClick = { showSettings = true }) {
-                        Icon(
-                            imageVector = Icons.Default.Settings,
-                            contentDescription = stringResource(id = R.string.settings_label),
-                            tint = colorResource(id = R.color.banjen_accent),
-                        )
-                    }
-                }
-            },
         ) { paddingValues ->
             Box(
                 modifier =
@@ -429,6 +396,19 @@ class EarActivity : AppCompatActivity() {
                         AdBanner()
                     }
                 }
+
+                // Overlay: BANJEN wordmark + pill buttons float over the canvas
+                CanvasOverlay(
+                    isSessionActive = sessionModeActive.value,
+                    isStringActive = selectedOption.intValue >= 0,
+                    onSessionClick = {
+                        toneGenerator.stop()
+                        selectedOption.intValue = -1
+                        Timber.d("session: start tuning=%s strings=%d", currentTuningModel.name, currentTuningModel.notes.size)
+                        sessionModeActive.value = true
+                    },
+                    onSettingsClick = { showSettings = true },
+                )
             }
         }
 
@@ -991,6 +971,58 @@ class EarActivity : AppCompatActivity() {
                     )
                 }
             }
+        }
+    }
+
+    @Composable
+    private fun CanvasOverlay(
+        isSessionActive: Boolean,
+        isStringActive: Boolean,
+        onSessionClick: () -> Unit,
+        onSettingsClick: () -> Unit,
+    ) {
+        val overlayAlpha by animateFloatAsState(
+            targetValue = if (isStringActive) 0.35f else 1f,
+            animationSpec = tween(300),
+            label = "overlay-alpha",
+        )
+
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .windowInsetsPadding(WindowInsets.statusBars)
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .graphicsLayer(alpha = overlayAlpha),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (!isSessionActive) {
+                PillIconButton(
+                    icon = Icons.Filled.Headphones,
+                    contentDescription = stringResource(id = R.string.session_mode_label),
+                    onClick = onSessionClick,
+                )
+            } else {
+                Spacer(modifier = Modifier.size(40.dp))
+            }
+
+            Text(
+                text = "BANJEN",
+                style =
+                    androidx.compose.ui.text.TextStyle(
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Color(0xFFB89A86),
+                        letterSpacing = 4.sp,
+                    ),
+            )
+
+            PillIconButton(
+                icon = Icons.Default.Settings,
+                contentDescription = stringResource(id = R.string.settings_label),
+                onClick = onSettingsClick,
+            )
         }
     }
 
