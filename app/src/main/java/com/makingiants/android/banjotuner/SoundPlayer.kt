@@ -83,7 +83,12 @@ class SoundPlayer(
 
         mediaPlayer =
             MediaPlayer().apply {
-                setAudioStreamType(AudioManager.STREAM_MUSIC)
+                setAudioAttributes(
+                    android.media.AudioAttributes.Builder()
+                        .setUsage(android.media.AudioAttributes.USAGE_MEDIA)
+                        .setContentType(android.media.AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build()
+                )
                 setVolume(volume, volume)
                 setOnPreparedListener(this@SoundPlayer)
                 setOnCompletionListener(this@SoundPlayer)
@@ -98,20 +103,17 @@ class SoundPlayer(
     }
 
     /**
-     * Reset the player with a mute to avoid
+     * Reset the player with a volume ramp to zero to avoid
      * a cut sound on reset.
      */
     fun stop() {
-        audioManager.setStreamMute(AudioManager.STREAM_MUSIC, true)
-
         mediaPlayer?.apply {
-            stop()
-            reset()
+            runCatching { setVolume(0f, 0f) }
+            runCatching { stop() }
+            runCatching { reset() }
             release()
         }
-
         mediaPlayer = null
-        audioManager.setStreamMute(AudioManager.STREAM_MUSIC, false)
     }
 
     fun isHeadphoneConnected(): Boolean {
@@ -121,9 +123,18 @@ class SoundPlayer(
 
     // <editor-fold desc="OnPreparedListener, OnCompletionListener implements">
 
-    override fun onPrepared(player: MediaPlayer) {
-        mediaPlayer?.start()
-        mediaPlayer?.playbackParams = PlaybackParams().setPitch(pitchRatio)
+    override fun onPrepared(mp: MediaPlayer) {
+        mp.setVolume(0f, 0f)
+        mp.start()
+        mp.playbackParams = PlaybackParams().setPitch(pitchRatio)
+        val handler = android.os.Handler(android.os.Looper.getMainLooper())
+        val steps = 10
+        for (step in 1..steps) {
+            handler.postDelayed({
+                val v = (step.toFloat() / steps) * volume
+                runCatching { mp.setVolume(v, v) }
+            }, step * 2L)
+        }
     }
 
     override fun onCompletion(arg0: MediaPlayer) {
