@@ -15,7 +15,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
@@ -51,8 +53,11 @@ fun calculateLoopSampleCount(
     val nominal = (cycles * samplesPerCycle).roundToInt()
     val halfPeriod = maxOf(1, (samplesPerCycle / 2).toInt())
     val twoPiFOverFs = 2.0 * PI * frequency / sampleRate
+    // Minimize 1-cos instead of |sin|: cos=1 only at complete cycles, while |sin|=0
+    // at both complete AND half cycles. A half-cycle boundary reverses waveform phase
+    // on every loop restart, causing an audible thump.
     return (nominal - halfPeriod..nominal + halfPeriod).minByOrNull { n ->
-        if (n <= 0) Double.MAX_VALUE else kotlin.math.abs(sin(twoPiFOverFs * n))
+        if (n <= 0) Double.MAX_VALUE else (1.0 - cos(twoPiFOverFs * n))
     } ?: nominal
 }
 
@@ -71,6 +76,7 @@ class ToneGenerator {
      */
     fun play(frequency: Float) {
         activeJob?.cancel()
+        Timber.d("play: freq=%fHz replacing=%b", frequency, audioTrack != null)
         activeJob =
             scope.launch {
                 fadeOutAndRelease()
@@ -119,6 +125,7 @@ class ToneGenerator {
                 trackMutex.withLock { audioTrack = track }
 
                 fadeIn(track)
+                Timber.d("play: fade-in complete freq=%fHz loopSamples=%d bufferSize=%d", frequency, loopSamples, bufferSize.coerceAtLeast(minBuf))
             }
     }
 
@@ -127,6 +134,7 @@ class ToneGenerator {
      * Safe to call from the main thread — returns immediately.
      */
     fun stop() {
+        Timber.d("stop: wasPlaying=%b", isPlaying)
         activeJob?.cancel()
         activeJob =
             scope.launch {
@@ -148,14 +156,16 @@ class ToneGenerator {
                 audioTrack.also { audioTrack = null }
             } ?: return
 
+        Timber.d("fadeOutAndRelease: track playing=%b", track.playState == AudioTrack.PLAYSTATE_PLAYING)
         withContext(NonCancellable) {
             if (track.playState == AudioTrack.PLAYSTATE_PLAYING) {
                 fadeOut(track)
             }
             track.setVolume(0f)
-            delay(20L)
-            runCatching { track.pause() }
+            delay(150L)
+            runCatching { track.stop() }
             track.release()
+            Timber.d("fadeOutAndRelease: track released")
         }
     }
 
