@@ -131,13 +131,13 @@ class ToneGenerator {
         try {
             if (track.playState == AudioTrack.PLAYSTATE_PLAYING) {
                 fadeOut(track)
-                track.pause()
-                track.flush()
             }
         } finally {
-            // Silence the track before releasing so any queued hardware buffer
-            // drains at zero amplitude — no click even if cancelled mid-fade.
+            // Always pause and flush before releasing — even if cancelled mid-fade.
+            // Without pause(), releasing a playing track causes a hardware click.
             track.setVolume(0f)
+            runCatching { track.pause() }
+            runCatching { track.flush() }
             track.release()
         }
     }
