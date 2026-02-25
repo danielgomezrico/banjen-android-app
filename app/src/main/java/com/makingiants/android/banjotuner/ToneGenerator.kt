@@ -6,11 +6,13 @@ import android.media.AudioTrack
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.math.PI
@@ -19,10 +21,11 @@ import kotlin.math.sin
 
 const val TONE_SAMPLE_RATE = 44100
 
-// Fade duration: 10ms is imperceptible as a fade but eliminates the
-// waveform discontinuity that causes the audible click on start/stop.
-private const val FADE_DURATION_MS = 10L
-private const val FADE_STEPS = 10
+// Fade duration: 20ms/20-step ramp — imperceptible to the ear but eliminates
+// waveform discontinuity clicks on start/stop. 20 steps gives a smooth ramp
+// even when the Android timer batches late (~4ms floor per step).
+private const val FADE_DURATION_MS = 20L
+private const val FADE_STEPS = 20
 
 fun generateSineWaveSamples(frequency: Float, sampleRate: Int, numSamples: Int): ShortArray {
     val samples = ShortArray(numSamples)
@@ -38,7 +41,12 @@ fun generateSineWaveSamples(frequency: Float, sampleRate: Int, numSamples: Int):
 fun calculateLoopSampleCount(frequency: Float, sampleRate: Int): Int {
     val samplesPerCycle = sampleRate.toFloat() / frequency
     val cycles = (sampleRate / samplesPerCycle).roundToInt()
-    return (cycles * samplesPerCycle).roundToInt()
+    val nominal = (cycles * samplesPerCycle).roundToInt()
+    val halfPeriod = maxOf(1, (samplesPerCycle / 2).toInt())
+    val twoPiFOverFs = 2.0 * PI * frequency / sampleRate
+    return (nominal - halfPeriod..nominal + halfPeriod).minByOrNull { n ->
+        if (n <= 0) Double.MAX_VALUE else kotlin.math.abs(sin(twoPiFOverFs * n))
+    } ?: nominal
 }
 
 class ToneGenerator {
@@ -128,16 +136,13 @@ class ToneGenerator {
             audioTrack.also { audioTrack = null }
         } ?: return
 
-        try {
+        withContext(NonCancellable) {
             if (track.playState == AudioTrack.PLAYSTATE_PLAYING) {
                 fadeOut(track)
             }
-        } finally {
-            // Always pause and flush before releasing — even if cancelled mid-fade.
-            // Without pause(), releasing a playing track causes a hardware click.
             track.setVolume(0f)
+            delay(20L)
             runCatching { track.pause() }
-            runCatching { track.flush() }
             track.release()
         }
     }

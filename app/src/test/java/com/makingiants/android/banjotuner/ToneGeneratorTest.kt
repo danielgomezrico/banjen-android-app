@@ -1,6 +1,7 @@
 package com.makingiants.android.banjotuner
 
 import org.junit.Test
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.sin
 import kotlin.test.assertEquals
@@ -38,6 +39,20 @@ class ToneGeneratorTest {
         // Should be a multiple of samples-per-cycle (44100/440 ~= 100.23)
         // The function should return at least one full second of audio
         assertTrue(count > 0)
-        assertTrue(count <= TONE_SAMPLE_RATE)
+        assertTrue(count <= TONE_SAMPLE_RATE * 2)
+    }
+
+    @Test
+    fun `calculateLoopSampleCount produces near-zero phase error at loop boundary for all DGBD strings`() {
+        // DGBD tuning: D3=146.83Hz, G3=196.00Hz, B3=246.94Hz, D4=293.66Hz
+        val dgbdFrequencies = listOf(146.83f, 196.00f, 246.94f, 293.66f)
+        for (frequency in dgbdFrequencies) {
+            val loopSamples = calculateLoopSampleCount(frequency, TONE_SAMPLE_RATE)
+            val phaseError = abs(sin(2.0 * PI * frequency * loopSamples / TONE_SAMPLE_RATE))
+            assertTrue(
+                phaseError < 0.01,
+                "Phase error $phaseError >= 0.01 for frequency ${frequency}Hz (loopSamples=$loopSamples)"
+            )
+        }
     }
 }
