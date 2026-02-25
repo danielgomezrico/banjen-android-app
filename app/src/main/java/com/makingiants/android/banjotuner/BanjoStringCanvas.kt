@@ -15,6 +15,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -37,6 +38,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.abs
@@ -113,6 +115,7 @@ fun BanjoStringCanvas(
     modifier: Modifier = Modifier,
 ) {
     val textMeasurer = rememberTextMeasurer()
+    val coroutineScope = rememberCoroutineScope()
     val infiniteTransition = rememberInfiniteTransition(label = "strings-breathe")
 
     // Breathing animation (opacity)
@@ -166,6 +169,9 @@ fun BanjoStringCanvas(
     // Per-string attack progress (0=biased envelope, 1=symmetric)
     val attackProgress = remember { Array(NUM_STRINGS) { Animatable(1f) } }
 
+    // Per-string reveal progress (0=hidden, 1=fully drawn) — opening animation
+    val revealProgress = remember { Array(NUM_STRINGS) { Animatable(0f) } }
+
     // Per-string last tap Y normalized (0=nut, 1=bridge)
     val touchYNorms = remember { FloatArray(NUM_STRINGS) { 0.5f } }
 
@@ -187,6 +193,19 @@ fun BanjoStringCanvas(
                 wavePhase += dtSeconds
             }
             lastNanos = now
+        }
+    }
+
+    // Opening animation: reveal each string nut-to-bridge, staggered left-to-right
+    LaunchedEffect(Unit) {
+        for (i in 0 until NUM_STRINGS) {
+            launch {
+                delay(i * 150L)
+                revealProgress[i].animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 380, easing = EaseOutCubic),
+                )
+            }
         }
     }
 
@@ -239,6 +258,12 @@ fun BanjoStringCanvas(
             modifier
                 .pointerInput(selectedString) {
                     detectTapGestures { offset ->
+                        // Interrupt opening animation so tone starts immediately on tap
+                        if (revealProgress.any { it.value < 1f }) {
+                            coroutineScope.launch {
+                                revealProgress.forEach { it.snapTo(1f) }
+                            }
+                        }
                         val hPad = SAFE_PADDING_DP * density
                         val availableWidth = size.width - 2 * hPad
                         val bandWidth = availableWidth / NUM_STRINGS
@@ -409,6 +434,7 @@ fun BanjoStringCanvas(
                 color = glowColor,
                 alpha = glowAlpha * 0.15f * effectiveAlpha,
                 strokeWidth = hazeWidth,
+                revealProgress = revealProgress[i].value,
             )
             // Layer 2: blur
             drawStringPath(
@@ -424,6 +450,7 @@ fun BanjoStringCanvas(
                 color = glowColor,
                 alpha = glowAlpha * 0.40f * effectiveAlpha,
                 strokeWidth = blurWidth,
+                revealProgress = revealProgress[i].value,
             )
 
             // Layer 3: core (main string)
@@ -443,12 +470,13 @@ fun BanjoStringCanvas(
                 sharpness = waveSharpness[i].value,
                 touchYNorm = touchYNorms[i],
                 attackProgress = attackProgress[i].value,
+                revealProgress = revealProgress[i].value,
                 isWound = i < 2,
             )
 
             // --- Labels ---
             val labelColor = palette.label
-            val labelAlpha = if (isActive) 1f else effectiveAlpha * 0.65f
+            val labelAlpha = (if (isActive) 1f else effectiveAlpha * 0.65f) * revealProgress[i].value
             val labelY = bridgeY - 76f * density
 
             drawStringLabel(
@@ -482,6 +510,7 @@ private fun DrawScope.drawStringPath(
     sharpness: Float = 3.0f,
     touchYNorm: Float = 0.5f,
     attackProgress: Float = 1.0f,
+    revealProgress: Float = 1.0f,
     isWound: Boolean = false,
 ) {
     if (alpha <= 0.001f) return
@@ -490,7 +519,9 @@ private fun DrawScope.drawStringPath(
     val segments = 80
     val segmentHeight = stringLength / segments
 
-    for (s in 0..segments) {
+    if (revealProgress <= 0f) return
+    val revealSegments = (revealProgress * segments).toInt().coerceAtLeast(1)
+    for (s in 0..revealSegments) {
         val y = stringTop + s * segmentHeight
         val yNorm = if (stringLength > 0) (s.toFloat() / segments) else 0f
 
