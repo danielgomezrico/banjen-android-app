@@ -1,5 +1,0 @@
-<<<<<<< Updated upstream
-Banjen: Banjo & Cavaquinho Tuner
-=======
-Banjen: Banjo & Cavaquinho Tuner | By Ear
->>>>>>> Stashed changes
