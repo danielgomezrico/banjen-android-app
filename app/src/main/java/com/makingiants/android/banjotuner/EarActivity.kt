@@ -313,7 +313,12 @@ class EarActivity : AppCompatActivity() {
         }
 
         Scaffold(
-            snackbarHost = { SnackbarHost(snackbarHostState) },
+            snackbarHost = {
+                SnackbarHost(
+                    hostState = snackbarHostState,
+                    modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
+                )
+            },
             containerColor = colorResource(id = R.color.banjen_background),
             contentWindowInsets = WindowInsets(0),
             floatingActionButton = {
