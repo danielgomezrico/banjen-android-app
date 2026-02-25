@@ -416,7 +416,7 @@ class EarActivity : AppCompatActivity() {
             ModalBottomSheet(
                 onDismissRequest = { showSettings = false },
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-                containerColor = colorResource(id = R.color.banjen_background),
+                containerColor = Color(0xFF1A1210),
             ) {
                 Column(
                     modifier =
@@ -455,6 +455,14 @@ class EarActivity : AppCompatActivity() {
                                 .apply()
                         },
                         onShareTuning = { shareTuning(currentTuningModel) },
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Box(
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .height(1.dp)
+                                .background(Color(0xFF2E2420)),
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     PitchControl(referencePitch) { newPitch ->
@@ -681,20 +689,30 @@ class EarActivity : AppCompatActivity() {
         var expanded by remember { mutableStateOf(false) }
 
         Box {
-            OutlinedButton(onClick = { expanded = true }) {
-                Text(
-                    text = label,
-                    style =
-                        MaterialTheme.typography.bodyLarge.copy(
-                            fontWeight = FontWeight.Medium,
-                            color = colorResource(id = R.color.banjen_accent),
-                        ),
-                )
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    contentDescription = null,
-                    tint = colorResource(id = R.color.banjen_accent),
-                )
+            Box(
+                modifier =
+                    Modifier
+                        .clip(RoundedCornerShape(50))
+                        .background(Color(0xFF2A1F1A))
+                        .border(1.dp, Color(0xFF5C4A3E), RoundedCornerShape(50))
+                        .clickable { expanded = true }
+                        .padding(horizontal = 16.dp, vertical = 10.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = label,
+                        style =
+                            MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFFB89A86),
+                            ),
+                    )
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        tint = Color(0xFFB89A86),
+                    )
+                }
             }
             DropdownMenu(
                 expanded = expanded,
