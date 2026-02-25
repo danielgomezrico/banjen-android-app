@@ -37,6 +37,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.PI
 import kotlin.math.abs
@@ -166,6 +167,9 @@ fun BanjoStringCanvas(
     // Per-string attack progress (0=biased envelope, 1=symmetric)
     val attackProgress = remember { Array(NUM_STRINGS) { Animatable(1f) } }
 
+    // Per-string reveal progress (0=hidden, 1=fully drawn) — opening animation
+    val revealProgress = remember { Array(NUM_STRINGS) { Animatable(0f) } }
+
     // Per-string last tap Y normalized (0=nut, 1=bridge)
     val touchYNorms = remember { FloatArray(NUM_STRINGS) { 0.5f } }
 
@@ -187,6 +191,19 @@ fun BanjoStringCanvas(
                 wavePhase += dtSeconds
             }
             lastNanos = now
+        }
+    }
+
+    // Opening animation: reveal each string nut-to-bridge, staggered left-to-right
+    LaunchedEffect(Unit) {
+        for (i in 0 until NUM_STRINGS) {
+            launch {
+                delay(i * 150L)
+                revealProgress[i].animateTo(
+                    targetValue = 1f,
+                    animationSpec = tween(durationMillis = 380, easing = EaseOutCubic),
+                )
+            }
         }
     }
 
@@ -409,6 +426,7 @@ fun BanjoStringCanvas(
                 color = glowColor,
                 alpha = glowAlpha * 0.15f * effectiveAlpha,
                 strokeWidth = hazeWidth,
+                revealProgress = revealProgress[i].value,
             )
             // Layer 2: blur
             drawStringPath(
@@ -424,6 +442,7 @@ fun BanjoStringCanvas(
                 color = glowColor,
                 alpha = glowAlpha * 0.40f * effectiveAlpha,
                 strokeWidth = blurWidth,
+                revealProgress = revealProgress[i].value,
             )
 
             // Layer 3: core (main string)
@@ -443,6 +462,7 @@ fun BanjoStringCanvas(
                 sharpness = waveSharpness[i].value,
                 touchYNorm = touchYNorms[i],
                 attackProgress = attackProgress[i].value,
+                revealProgress = revealProgress[i].value,
                 isWound = i < 2,
             )
 
