@@ -15,6 +15,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -114,6 +115,7 @@ fun BanjoStringCanvas(
     modifier: Modifier = Modifier,
 ) {
     val textMeasurer = rememberTextMeasurer()
+    val coroutineScope = rememberCoroutineScope()
     val infiniteTransition = rememberInfiniteTransition(label = "strings-breathe")
 
     // Breathing animation (opacity)
@@ -256,6 +258,12 @@ fun BanjoStringCanvas(
             modifier
                 .pointerInput(selectedString) {
                     detectTapGestures { offset ->
+                        // Interrupt opening animation so tone starts immediately on tap
+                        if (revealProgress.any { it.value < 1f }) {
+                            coroutineScope.launch {
+                                revealProgress.forEach { it.snapTo(1f) }
+                            }
+                        }
                         val hPad = SAFE_PADDING_DP * density
                         val availableWidth = size.width - 2 * hPad
                         val bandWidth = availableWidth / NUM_STRINGS
