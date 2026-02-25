@@ -3,11 +3,26 @@ package com.makingiants.android.banjotuner
 import android.media.AudioAttributes
 import android.media.AudioFormat
 import android.media.AudioTrack
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.math.PI
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
 const val TONE_SAMPLE_RATE = 44100
+
+// Fade duration: 10ms is imperceptible as a fade but eliminates the
+// waveform discontinuity that causes the audible click on start/stop.
+private const val FADE_DURATION_MS = 10L
+private const val FADE_STEPS = 10
 
 fun generateSineWaveSamples(frequency: Float, sampleRate: Int, numSamples: Int): ShortArray {
     val samples = ShortArray(numSamples)
@@ -27,53 +42,123 @@ fun calculateLoopSampleCount(frequency: Float, sampleRate: Int): Int {
 }
 
 class ToneGenerator {
+
+    private val scope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private val trackMutex = Mutex()
     private var audioTrack: AudioTrack? = null
-    val isPlaying: Boolean get() = audioTrack?.playState == AudioTrack.PLAYSTATE_PLAYING
+    private var activeJob: Job? = null
 
+    val isPlaying: Boolean
+        get() = audioTrack?.playState == AudioTrack.PLAYSTATE_PLAYING
+
+    /**
+     * Begin playing a tone at [frequency] Hz with a short fade-in.
+     * If a tone is already playing it fades out first. Safe to call from the main thread.
+     */
     fun play(frequency: Float) {
-        stop()
+        activeJob?.cancel()
+        activeJob = scope.launch {
+            fadeOutAndRelease()
+            if (!isActive) return@launch
 
-        val loopSamples = calculateLoopSampleCount(frequency, TONE_SAMPLE_RATE)
-        val samples = generateSineWaveSamples(frequency, TONE_SAMPLE_RATE, loopSamples)
-        val bufferSize = loopSamples * 2 // 16-bit = 2 bytes per sample
-
-        val track = AudioTrack.Builder()
-            .setAudioAttributes(
-                AudioAttributes.Builder()
-                    .setUsage(AudioAttributes.USAGE_MEDIA)
-                    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                    .build()
-            )
-            .setAudioFormat(
-                AudioFormat.Builder()
-                    .setSampleRate(TONE_SAMPLE_RATE)
-                    .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                    .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
-                    .build()
-            )
-            .setBufferSizeInBytes(bufferSize.coerceAtLeast(AudioTrack.getMinBufferSize(
+            val loopSamples = calculateLoopSampleCount(frequency, TONE_SAMPLE_RATE)
+            val samples = generateSineWaveSamples(frequency, TONE_SAMPLE_RATE, loopSamples)
+            val bufferSize = loopSamples * 2
+            val minBuf = AudioTrack.getMinBufferSize(
                 TONE_SAMPLE_RATE,
                 AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT,
-            )))
-            .setTransferMode(AudioTrack.MODE_STATIC)
-            .build()
+            )
+            val track = AudioTrack.Builder()
+                .setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(AudioAttributes.USAGE_MEDIA)
+                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                        .build(),
+                )
+                .setAudioFormat(
+                    AudioFormat.Builder()
+                        .setSampleRate(TONE_SAMPLE_RATE)
+                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                        .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                        .build(),
+                )
+                .setBufferSizeInBytes(bufferSize.coerceAtLeast(minBuf))
+                .setTransferMode(AudioTrack.MODE_STATIC)
+                .build()
 
-        track.write(samples, 0, samples.size)
-        track.setLoopPoints(0, loopSamples, -1)
-        track.play()
+            track.write(samples, 0, samples.size)
+            track.setLoopPoints(0, loopSamples, -1)
 
-        audioTrack = track
+            if (!isActive) {
+                track.release()
+                return@launch
+            }
+
+            track.setVolume(0f)
+            track.play()
+
+            trackMutex.withLock { audioTrack = track }
+
+            fadeIn(track)
+        }
     }
 
+    /**
+     * Stop the currently playing tone with a short fade-out to avoid a click.
+     * Safe to call from the main thread — returns immediately.
+     */
     fun stop() {
-        audioTrack?.apply {
-            if (playState == AudioTrack.PLAYSTATE_PLAYING) {
-                pause()
-                flush()
-            }
-            release()
+        activeJob?.cancel()
+        activeJob = scope.launch {
+            fadeOutAndRelease()
         }
-        audioTrack = null
+    }
+
+    /**
+     * Release all resources. Call when this ToneGenerator will no longer be used.
+     */
+    fun release() {
+        activeJob?.cancel()
+        scope.cancel()
+    }
+
+    private suspend fun fadeOutAndRelease() {
+        val track = trackMutex.withLock {
+            audioTrack.also { audioTrack = null }
+        } ?: return
+
+        try {
+            if (track.playState == AudioTrack.PLAYSTATE_PLAYING) {
+                fadeOut(track)
+                track.pause()
+                track.flush()
+            }
+        } finally {
+            // Silence the track before releasing so any queued hardware buffer
+            // drains at zero amplitude — no click even if cancelled mid-fade.
+            track.setVolume(0f)
+            track.release()
+        }
+    }
+
+    // delay() is a cancellation-cooperative suspend point — it throws
+    // CancellationException when the parent coroutine is cancelled, so
+    // no explicit isActive check is needed inside these loops.
+
+    private suspend fun fadeOut(track: AudioTrack) {
+        val stepDelayMs = FADE_DURATION_MS / FADE_STEPS
+        for (step in FADE_STEPS downTo 0) {
+            track.setVolume(step.toFloat() / FADE_STEPS)
+            if (step > 0) delay(stepDelayMs)
+        }
+    }
+
+    private suspend fun fadeIn(track: AudioTrack) {
+        val stepDelayMs = FADE_DURATION_MS / FADE_STEPS
+        for (step in 0..FADE_STEPS) {
+            track.setVolume(step.toFloat() / FADE_STEPS)
+            if (step < FADE_STEPS) delay(stepDelayMs)
+        }
     }
 }
