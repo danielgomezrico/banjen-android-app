@@ -110,6 +110,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -164,6 +165,7 @@ class EarActivity : AppCompatActivity() {
     private var audioRecord: AudioRecord? = null
 
     private fun stopAudioCapture() {
+        Timber.d("audioCapture: stop")
         try {
             audioRecord?.stop()
         } catch (_: IllegalStateException) {
@@ -173,6 +175,7 @@ class EarActivity : AppCompatActivity() {
     }
 
     private fun exitSessionMode() {
+        Timber.d("session: exit")
         sessionModeActive.value = false
         toneGenerator.stop()
     }
@@ -214,6 +217,7 @@ class EarActivity : AppCompatActivity() {
             },
         )
 
+        if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
         Rive.init(this)
         MobileAds.initialize(this)
         val autoPlayIndex = parseStringIndex(intent)
@@ -221,6 +225,7 @@ class EarActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
+        Timber.d("onPause: sessionWasActive=%b", sessionModeActive.value)
         if (sessionModeActive.value) {
             exitSessionMode()
         }
@@ -302,6 +307,8 @@ class EarActivity : AppCompatActivity() {
             val totalStrings = currentTuningModel.notes.size
             while (index < totalStrings && sessionModeActive.value) {
                 selectedOption.intValue = index
+                val n = currentTuningModel.notes[index]
+                Timber.d("session: string index=%d note=%s freq=%.2fHz durationSec=%d", index, n.name, n.frequency, SECONDS_PER_STRING)
                 toneGenerator.play(currentTuningModel.notes[index].frequency)
                 delay(SECONDS_PER_STRING * 1000L)
                 if (index < totalStrings - 1) {
@@ -351,6 +358,7 @@ class EarActivity : AppCompatActivity() {
                         IconButton(onClick = {
                             toneGenerator.stop()
                             selectedOption.intValue = -1
+                            Timber.d("session: start tuning=%s strings=%d", currentTuningModel.name, currentTuningModel.notes.size)
                             sessionModeActive.value = true
                         }) {
                             Icon(
@@ -392,16 +400,23 @@ class EarActivity : AppCompatActivity() {
                             stopAudioCapture()
                         }
                         if (index == -1) {
+                            Timber.d("tap: stop prevIndex=%d", selectedOption.intValue)
                             toneGenerator.stop()
                             selectedOption.intValue = -1
                             selectedStringIndex.intValue = -1
                             isVolumeLow.value = false
                         } else {
                             val note = currentTuningModel.notes.getOrNull(index) ?: return@BanjoStringCanvas
+                            Timber.d("tap: play index=%d note=%s freq=%.2fHz instrument=%s tuning=%s refPitch=%d", index, note.name, note.frequency, currentInstrument.name, currentTuningModel.name, referencePitch.intValue)
                             toneGenerator.play(note.frequency)
                             selectedOption.intValue = index
                             selectedStringIndex.intValue = index
                             isVolumeLow.value = isVolumeLow()
+                            if (isVolumeLow.value) {
+                                val cur = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
+                                val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+                                Timber.d("volumeLow: current=%d max=%d", cur, max)
+                            }
                             if (isVolumeLow.value) {
                                 scope.launch { snackbarHostState.showSnackbar(volumeLowMessage) }
                             }
@@ -443,6 +458,7 @@ class EarActivity : AppCompatActivity() {
                         instruments = ALL_INSTRUMENTS,
                         onInstrumentSelected = { newIndex ->
                             showSettings = false
+                            Timber.d("instrumentChange: newIndex=%d name=%s", newIndex, ALL_INSTRUMENTS[newIndex].name)
                             toneGenerator.stop()
                             selectedOption.intValue = -1
                             isVolumeLow.value = false
@@ -457,6 +473,7 @@ class EarActivity : AppCompatActivity() {
                         tunings = currentInstrument.tunings,
                         onTuningSelected = { newIndex ->
                             showSettings = false
+                            Timber.d("tuningChange: newIndex=%d name=%s", newIndex, currentInstrument.tunings[newIndex].name)
                             toneGenerator.stop()
                             selectedOption.intValue = -1
                             isVolumeLow.value = false
@@ -476,6 +493,7 @@ class EarActivity : AppCompatActivity() {
                         if (currentIndex >= 0) {
                             val note = currentTuningModel.notes.getOrNull(currentIndex)
                             if (note != null) {
+                                Timber.d("pitchAdjust: newA=%d ratio=%f effectiveHz=%f", newPitch, pitchRatio, note.frequency * pitchRatio)
                                 toneGenerator.play(note.frequency * pitchRatio)
                             }
                         }
@@ -505,6 +523,7 @@ class EarActivity : AppCompatActivity() {
     ) {
         LaunchedEffect(Unit) {
             isVolumeLow.value = isVolumeLow()
+            Timber.d("autoPlay: index=%d note=%s freq=%.2fHz", index, note.name, note.frequency)
             toneGenerator.play(note.frequency)
         }
     }
@@ -524,6 +543,7 @@ class EarActivity : AppCompatActivity() {
         }
 
         LaunchedEffect(targetFrequency) {
+            var lastPitchLogMs = 0L
             withContext(Dispatchers.IO) {
                 val minBufferSize =
                     AudioRecord.getMinBufferSize(
@@ -543,6 +563,7 @@ class EarActivity : AppCompatActivity() {
                     )
                 audioRecord = record
                 record.startRecording()
+                Timber.d("audioCapture: start sampleRate=%d bufferSize=%d actualBufferSize=%d", sampleRate, bufferSize, actualBufferSize)
 
                 val audioBuffer = FloatArray(bufferSize)
                 while (isActive) {
@@ -568,6 +589,13 @@ class EarActivity : AppCompatActivity() {
                             }
                         withContext(Dispatchers.Main) {
                             pitchResult.value = result
+                        }
+                        val now = System.currentTimeMillis()
+                        if (now - lastPitchLogMs >= 1000L) {
+                            val detectedStr = if (result.detectedHz <= 0) "none" else "%.1fHz".format(result.detectedHz)
+                            val centsStr = if (result.status == TuningStatus.NO_SIGNAL) "n/a" else "%+.1f".format(result.centDeviation)
+                            Timber.d("pitch: detected=%s target=%.1fHz cents=%s status=%s", detectedStr, targetFrequency, centsStr, result.status)
+                            lastPitchLogMs = now
                         }
                     }
                 }

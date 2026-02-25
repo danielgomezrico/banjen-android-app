@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.PI
+import timber.log.Timber
 import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.pow
@@ -260,6 +261,7 @@ fun BanjoStringCanvas(
                     detectTapGestures { offset ->
                         // Interrupt opening animation so tone starts immediately on tap
                         if (revealProgress.any { it.value < 1f }) {
+                            Timber.d("tap: interrupted opening animation — snapping to full reveal")
                             coroutineScope.launch {
                                 revealProgress.forEach { it.snapTo(1f) }
                             }
@@ -288,6 +290,10 @@ fun BanjoStringCanvas(
                                 yNorm > 0.7f -> 2
                                 else -> 1
                             }
+
+                        val zone = when (tapZone.intValue) { 0 -> "nut"; 2 -> "bridge"; else -> "center" }
+                        val action = if (tappedIndex == selectedString) "toggle-off" else "select"
+                        Timber.d("tap: index=%d zone=%s yNorm=%.2f action=%s", tappedIndex, zone, yNorm, action)
 
                         if (tappedIndex == selectedString) {
                             onStringSelected(-1)
