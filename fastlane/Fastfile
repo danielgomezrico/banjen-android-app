@@ -13,7 +13,7 @@ platform :android do
 
     # Patch versionName and versionCode in build.gradle before building.
     # Version code: current value + 1.
-    gradle_path = "../app/build.gradle"
+    gradle_path = File.expand_path("../app/build.gradle", __dir__)
     gradle_content = File.read(gradle_path)
     current_version_code = gradle_content.match(/def appVersionCode = (\d+)/)[1].to_i
     version_code = current_version_code + 1
