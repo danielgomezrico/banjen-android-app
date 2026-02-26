@@ -56,11 +56,9 @@ jobs:
           echo "$GOOGLE_SERVICES" | base64 -d > app/google-services.json
           echo "$KEY" | base64 -d > app/key.keystore
 
-      - name: Deploy to Play Store and create GitHub release
+      - name: Deploy to Play Store
         env:
           PLAY_STORE_SERVICE_ACCOUNT_JSON_B64: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           export PLAY_STORE_SERVICE_ACCOUNT_JSON=$(echo "$PLAY_STORE_SERVICE_ACCOUNT_JSON_B64" | base64 -d)
           bundle exec fastlane android deploy
