@@ -3,6 +3,7 @@ package com.makingiants.android.banjotuner
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.filters.MediumTest
 import org.junit.Rule
@@ -68,5 +69,37 @@ class EarActivityTest {
         descriptions.forEach { description ->
             composeTestRule.onNode(hasContentDescription(description)).assertExists()
         }
+    }
+
+    @Test
+    fun test_settingsButtonExists() {
+        composeTestRule
+            .onNode(hasContentDescription("Settings"))
+            .assertExists()
+    }
+
+    @Test
+    fun test_wordmarkExists() {
+        composeTestRule
+            .onNodeWithText("BANJEN")
+            .assertExists()
+    }
+
+    @Test
+    fun test_sessionButtonExists() {
+        composeTestRule
+            .onNode(hasContentDescription("Session mode"))
+            .assertExists()
+    }
+
+    @Test
+    fun test_settingsSheetOpens() {
+        composeTestRule
+            .onNode(hasContentDescription("Settings"))
+            .performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule
+            .onNodeWithText("4-String Banjo")
+            .assertExists()
     }
 }
