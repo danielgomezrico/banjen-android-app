@@ -55,17 +55,6 @@ platform :android do
 
     add_git_tag(tag: next_version)
     push_git_tags
-
-    set_github_release(
-      repository_name: ENV["GITHUB_REPOSITORY"],
-      api_token: ENV["GITHUB_TOKEN"],
-      name: "v#{next_version}",
-      tag_name: next_version,
-      description: notes,
-      is_draft: false,
-      is_prerelease: false,
-      upload_assets: ["app/build/outputs/bundle/release/app-release.aab"]
-    )
   end
 
   desc "Preview next version and changelog from conventional commits (dry-run, no build)"
