@@ -369,6 +369,7 @@ class EarActivity : AppCompatActivity() {
                 }
 
                 BanjoStringCanvas(
+                    notes = currentTuningModel.notes,
                     selectedString = selectedOption.intValue,
                     onStringSelected = { index ->
                         if (sessionModeActive.value) return@BanjoStringCanvas

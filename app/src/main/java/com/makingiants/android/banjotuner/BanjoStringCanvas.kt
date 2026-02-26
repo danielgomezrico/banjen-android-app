@@ -111,6 +111,7 @@ private const val SAFE_PADDING_DP = 16f
 
 @Composable
 fun BanjoStringCanvas(
+    notes: List<Note>,
     selectedString: Int,
     onStringSelected: (index: Int) -> Unit,
     modifier: Modifier = Modifier,
