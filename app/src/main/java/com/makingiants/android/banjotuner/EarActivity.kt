@@ -208,6 +208,7 @@ class EarActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
+        volumeControlStream = AudioManager.STREAM_MUSIC
 
         savedPitch = prefs.getInt(KEY_REFERENCE_PITCH, DEFAULT_PITCH)
 
@@ -369,6 +370,7 @@ class EarActivity : AppCompatActivity() {
                 }
 
                 BanjoStringCanvas(
+                    notes = currentTuningModel.notes,
                     selectedString = selectedOption.intValue,
                     onStringSelected = { index ->
                         if (sessionModeActive.value) return@BanjoStringCanvas
