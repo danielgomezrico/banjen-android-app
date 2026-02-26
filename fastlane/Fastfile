@@ -23,7 +23,7 @@ platform :android do
     File.write(gradle_path, gradle_content)
 
     git_commit(
-      path: ["../app/build.gradle"],
+      path: [gradle_path],
       message: "chore(CI): Prepare version #{next_version}-#{version_code}"
     )
     push_to_git_remote
