@@ -67,6 +67,7 @@ private data class StringColors(
 
 private val stringPalette =
     listOf(
+        StringColors(Color(0xFF5C7B58), Color(0xFF78C870), Color(0xFF78C870), Color(0xFF90B082)), // g4 drone
         StringColors(Color(0xFF8C7161), Color(0xFFD4956A), Color(0xFFD4956A), Color(0xFFB89A86)), // D3
         StringColors(Color(0xFF6B8490), Color(0xFF5AAFCB), Color(0xFF5AAFCB), Color(0xFF8EADB8)), // G3
         StringColors(Color(0xFF8C8062), Color(0xFFCBA55A), Color(0xFFCBA55A), Color(0xFFB8A882)), // B3
@@ -108,6 +109,46 @@ private val breathingAmplitude = floatArrayOf(0.09f, 0.08f, 0.05f, 0.04f) // D3â
 private val breathingPeriodS = floatArrayOf(2.8f, 2.4f, 3.2f, 1.8f) // incommensurate
 private const val NUT_BRIDGE_HEIGHT_DP = 12f
 private const val SAFE_PADDING_DP = 16f
+
+private data class StringPhysics(
+    val idleThickDp: Float,
+    val activeThickDp: Float,
+    val vibAmpDp: Float,
+    val vibFreqHz: Float,
+    val vibWavePeaks: Float,
+    val springStiffness: Float,
+    val springDamping: Float,
+    val releaseDurationMs: Int,
+    val initialSharpness: Float,
+    val sharpnessTransMs: Int,
+    val breathingAmplitude: Float,
+    val breathingPeriodS: Float,
+    val isWound: Boolean,
+)
+
+private fun computeStringPhysics(notes: List<Note>): List<StringPhysics> {
+    val freqMin = notes.minOf { it.frequency }
+    val freqMax = notes.maxOf { it.frequency }
+    val golden = 0.6180339887f
+    return notes.mapIndexed { i, note ->
+        val fn = if (freqMax > freqMin) (note.frequency - freqMin) / (freqMax - freqMin) else 0.5f
+        StringPhysics(
+            idleThickDp       = lerp(4.0f, 2.0f, fn),
+            activeThickDp     = lerp(5.5f, 2.8f, fn),
+            vibAmpDp          = lerp(8.0f, 4.0f, fn),
+            vibFreqHz         = lerp(3.0f, 6.0f, fn),
+            vibWavePeaks      = lerp(2.5f, 4.0f, fn),
+            springStiffness   = lerp(300f, 500f, fn),
+            springDamping     = lerp(0.50f, 0.65f, fn),
+            releaseDurationMs = lerp(400f, 220f, fn).toInt(),
+            initialSharpness  = lerp(0.7f, 1.2f, fn),
+            sharpnessTransMs  = lerp(250f, 120f, fn).toInt(),
+            breathingAmplitude = lerp(0.09f, 0.04f, fn),
+            breathingPeriodS  = 1.5f + 1.8f * ((i.toFloat() * golden) % 1.0f),
+            isWound           = note.frequency < 220f,
+        )
+    }
+}
 
 @Composable
 fun BanjoStringCanvas(
@@ -633,6 +674,11 @@ private fun DrawScope.drawStringLabel(
             ),
     )
 }
+
+private fun lerp(start: Float, end: Float, fraction: Float): Float =
+    start + (end - start) * fraction.coerceIn(0f, 1f)
+
+private fun ordinalSuffix(n: Int): String = when (n) { 1 -> "st"; 2 -> "nd"; 3 -> "rd"; else -> "th" }
 
 private fun lerpColor(
     start: Color,
