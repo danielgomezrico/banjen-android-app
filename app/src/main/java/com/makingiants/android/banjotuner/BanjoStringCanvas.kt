@@ -157,6 +157,9 @@ fun BanjoStringCanvas(
     onStringSelected: (index: Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val numStrings = notes.size
+    val physics = remember(notes) { computeStringPhysics(notes) }
+
     val textMeasurer = rememberTextMeasurer()
     val coroutineScope = rememberCoroutineScope()
     val infiniteTransition = rememberInfiniteTransition(label = "strings-breathe")
@@ -187,36 +190,36 @@ fun BanjoStringCanvas(
 
     // Per-string vibration amplitude animatable
     val vibrationAmplitudes =
-        remember {
-            Array(NUM_STRINGS) { Animatable(0f) }
+        remember(numStrings) {
+            Array(numStrings) { Animatable(0f) }
         }
 
     // Per-string color lerp factor (0 = idle, 1 = active)
     val colorFactors =
-        remember {
-            Array(NUM_STRINGS) { Animatable(0f) }
+        remember(numStrings) {
+            Array(numStrings) { Animatable(0f) }
         }
 
     // Per-string opacity (1.0 = full, 0.35 = dimmed)
     val stringOpacities =
-        remember {
-            Array(NUM_STRINGS) { Animatable(1f) }
+        remember(numStrings) {
+            Array(numStrings) { Animatable(1f) }
         }
 
     // Per-string wave sharpness (3.0=pure sine, ~0.7=angular at D3 pluck)
-    val waveSharpness = remember { Array(NUM_STRINGS) { Animatable(3.0f) } }
+    val waveSharpness = remember(numStrings) { Array(numStrings) { Animatable(3.0f) } }
 
     // Tap zone: 0=nut, 1=center, 2=bridge (set during tap, used in sharpness offset)
     val tapZone = remember { mutableIntStateOf(1) }
 
     // Per-string attack progress (0=biased envelope, 1=symmetric)
-    val attackProgress = remember { Array(NUM_STRINGS) { Animatable(1f) } }
+    val attackProgress = remember(numStrings) { Array(numStrings) { Animatable(1f) } }
 
     // Per-string reveal progress (0=hidden, 1=fully drawn) — opening animation
-    val revealProgress = remember { Array(NUM_STRINGS) { Animatable(0f) } }
+    val revealProgress = remember(numStrings) { Array(numStrings) { Animatable(0f) } }
 
     // Per-string last tap Y normalized (0=nut, 1=bridge)
-    val touchYNorms = remember { FloatArray(NUM_STRINGS) { 0.5f } }
+    val touchYNorms = remember(numStrings) { FloatArray(numStrings) { 0.5f } }
 
     // String geometry refs for pointerInput scope (updated each draw frame)
     val stringTopPx = remember { mutableFloatStateOf(0f) }
@@ -240,8 +243,8 @@ fun BanjoStringCanvas(
     }
 
     // Opening animation: reveal each string nut-to-bridge, staggered left-to-right
-    LaunchedEffect(Unit) {
-        for (i in 0 until NUM_STRINGS) {
+    LaunchedEffect(numStrings) {
+        for (i in 0 until numStrings) {
             launch {
                 delay(i * 150L)
                 revealProgress[i].animateTo(
@@ -253,11 +256,12 @@ fun BanjoStringCanvas(
     }
 
     // React to selectedString changes: animate amplitudes, colors, opacities
-    for (i in 0 until NUM_STRINGS) {
+    for (i in 0 until numStrings) {
+        val p = physics[i]
         LaunchedEffect(selectedString, i) {
             if (selectedString == i) {
                 // This string is now active — spring onset (parallel with color + sharpness)
-                launch { vibrationAmplitudes[i].animateTo(1f, spring(stiffness = springStiffness[i], dampingRatio = springDamping[i])) }
+                launch { vibrationAmplitudes[i].animateTo(1f, spring(stiffness = p.springStiffness, dampingRatio = p.springDamping)) }
                 val sharpnessOffset =
                     when (tapZone.intValue) {
                         0 -> 0.05f
@@ -265,8 +269,8 @@ fun BanjoStringCanvas(
                         else -> 0f
                     }
                 launch {
-                    waveSharpness[i].snapTo(initialSharpness[i] + sharpnessOffset)
-                    waveSharpness[i].animateTo(3.0f, tween(sharpnessTransMs[i], easing = EaseOutCubic))
+                    waveSharpness[i].snapTo(p.initialSharpness + sharpnessOffset)
+                    waveSharpness[i].animateTo(3.0f, tween(p.sharpnessTransMs, easing = EaseOutCubic))
                 }
                 launch {
                     attackProgress[i].snapTo(0f)
@@ -275,14 +279,14 @@ fun BanjoStringCanvas(
                 colorFactors[i].animateTo(1f, tween(200, easing = EaseOutCubic))
             } else if (selectedString >= 0) {
                 // Another string is active — decay and dim
-                val easing = if (i < 2) EaseOutCubic else EaseOutQuad
-                vibrationAmplitudes[i].animateTo(0f, tween(releaseDurationMs[i], easing = easing))
+                val easing = if (i < numStrings / 2) EaseOutCubic else EaseOutQuad
+                vibrationAmplitudes[i].animateTo(0f, tween(p.releaseDurationMs, easing = easing))
                 colorFactors[i].animateTo(0f, tween(350, easing = EaseOutCubic))
                 stringOpacities[i].animateTo(DIMMED_OPACITY, tween(300, easing = EaseOutCubic))
             } else {
                 // No string selected — return to idle
-                val easing = if (i < 2) EaseOutCubic else EaseOutQuad
-                vibrationAmplitudes[i].animateTo(0f, tween(releaseDurationMs[i], easing = easing))
+                val easing = if (i < numStrings / 2) EaseOutCubic else EaseOutQuad
+                vibrationAmplitudes[i].animateTo(0f, tween(p.releaseDurationMs, easing = easing))
                 colorFactors[i].animateTo(0f, tween(350, easing = EaseOutCubic))
                 stringOpacities[i].animateTo(1f, tween(300, easing = EaseOutCubic))
             }
