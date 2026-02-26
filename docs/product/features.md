@@ -224,30 +224,44 @@ This is the **opposite** of a sticky-retention model — the app's success metri
 
 ## Priority Matrix
 
-| # | Feature | Tier | Personas | Pain Severity (1-5) | Persona Count | Effort (1-5) | Priority Score |
-|---|---------|------|----------|---------------------|---------------|--------------|----------------|
-| 1 | Ad Placement Redesign | Quick Win | All 5 | 5 | 5 | 1 | **10.0** |
-| 2 | Cavaquinho/Portuguese ASO | Quick Win | Rafael, Marcus | 5 | 2 | 1 | **10.0** |
-| 3 | Beginner String Labels | Quick Win | Harold, Betty | 3 | 2 | 1 | **6.0** |
-| 4 | $2.99 Ad Removal IAP | Core | All 5 | 5 | 5 | 2 | **9.0** |
-| 5 | GDAE Tuning Preset | Core | Siobhan (+network) | 5 | 2 | 3 | **7.0** |
-| 6 | CGBD Tuning Preset | Core | Betty | 5 | 1 | 2 | **5.0** |
-| 7 | Touch Target Enlargement | Core | Betty, Harold | 4 | 2 | 2 | **5.3** |
-| 8 | Adjustable Reference Pitch | Core | Marcus | 4 | 2 | 2 | **5.3** |
-| 9 | Home Screen Widget | Core | Marcus, Harold, Siobhan | 3 | 3 | 3 | **4.0** |
-| 10 | Session Mode | Differentiator | Siobhan, Rafael, Marcus | 4 | 3 | 3 | **5.3** |
-| 11 | Per-Instrument Pitch Memory | Differentiator | Marcus | 3 | 1 | 2 | **3.0** |
-| 12 | Hearing Aid Compatibility | Differentiator | Betty | 3 | 1 | 3 | **2.0** |
-| 13 | Ear Training Progression | Moonshot | Harold, Betty | 4 | 2 | 5 | **2.7** |
-| 14 | Visual Tuning Feedback | Moonshot | Harold, Marcus, Rafael | 3 | 3 | 5 | **2.4** |
+| # | Feature | Tier | Personas | Pain Severity (1-5) | Persona Count | Effort (1-5) | Priority Score | Status |
+|---|---------|------|----------|---------------------|---------------|--------------|----------------|--------|
+| 1 | Ad Placement Redesign | Quick Win | All 5 | 5 | 5 | 1 | **10.0** | TODO |
+| 2 | Cavaquinho/Portuguese ASO | Quick Win | Rafael, Marcus | 5 | 2 | 1 | **10.0** | TODO |
+| 3 | Beginner String Labels | Quick Win | Harold, Betty | 3 | 2 | 1 | **6.0** | TODO |
+| 4 | $2.99 Ad Removal IAP | Core | All 5 | 5 | 5 | 2 | **9.0** | TODO |
+| 5 | GDAE Tuning Preset | Core | Siobhan (+network) | 5 | 2 | 3 | **7.0** | ✅ SHIPPED |
+| 6 | CGBD Tuning Preset | Core | Betty | 5 | 1 | 2 | **5.0** | ✅ SHIPPED |
+| 7 | Touch Target Enlargement | Core | Betty, Harold | 4 | 2 | 2 | **5.3** | TODO |
+| 8 | Adjustable Reference Pitch | Core | Marcus | 4 | 2 | 2 | **5.3** | ✅ SHIPPED |
+| 9 | Home Screen Widget | Core | Marcus, Harold, Siobhan | 3 | 3 | 3 | **4.0** | ✅ SHIPPED |
+| 10 | Session Mode | Differentiator | Siobhan, Rafael, Marcus | 4 | 3 | 3 | **5.3** | ✅ SHIPPED |
 
-*Priority Score = (Pain Severity x Persona Count) / Effort, normalized to 1-10 scale. Scores above 5.0 are ship-immediately urgent.*
+| 11 | Per-Instrument Pitch Memory | Differentiator | Marcus | 3 | 1 | 2 | **3.0** | TODO |
+| 12 | Hearing Aid Compatibility | Differentiator | Betty | 3 | 1 | 3 | **2.0** | TODO |
+| 13 | Ear Training Progression | Moonshot | Harold, Betty | 4 | 2 | 5 | **2.7** | TODO |
+| 14 | Visual Tuning Feedback | Moonshot | Harold, Marcus, Rafael | 3 | 3 | 5 | **2.4** | TODO |
+
+*Priority Score = (Pain Severity x Persona Count) / Effort, normalized to 1-10 scale. Scores above 5.0 are ship-immediately urgent. ✅ SHIPPED = fully implemented in current codebase.*
 
 ---
 
 ## Sequencing Recommendation
 
-The shipping order follows the Growth Ladder from user-personas.md, optimized for maximum persona conversion and revenue at each stage.
+The shipping order follows the Growth Ladder from user-personas.md. Features #5, #6, #8, #9, #10 are already shipped — the active backlog starts at Sprint 1 below.
+
+### ✅ Already Shipped (no action needed)
+
+- **#5 GDAE** — in `TuningModel.kt`
+- **#6 CGBD** — in `TuningModel.kt`
+- **#8 Adjustable Reference Pitch** — `PitchControl` in `EarActivity.kt`
+- **#9 Home Screen Widget** — `TunerWidget.kt`
+- **#10 Session Mode** — `sessionModeActive` in `EarActivity.kt`
+- **4-string alternate tunings (GDAE, CGBD, DGBE)** — fully working; `BanjoStringCanvas` is hardcoded to 4 strings so these work correctly
+
+**Bug — 5-string banjo selector shows but canvas is broken:** `FIVE_STRING_BANJO` appears in the instrument selector but `BanjoStringCanvas` is hardcoded to `NUM_STRINGS = 4`. Selecting 5-string always shows 4 strings. `BanjoStringCanvas` must accept a `notes: List<Note>` parameter and derive count, labels, and animation array sizes from it.
+
+---
 
 ### Sprint 1: Protect Harold + Unlock Revenue (Features #1, #2, #3)
 
@@ -255,69 +269,45 @@ The shipping order follows the Growth Ladder from user-personas.md, optimized fo
 
 **Growth Ladder alignment:** Stage 1 (Protect Harold) + Stage 2 (Unlock Cavaquinho Market)
 
-**Justification:** These three changes are all low-effort (combined: ~1-2 days of work) and address the two highest-priority pains. Feature #1 protects every persona by making the tuning screen sacred. Feature #2 opens an entirely new market with zero code changes. Feature #3 makes Harold's first experience comprehensible. Together, they convert Harold from YouTube workaround to daily user, give Marcus his "one more chance," and make Banjen discoverable to millions of cavaquinho players.
+**Justification:** All three are low-effort (~1-2 days combined). Feature #1 protects every persona by making the tuning screen sacred. Feature #2 opens an entirely new market with zero code changes. Feature #3 makes Harold's first experience comprehensible.
 
-**Revenue impact:** No immediate revenue, but eliminates the #1 cause of permanent user loss (ad-driven deletion) and creates the discoverability path for a market 100x larger than the current 4-string banjo TAM.
+**Revenue impact:** No immediate revenue, but eliminates the #1 cause of permanent user loss and opens the cavaquinho market.
 
 ---
 
-### Sprint 2: Monetize + Unlock Betty (Features #4, #6, #7)
+### Sprint 2: Monetize + Unlock Betty (Features #4, #7)
 
-**Ship:** $2.99 Ad Removal IAP + CGBD Tuning + Touch Target Enlargement
+**Ship:** $2.99 Ad Removal IAP + Touch Target Enlargement
 
 **Growth Ladder alignment:** Stage 1 completion (monetization) + Stage 4 (Unlock Betty)
 
-**Justification:** With Feature #1 already providing a clean free tier, the IAP (Feature #4) becomes an upsell for power users who want zero ads anywhere — not a ransom for basic functionality. CGBD (Feature #6) and touch targets (Feature #7) ship together because they share a persona: Betty can't use the app without CGBD tuning AND buttons she can tap. Shipping one without the other doesn't convert Betty.
+**Note:** CGBD (#6) is already shipped, so Betty's tuning is resolved. This sprint focuses on monetization and touch accessibility. Touch targets are the remaining blocker for Betty.
 
-**Revenue impact:** First revenue. At $2.99 with a conservative 5% conversion of active users, even modest user numbers generate meaningful income for a solo developer. Siobhan and Marcus will purchase immediately.
-
----
-
-### Sprint 3: Unlock the Irish Market (Feature #5)
-
-**Ship:** GDAE Tuning Preset
-
-**Growth Ladder alignment:** Stage 3 (Unlock the Irish Session Market)
-
-**Justification:** GDAE requires new audio files (4 reference tones) and shares infrastructure with CGBD (shipped in Sprint 2). Siobhan is the persona with the highest distribution multiplier — one post on The Session triggers downloads from Dublin to Boston to Melbourne. Shipping GDAE after CGBD means the tuning preset infrastructure is already built and tested.
-
-**Revenue impact:** Siobhan's network amplification effect. Irish session players are a tight, global community. GDAE also serves octave mandolin — doubling addressable users with zero additional effort.
+**Revenue impact:** First revenue. Siobhan and Marcus will purchase immediately. At 5% conversion, even modest DAU generates meaningful income.
 
 ---
 
-### Sprint 4: Convert Marcus (Features #8, #9)
+### Sprint 3: Differentiate (Feature #11)
 
-**Ship:** Adjustable Reference Pitch + Home Screen Widget
+**Ship:** Per-Instrument Pitch Memory
 
-**Growth Ladder alignment:** Stage 5 (Convert Marcus into an Evangelist)
+**Growth Ladder alignment:** Stage 5 deepening (Marcus's full workflow)
 
-**Justification:** Marcus has three non-negotiable conditions: (1) ad-free tuning (done in Sprint 1), (2) adjustable pitch, (3) home screen widget. Sprints 4 delivers #2 and #3. All three conditions met = Marcus reinstalls, recommends on Reddit and YouTube, and his friend Diego in the Austin Brazilian music group installs. Marcus's evangelism is tech-community-focused — Reddit r/WeAreTheMusicMakers, YouTube gear reviews — reaching a different audience than Siobhan's Irish sessions or Rafael's WhatsApp groups.
+**Justification:** All prerequisites are shipped (#5/#6 tuning presets, #8 adjustable pitch, #10 session mode). This is the remaining feature that completes Marcus's three conditions and creates a competitive moat no other tuner offers.
 
-**Revenue impact:** Marcus converts from churned user to paying evangelist. His Reddit post reaches thousands of multi-instrumentalists.
-
----
-
-### Sprint 5: Differentiate (Features #10, #11)
-
-**Ship:** Session Mode + Per-Instrument Pitch Memory
-
-**Growth Ladder alignment:** Stage 6 (Session Mode — cross-persona feature)
-
-**Justification:** Session mode transforms Banjen from "useful tool" to "irreplaceable tool" for the three highest-urgency personas (Siobhan, Rafael, Marcus). Per-instrument pitch memory (Feature #11) depends on both the tuning presets (#5/#6) and adjustable pitch (#8), which are now shipped. These two features together create a competitive moat — no other tuner app offers hands-free auto-advance with per-instrument pitch memory.
-
-**Revenue impact:** Retention and word-of-mouth. These features create the "wow" moments that generate organic recommendations. Siobhan tells the Tuesday table. Rafael shares in WhatsApp. Marcus reviews on YouTube.
+**Revenue impact:** Marcus converts from churned user to paying evangelist on Reddit and YouTube.
 
 ---
 
-### Sprint 6: Deepen Accessibility (Feature #12)
+### Sprint 4: Deepen Accessibility (Feature #12)
 
 **Ship:** Hearing Aid Compatibility Mode
 
 **Growth Ladder alignment:** Stage 4 deepening (Betty's complete experience)
 
-**Justification:** With CGBD, touch targets, and ad-free tuning already shipped, Betty is a converted user. The hearing aid compatibility mode is the finishing touch that makes her experience optimal rather than merely functional. Ships after the core features because it addresses a moderate-severity pain rather than a critical one.
+**Justification:** Betty is now a converted user (CGBD shipped, touch targets shipped, ad-free tuning coming in Sprint 1). This finishing touch signals "we built this for you" to the 65+ demographic.
 
-**Revenue impact:** Modest direct impact, but signals "we built this for you" to the entire 65+ demographic — an underserved, loyal, and willing-to-pay audience.
+**Revenue impact:** Modest direct impact but builds loyalty in an underserved, willing-to-pay audience.
 
 ---
 
@@ -327,15 +317,17 @@ The shipping order follows the Growth Ladder from user-personas.md, optimized fo
 
 **Growth Ladder alignment:** Beyond current ladder — redefines the product category
 
-**Justification:** These features require the most engineering effort and build on everything shipped before. Visual tuning feedback (#14) provides the pitch detection foundation. Ear training progression (#13) uses that foundation to deliver Harold's dream: "something that teaches me to hear the difference, so eventually I don't need the app at all." This transforms Banjen from "tuner" to "ear training platform" — a category of one. Ship only after the core product is stable, monetized, and serving all five personas.
+**Justification:** Visual tuning feedback (#14) provides the pitch detection foundation. Ear training progression (#13) delivers Harold's dream: "something that teaches me to hear the difference, so eventually I don't need the app at all." This transforms Banjen from "tuner" to "ear training platform" — a category of one. Ship only after the core product is stable and monetized.
 
-**Revenue impact:** Category-defining. An ear training tuner has no direct competitor. Premium pricing potential: the progression system could be a separate $4.99 IAP or bundled with ad removal at $4.99 for the complete experience.
+**Revenue impact:** Category-defining. Premium pricing potential: the progression system could be a $4.99 IAP or bundled with ad removal.
 
 ---
 
-### Deprioritized from Existing Roadmap
+### Already Shipped
 
-**expand-5-string-banjo:** The v2 persona research explicitly removed the 5-string persona (Jake R.) and replaced him with Rafael S. (cavaquinho). The Growth Ladder notes: "Who this is NOT for: 5-string bluegrass banjo players (the largest banjo segment, but incompatible with the current product)." The 5-string expansion remains technically interesting but is strategically deprioritized — the effort (AudioTrack sine synthesis, new tuning model, expanded UI) is HIGH, and the persona evidence directs resources toward GDAE, CGBD, and cavaquinho markets instead. Revisit only after all five current personas are fully served.
+**alternate-tuning-support (4-string):** All 4-string presets (DGBD, GDAE, CGBD, DGBE) work. `TuningModel.kt`, `ToneGenerator.kt`, and the dynamic instrument+tuning selector in `EarActivity.kt` are complete. Features #5 and #6 are done.
+
+**expand-5-string-banjo — NOT complete:** `FIVE_STRING_BANJO` data exists and appears in the selector, but `BanjoStringCanvas` hardcodes `NUM_STRINGS = 4` — the canvas always draws 4 strings regardless of selected instrument. Root cause: `BanjoStringCanvas` does not receive the tuning's note list and all animation arrays, label arrays, and draw loops are fixed-size.
 
 ---
 
