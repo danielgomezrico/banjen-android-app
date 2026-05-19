@@ -19,12 +19,6 @@
   <string name="reference_pitch_label">Tom de referência</string>
   <string name="session_mode_label">Modo sessão</string>
   <string name="session_stop">Parar</string>
-  <string name="session_no_headphones">Nenhum fone detectado. Conecte fones de ouvido para afinar discretamente.</string>
-  <string name="session_volume_label">Volume</string>
-  <string name="session_string_1">4 - Ré</string>
-  <string name="session_string_2">3 - Sol</string>
-  <string name="session_string_3">2 - Si</string>
-  <string name="session_string_4">1 - Ré</string>
   <string name="widget_description">Botões de afinação de banjo de acesso rápido</string>
   <string name="check_tuning_button">Verificar Afinação</string>
   <string name="mic_permission_rationale">Acesso ao microfone é necessário para verificar sua afinação.</string>
