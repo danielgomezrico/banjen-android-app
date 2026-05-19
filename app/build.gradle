@@ -70,6 +70,30 @@ android {
         }
     }
 
+    bundle {
+        abi {
+            enableSplit = true
+        }
+        density {
+            enableSplit = true
+        }
+        language {
+            enableSplit = true
+        }
+    }
+
+    packaging {
+        resources {
+            excludes += [
+                'META-INF/proguard/androidx-*.pro',
+                'META-INF/proguard/butterknife-*.pro',
+                'kotlin/**',
+                '**.kotlin_builtins',
+                '**.kotlin_metadata',
+                'DebugProbesKt.bin'
+            ]
+        }
+    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -84,7 +108,6 @@ android {
         buildConfig true
         compose true
         resValues true
-        buildConfig true
     }
 
 }
