@@ -17,7 +17,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.VisibleForTesting
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -53,15 +53,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Headphones
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -108,7 +103,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
-import app.rive.runtime.kotlin.core.Rive
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -125,7 +119,7 @@ import kotlin.math.roundToInt
 private const val KEY_INSTRUMENT_INDEX = "instrument_index"
 private const val KEY_TUNING_INDEX = "tuning_index"
 
-class EarActivity : AppCompatActivity() {
+class EarActivity : ComponentActivity() {
     companion object {
         const val EXTRA_STRING_INDEX = "string_index"
         private const val MAX_STRING_INDEX = 4 // 5-string banjo has 5 strings (0..4)
@@ -227,7 +221,6 @@ class EarActivity : AppCompatActivity() {
         )
 
         if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
-        Rive.init(this)
         MobileAds.initialize(this)
         val autoPlayIndex = parseStringIndex(intent)
         setContent { Contents(autoPlayIndex) }
@@ -350,7 +343,7 @@ class EarActivity : AppCompatActivity() {
                         containerColor = colorResource(id = R.color.banjen_accent),
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Stop,
+                            imageVector = AppIcons.Stop,
                             contentDescription = stringResource(id = R.string.session_stop),
                             tint = colorResource(id = R.color.banjen_background),
                         )
@@ -789,7 +782,7 @@ class EarActivity : AppCompatActivity() {
                 modifier = Modifier.size(40.dp),
             ) {
                 Icon(
-                    imageVector = Icons.Filled.Remove,
+                    imageVector = AppIcons.Remove,
                     contentDescription = "$pitchLabel -1",
                     tint = colorResource(id = R.color.banjen_accent),
                 )
@@ -953,7 +946,7 @@ class EarActivity : AppCompatActivity() {
             ) {
                 if (showVolumeIcon) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.VolumeOff,
+                        imageVector = AppIcons.VolumeOff,
                         contentDescription = volumeLowMessage,
                         tint = Color.Red,
                         modifier = Modifier.size(24.dp).graphicsLayer(translationX = iconShakeAnimation),
@@ -1006,7 +999,7 @@ class EarActivity : AppCompatActivity() {
                         modifier = Modifier.size(36.dp),
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Mic,
+                            imageVector = AppIcons.Mic,
                             contentDescription = stringResource(R.string.check_tuning_button),
                             tint = colorResource(id = R.color.banjen_accent),
                             modifier = Modifier.size(20.dp),
@@ -1050,7 +1043,7 @@ class EarActivity : AppCompatActivity() {
         ) {
             if (!isSessionActive) {
                 PillIconButton(
-                    icon = Icons.Filled.Headphones,
+                    icon = AppIcons.Headphones,
                     contentDescription = stringResource(id = R.string.session_mode_label),
                     onClick = onSessionClick,
                 )

@@ -1,11 +1,13 @@
 <resources>
 
-  <!-- Base application theme. -->
-  <style name="AppTheme" parent="Theme.AppCompat.NoActionBar">
-    <item name="colorPrimaryDark">@color/banjen_primary</item>
-    <item name="colorPrimary">@color/banjen_primary_dark</item>
-    <item name="colorAccent">@color/banjen_accent</item>
-    <item name="colorControlHighlight">@color/banjen_accent</item>
+  <!--
+    Base application theme. Decoupled from AppCompat after EarActivity moved
+    to ComponentActivity, so the `androidx.appcompat:appcompat` dependency
+    could be removed. Compose drives all colors via MaterialTheme; the only
+    theme requirement left is a no-action-bar window background.
+  -->
+  <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+    <item name="android:windowBackground">@color/banjen_background</item>
   </style>
 
 </resources>
