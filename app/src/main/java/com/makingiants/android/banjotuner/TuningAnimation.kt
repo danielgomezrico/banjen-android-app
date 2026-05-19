@@ -11,14 +11,10 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import kotlin.math.abs
 
@@ -126,19 +122,24 @@ internal fun ringAsymmetryOffset(centDeviation: Float): Float =
     )
 
 /**
- * Tuning animation wrapper. Tries to render via Rive state machine;
- * falls back to a minimal Canvas animation if the .riv resource is
- * missing or fails to load. Preserves the same public API so
- * EarActivity.kt requires no changes.
+ * Tuning animation wrapper. Renders a minimal Canvas-based animation.
+ *
+ * Note: Previously this delegated to a Rive state machine when a .riv asset
+ * was bundled, falling back to Canvas otherwise. Rive dependency and the
+ * .riv asset were removed to shrink APK size; the Canvas fallback is now
+ * the sole implementation. `animState`, `pitchCheckMode`, and the cent
+ * deviation are still computed and remain available for future re-use.
  */
 @Composable
 fun TuningAnimation(
     selectedOption: State<Int>,
     pitchCheckMode: State<Boolean>,
     pitchResult: State<PitchResult?>,
-    isVolumeLow: State<Boolean>,
+    @Suppress("UNUSED_PARAMETER") isVolumeLow: State<Boolean>,
     modifier: Modifier = Modifier,
 ) {
+    // Drive any future state-aware visuals by computing animState here.
+    @Suppress("UNUSED_VARIABLE")
     val animState =
         deriveTuningAnimationState(
             selectedOption.value,
@@ -146,29 +147,13 @@ fun TuningAnimation(
             pitchResult.value,
         )
 
-    val context = LocalContext.current
-    val riveResId = remember { resolveRiveResource(context) }
-    var riveLoadFailed by remember { mutableStateOf(false) }
-
-    if (riveResId != 0 && !riveLoadFailed) {
-        RiveTuningAnimation(
-            riveResId = riveResId,
-            animState = animState,
-            selectedString = selectedOption.value,
-            centDeviation = pitchResult.value?.centDeviation?.toFloat() ?: 0f,
-            isVolumeLow = isVolumeLow.value,
-            onLoadFailed = { riveLoadFailed = true },
-            modifier = modifier,
-        )
-    } else {
-        val baseAccent =
-            if (selectedOption.value in stringAccentColors.indices) {
-                stringAccentColors[selectedOption.value]
-            } else {
-                neutralColor
-            }
-        CanvasFallbackAnimation(ringColor = baseAccent, modifier = modifier)
-    }
+    val baseAccent =
+        if (selectedOption.value in stringAccentColors.indices) {
+            stringAccentColors[selectedOption.value]
+        } else {
+            neutralColor
+        }
+    CanvasFallbackAnimation(ringColor = baseAccent, modifier = modifier)
 }
 
 /**
