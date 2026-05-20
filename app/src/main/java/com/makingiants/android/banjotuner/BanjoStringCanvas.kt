@@ -13,6 +13,11 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
@@ -32,11 +37,19 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -285,11 +298,13 @@ fun BanjoStringCanvas(
         }
     }
 
-    Canvas(
-        modifier =
-            modifier
-                .pointerInput(selectedString, numStrings) {
-                    detectTapGestures { offset ->
+    Box(modifier = modifier) {
+        Canvas(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .pointerInput(selectedString, numStrings) {
+                        detectTapGestures { offset ->
                         // Interrupt opening animation so tone starts immediately on tap
                         if (revealProgress.any { it.value < 1f }) {
                             Timber.d("tap: interrupted opening animation — snapping to full reveal")
@@ -530,6 +545,42 @@ fun BanjoStringCanvas(
                 density = density,
                 fontScale = colorFactor,
             )
+        }
+    }
+
+        // A11y overlay: one focusable semantic node per string band.
+        // No clickable/pointerInput, so touches still reach the Canvas underneath
+        // and zone-based pluck shaping (nut/center/bridge) keeps working for sighted users.
+        Row(
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = SAFE_PADDING_DP.dp),
+        ) {
+            for (i in 0 until numStrings) {
+                val ordinalNum = numStrings - i
+                val suffix = ordinalSuffix(ordinalNum)
+                val noteName = notes[i].name
+                val isSelected = selectedString == i
+                val descriptionText = "$ordinalNum$suffix string, note $noteName. Double tap to play."
+                val clickLabel = if (isSelected) "Stop $noteName" else "Play $noteName"
+                Box(
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .semantics(mergeDescendants = false) {
+                                role = Role.Button
+                                contentDescription = descriptionText
+                                selected = isSelected
+                                if (isSelected) stateDescription = "Playing"
+                                onClick(label = clickLabel) {
+                                    onStringSelected(if (isSelected) -1 else i)
+                                    true
+                                }
+                            },
+                )
+            }
         }
     }
 }
