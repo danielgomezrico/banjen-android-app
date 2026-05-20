@@ -84,9 +84,11 @@ android {
 
     packaging {
         resources {
+            // Do NOT exclude META-INF/proguard/*.pro — those are consumer ProGuard
+            // rules shipped by AndroidX libraries (glance-appwidget → WorkManager →
+            // Room). Stripping them with android.enableR8.fullMode=true causes
+            // androidx.startup.InitializationProvider to crash on process start.
             excludes += [
-                'META-INF/proguard/androidx-*.pro',
-                'META-INF/proguard/butterknife-*.pro',
                 'kotlin/**',
                 '**.kotlin_builtins',
                 '**.kotlin_metadata',
