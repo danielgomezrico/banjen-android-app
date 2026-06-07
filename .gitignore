@@ -178,3 +178,5 @@ Temporary Items
 fastlane/play-store-credentials.json
 fastlane/report.xml
 fastlane/README.md
+.agents/
+.gitnexus/
