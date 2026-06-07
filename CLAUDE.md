@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Banjen is an Android 4-string banjo tuner app (package: `com.makingiants.android.banjotuner`). It plays looping reference tones for each string (DGBD tuning). Single-activity Jetpack Compose UI with AdMob ads and Firebase Crashlytics.
+Banjen is an Android banjo tuner app (package: `com.makingiants.android.banjotuner`). It is an **ear-training tuner**: tap a string and it plays a looping reference tone you match by ear. Tones are **synthesized live as sine waves** (no audio assets). It also has an optional **mic-based pitch check** (YIN algorithm) that shows flat/sharp/in-tune feedback. Single-activity Jetpack Compose UI with a Play-services-ads-lite banner and Firebase Crashlytics.
 
 **Primary user**: Harold M. persona — older beginner who prefers ear-training over visual tuners. Simplicity is the core value proposition: "The simplest way to tune your banjo by ear."
 
@@ -12,12 +12,16 @@ Banjen is an Android 4-string banjo tuner app (package: `com.makingiants.android
 
 ```bash
 make build          # Release APK (./gradlew assembleRelease)
-make run            # Install debug on connected device
-make run_release    # Install release on connected device
-make test           # Unit tests (./gradlew test)
-make format         # Format Kotlin with ktlint 1.5.0
+make run            # Uninstall + install debug + launch (DEVICE=<serial> for multi-device)
+make run_release    # Uninstall + install release
+make test           # Unit tests (./gradlew test) — JVM tests in app/src/test/
+make format         # Format Kotlin with ktlint 1.5.0 (auto-downloads to .ktlint/)
 
-# Instrumented tests (requires connected device/emulator)
+# Single unit test class / method
+./gradlew test --tests "com.makingiants.android.banjotuner.ToneGeneratorTest"
+./gradlew test --tests "com.makingiants.android.banjotuner.PitchDetectorTest.detect*"
+
+# Instrumented (Compose UI) tests — requires connected device/emulator
 ./gradlew connectedAndroidTest
 
 # Full build with coverage (jacoco runs automatically)
@@ -26,55 +30,71 @@ make format         # Format Kotlin with ktlint 1.5.0
 
 ## Architecture
 
-Single-module Gradle project (`app/`). Only two production source files:
+Single-module Gradle project (`app/`). All production code lives in one package, `com.makingiants.android.banjotuner`. Single activity, no ViewModel, no DI, no navigation — state is held in Compose `mutableStateOf`/`SharedPreferences`. Files:
 
-- **`EarActivity`** — Single activity, sets Compose content directly (no ViewModel, no navigation). Four hardcoded string buttons (DGBD) with scale+shake animations. `mutableIntStateOf(-1)` tracks selected button. AdMob banner at the bottom. Volume-low alert with shaking icon + snackbar.
-- **`SoundPlayer`** — Wraps `MediaPlayer` for looping playback of MP3 assets from `assets/b_sounds/` (files `1.mp3`–`4.mp3` = D3, G3, B3, D4). `stop()` mutes stream before stopping to avoid audio artifacts. `isVolumeLow()` checks if media volume < 50%.
+- **`EarActivity`** (~1100 lines) — The whole UI. `ComponentActivity` that sets Compose content directly. Owns `ToneGenerator`, `PitchDetector`, the `selectedStringIndex`, `pitchCheckMode`, `sessionModeActive` state, the `referencePitch`, and the current instrument/tuning selection. Hosts string buttons, the tuning animation, instrument/tuning dropdowns, reference-pitch (A=) control, banner ad, and the snackbar/volume-low alert. `AudioCaptureEffect` runs the `AudioRecord` → `PitchDetector` loop while pitch-check is active. Reads an autoplay `string_index` intent extra (from the home-screen widget). Tears down audio in `exitSessionMode`/`onPause`.
+- **`ToneGenerator`** — Synthesizes and loops a sine tone via `AudioTrack` (`MODE_STATIC`, hardware loop points). No MP3 assets. Key tricks, all to kill click/cold-start noise: a permanent silent **warm-up track** keeps the audio path hot; 200ms fade-in/out; `calculateLoopSampleCount` picks a loop length whose boundary minimizes `1-cos` (full-cycle, not half-cycle) to avoid a phase-flip thump. Coroutine-driven; `play()`/`stop()`/`release()` are main-thread-safe.
+- **`PitchDetector`** — Pure-Kotlin YIN pitch detection over a `FloatArray`. `detectPitch` → Hz, `centsFromTarget`, `classifyTuning` → `TuningStatus` (IN_TUNE/CLOSE/SHARP/FLAT/NO_SIGNAL). Also defines `PitchResult` and the `BanjoString` enum.
+- **`TuningModel`** — Data model for instruments/tunings: `Note`, `Tuning`, `Instrument`, the `FOUR_STRING_BANJO`/`FIVE_STRING_BANJO` catalogs (DGBD, Irish GDAE, Chicago DGBE, Plectrum CGBD, plus 5-string Open G/Double C/Modal/Drop C/Open D), `noteFrequency(midi)`, and `encodeTuning`/`decodeTuning` for persistence.
+- **`AppConstants`** — Reference-pitch range (432–446 Hz, default 440), `SharedPreferences` keys (`banjen_prefs`), session-mode constants (`SECONDS_PER_STRING`, session volume), and small pure helpers (`clampPitch`, `calculatePitchRatio`, `autoAdvanceNextIndex`, `clampVolume`). Heavily unit-tested.
+- **`BanjoStringCanvas`** (~730 lines) — Custom-drawn string visualization with per-string semantic (accessibility) buttons overlaid on the Canvas.
+- **`TuningAnimation`** — Canvas-based concentric-ring "breathing" animation. **Rive was removed** (APK size); `deriveTuningAnimationState`, `pitchCheckMode`, and cent-deviation are still computed for future reuse but only the Canvas fallback renders.
+- **`TunerWidget`** — Glance home-screen app widget (`TunerWidgetReceiver`). Four string buttons that `actionStartActivity<EarActivity>` with a `string_index` extra. Pulls in WorkManager+Room transitively (see ProGuard note below).
+- **`AppIcons`** — Hand-inlined vector icons (Stop, Remove, Mic, Headphones, VolumeOff). `material-icons-extended` was dropped (~10–15 MB) to shrink the APK.
 
-Instrumented tests use a Robot pattern (`EarRobot`/`withEarRobot`) for Compose UI testing with `AndroidComposeTestRule`. No unit tests exist (JaCoCo is configured but `src/test/` is absent).
+Instrumented tests use a Robot pattern (`EarRobot`/`withEarRobot`) with `AndroidComposeTestRule`. Unit tests now exist and are substantial — `app/src/test/` covers `ToneGenerator`, `PitchDetector`, pitch math, `TuningModel`, session mode, widget, and animation state.
 
 ## Key Config
 
-- **Signing & ads config**: Set in `gradle.properties` (see `gradle.properties.example`). CI reads from GitHub secrets.
-- **`dependencies.gradle`**: Defines `setup.targetSdk`, `setup.minSdk`, and Kotlin version.
-- **Localization**: en (default), es, pt, it — `app/src/main/res/values-*/strings.xml`
-- **Min SDK**: 23 | **Target SDK**: 36 | **Java**: 17
+- **Build tooling**: AGP **9.0.1**, Kotlin **2.3.10**, Compose BOM **2026.02.00**, Firebase BOM **34.9.0**, JDK 17 source/target. CI builds with JDK 21.
+- **`android.enableR8.fullMode=true`** (`gradle.properties`). Release uses `minifyEnabled`/`shrinkResources` + AAB ABI/density/language splits. R8 full mode strips reflective members Room/WorkManager need — `app/rules.pro` keeps the Room/WorkManager/Startup surface, and `packaging` must NOT exclude `META-INF/proguard/*.pro` (consumer rules), or `InitializationProvider` crashes on launch.
+- **Signing & ads**: read from gradle properties / env (`BANJEN_SIGN_*`, `BANJEN_ADS_UNIT_ID_BANNER`, `BANJEN_ADMOB_APP_ID`); injected as `resValue`. CI reads from GitHub secrets. See `gradle.properties.example`.
+- **`dependencies.gradle`**: `setup.targetSdk` (36), `setup.minSdk` (23), `deps.kotlin`.
+- **Localization**: en (default), es, pt, it — `res/values-*/strings.xml` (and `resConfigs`).
+- **Ads**: `play-services-ads-lite` (not the full SDK). Logging via Timber.
+
+## Release Automation (Fastlane)
+
+`fastlane/Fastfile` `deploy` lane drives versioning from **conventional commits** (`analyze_commits`): `feat`→minor, `fix`/`perf`→patch, breaking→major. It patches `appVersionName`/`appVersionCode` in `app/build.gradle`, commits, builds the AAB, uploads to Play Store **internal/draft** track, and tags. So commit-message types directly drive the next published version — follow conventional commits strictly. Ruby 3.3.10 (`.ruby-version`). `make deploy-metadata` uploads store metadata only.
 
 ## Known Technical Debt
 
-- `AudioManager.setStreamMute()` is deprecated since API 23 (HIGH severity)
-- `setAudioStreamType()` is deprecated; no `prepareAsync` error handling (MEDIUM)
-- Live AdMob IDs committed to version control (MEDIUM)
-- Legacy XML resources (styles, dimens, drawables) exist but are unused
+- **`RECORD_AUDIO` is not declared in any manifest**, yet `EarActivity` requests it at runtime for pitch-check — the runtime grant will fail. Add the permission before relying on mic-based tuning.
+- Legacy XML resources (styles, dimens, drawables) partly unused.
 
 ## Product Context
 
 Full product documentation lives in `docs/product/`:
 
-- **`ux-report.md`** — SUPERSEDED by the v2 UX investigation below. Kept for historical reference.
+- **`ux-report.md`** — SUPERSEDED by v3 UX investigation. Historical reference only.
+- **`user-personas.md` / `pains.md` / `features.md` (root of docs/product/)** — v2 (Feb 2026). SUPERSEDED by v3. Kept side-by-side for diff/history.
 - **`codebase-investigation.md`** — Technical deep-dive: architecture patterns, deprecated APIs, build deps, test gaps.
-- **`features/`** — Each planned feature has a `1-investigation.md` and `2-plan.md` (see features.md for updated prioritization).
+- **`features/`** — Each planned feature has a `1-investigation.md` and `2-plan.md` (see v3 features.md for current prioritization).
 
-## UX Investigation (v2 — February 2026)
+## UX Investigation (v3 — May 2026)
 
-UX research has been conducted for this project. Before building features or making product decisions, agents MUST read these files:
+WHY: Hard constraints prevent common pitfalls. Discipline on critical operations prevents irreversible mistakes.
 
-- **User Personas:** `docs/product/user-personas.md` — 5 evidence-grounded personas with interview insights. **Jake R. (5-string) replaced by Rafael S. (cavaquinho, DGBD hidden fit).** 5-string banjo support deprioritized accordingly.
-- **User Pains:** `docs/product/pains.md` — 47 pains, 7 cross-persona patterns, 7 design principles. The tuning screen is sacred: ads during tuning = permanent deletion across all personas.
-- **Feature Opportunities:** `docs/product/features.md` — 14 prioritized features across 4 tiers, 6-sprint sequencing plan. Top priority: Ad Placement Redesign (score 10.0, 5/5 personas affected).
+Before building features or making product decisions, agents MUST read these v3 files:
 
-**Primary persona:** Harold M. (67, retired beginner, DGBD) — confirmed beachhead. Hidden motivation: cognitive health (fighting dementia). Tuning friction threatens his daily brain-health discipline.
+- **User Personas:** `docs/product/v3/user-personas.md` — 5 evidence-grounded personas refined from fresh research + simulated interviews. Harold (primary), Lúcia (cavaquinho), Eileen (Irish tenor GDAE), Wendell (CGBD plectrum, tech 1/5), Marcus (skeptic, deleted Banjen).
+- **User Pains:** `docs/product/v3/pains.md` — 49 pains across 8 categories, 10 cross-persona patterns, 5 inviolable constraints. Adds discovery-surface gates (language, instrument label, family install-gate) absent from v2.
+- **Feature Opportunities:** `docs/product/v3/features.md` — 21 features across 4 tiers, 6-sprint plan. Top P0: CLS-safe banner ad (off tuning surface). Top growth: pt-BR Play Store listing with literal "Cavaquinho" in title.
 
-**Highest-leverage zero-code opportunity:** Add "cavaquinho" + Portuguese keywords to Play Store listing. Unlocks millions of DGBD players in Brazilian diaspora who currently search "afinador de cavaquinho" and never find Banjen.
+**Primary persona:** Harold M. (67, retired beginner, DGBD) — beachhead unchanged. Hidden cognitive-health motivation is now actively-protected clinical disclosure — copy must NOT surface dementia framing.
 
-**Universal dealbreaker:** Ad layout shift during active tuning caused rage-quit and permanent deletion across all 5 personas. The tuning screen must be ad-free.
+**Universal dealbreaker:** Any ad, audio interruption, or layout shift on the tuning surface = permanent uninstall across all 5 personas. Marcus named the precise bug (Cumulative Layout Shift on banner ad slot).
 
-Every feature built should reference at least one persona and one pain from these documents.
+**Highest-leverage zero-code opportunity:** pt-BR Play Store listing with "afinador de cavaquinho" in title. Lúcia did not know cavaquinho and banjo share DGBD until interview — the product is already built for her; only metadata is missing.
+
+**Pre-install gates (new in v3):** 3/5 personas reject Banjen at the discovery surface, never reaching the product. Lúcia closes English results before clicking; Eileen closes the tab if GDAE isn't visible in 5 seconds; Wendell cannot install without his daughter Camille.
+
+Every feature built should reference at least one v3 persona and one v3 pain.
 
 ## CI/CD
 
 - **Build** (`.github/workflows/build.yaml`): Runs on all branch pushes. Gradle build with JDK 21.
-- **Deploy** (`.github/workflows/deploy.yaml`): Runs on master push. Builds release AAB, uploads as artifact. No automated Play Store upload.
+- **Deploy** (`.github/workflows/deploy.yaml`): Runs on master push. Builds release AAB, uploads as artifact. No automated Play Store upload (use the Fastlane `deploy` lane for that).
 
 ## Guidelines
 
