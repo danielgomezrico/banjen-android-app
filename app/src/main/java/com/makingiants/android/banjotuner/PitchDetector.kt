@@ -12,6 +12,7 @@ class PitchDetector(
      * Returns the detected frequency in Hz, or -1.0 if no pitch is detected.
      */
     fun detectPitch(samples: FloatArray): Double {
+        if (samples.isEmpty()) return -1.0
         val halfLen = samples.size / 2
         val yinBuffer = FloatArray(halfLen)
 
