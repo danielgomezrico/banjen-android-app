@@ -59,6 +59,7 @@ fun calculateLoopSampleCount(
     frequency: Float,
     sampleRate: Int,
 ): Int {
+    if (frequency <= 0f) return sampleRate
     val samplesPerCycle = sampleRate.toFloat() / frequency
     val cycles = (sampleRate / samplesPerCycle).roundToInt()
     val nominal = (cycles * samplesPerCycle).roundToInt()

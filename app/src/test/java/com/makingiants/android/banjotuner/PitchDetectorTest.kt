@@ -5,6 +5,7 @@ import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.sin
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class PitchDetectorTest {
@@ -103,5 +104,48 @@ class PitchDetectorTest {
     fun `classifyTuning returns FLAT beyond 25 cents negative`() {
         assertEquals(TuningStatus.FLAT, detector.classifyTuning(-30.0))
         assertEquals(TuningStatus.FLAT, detector.classifyTuning(-50.0))
+    }
+
+    // --- Edge case 1: NaN input propagation ---
+    @Test
+    fun `detectPitch returns sentinel and never NaN for all-NaN buffer`() {
+        val input = FloatArray(4096) { Float.NaN }
+        val r = detector.detectPitch(input)
+        assertFalse(r.isNaN(), "detectPitch must not return NaN for NaN input, got $r")
+        assertFalse(r.isInfinite(), "detectPitch must not return Infinite for NaN input, got $r")
+        assertEquals(-1.0, r, 0.0)
+    }
+
+    // --- Edge case 2: Constant non-zero buffer ---
+    @Test
+    fun `detectPitch returns sentinel and never NaN for constant non-zero buffer`() {
+        val input = FloatArray(4096) { 1.0f }
+        val r = detector.detectPitch(input)
+        assertFalse(r.isNaN(), "detectPitch must not return NaN for constant buffer, got $r")
+        assertEquals(-1.0, r, 0.0)
+    }
+
+    // --- Edge case 3: Infinity input ---
+    @Test
+    fun `detectPitch returns sentinel and never NaN for infinity buffer`() {
+        val input = FloatArray(4096) { Float.POSITIVE_INFINITY }
+        val r = detector.detectPitch(input)
+        assertFalse(r.isNaN(), "detectPitch must not return NaN for infinity input, got $r")
+        assertFalse(r.isInfinite(), "detectPitch must not return Infinite for infinity input, got $r")
+        assertEquals(-1.0, r, 0.0)
+    }
+
+    // --- Edge case 4: Empty buffer ---
+    @Test
+    fun `detectPitch returns sentinel for empty buffer`() {
+        val r = detector.detectPitch(FloatArray(0))
+        assertEquals(-1.0, r, 0.0)
+    }
+
+    // --- Edge case 5: classifyTuning boundary exactness ---
+    @Test
+    fun `classifyTuning is IN_TUNE at exactly ten cents boundary`() {
+        assertEquals(TuningStatus.IN_TUNE, detector.classifyTuning(10.0))
+        assertEquals(TuningStatus.IN_TUNE, detector.classifyTuning(-10.0))
     }
 }

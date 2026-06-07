@@ -64,4 +64,46 @@ class ToneGeneratorTest {
         val maxAllowed = (Short.MAX_VALUE * AMPLITUDE_SCALE).toInt()
         assertTrue(samples.all { it.toInt() in -maxAllowed..maxAllowed })
     }
+
+    @Test
+    fun `calculateLoopSampleCount does not throw and returns positive for zero frequency`() {
+        val result = calculateLoopSampleCount(0f, TONE_SAMPLE_RATE)
+        assertTrue(result > 0, "Expected positive result for zero frequency, got $result")
+        assertEquals(TONE_SAMPLE_RATE, result)
+    }
+
+    @Test
+    fun `calculateLoopSampleCount returns safe positive for negative frequency`() {
+        val result = calculateLoopSampleCount(-50f, TONE_SAMPLE_RATE)
+        assertTrue(result > 0, "Expected positive result for negative frequency, got $result")
+        assertEquals(TONE_SAMPLE_RATE, result)
+    }
+
+    @Test
+    fun `generateSineWaveSamples returns empty array for zero sample count`() {
+        val result = generateSineWaveSamples(440f, TONE_SAMPLE_RATE, 0)
+        assertEquals(0, result.size)
+    }
+
+    @Test
+    fun `generateSineWaveSamples produces silence for zero frequency`() {
+        val result = generateSineWaveSamples(0f, TONE_SAMPLE_RATE, 100)
+        assertEquals(100, result.size)
+        assertTrue(result.all { it == 0.toShort() }, "Expected all-zero samples for zero frequency")
+    }
+
+    @Test
+    fun `generateSineWaveSamples stays within amplitude scale for all DGBD strings`() {
+        // D3=146.83Hz, G3=196.00Hz, B3=246.94Hz, D4=293.66Hz — from BanjoString enum in PitchDetector.kt
+        val dgbdFrequencies = listOf(146.83f, 196.00f, 246.94f, 293.66f)
+        val maxAllowed = (Short.MAX_VALUE * AMPLITUDE_SCALE).toInt()
+        for (frequency in dgbdFrequencies) {
+            val numSamples = calculateLoopSampleCount(frequency, TONE_SAMPLE_RATE)
+            val samples = generateSineWaveSamples(frequency, TONE_SAMPLE_RATE, numSamples)
+            assertTrue(
+                samples.all { it.toInt() in -maxAllowed..maxAllowed },
+                "Amplitude out of bounds for ${frequency}Hz (maxAllowed=$maxAllowed)"
+            )
+        }
+    }
 }
