@@ -102,7 +102,7 @@ class ToneGeneratorTest {
             val samples = generateSineWaveSamples(frequency, TONE_SAMPLE_RATE, numSamples)
             assertTrue(
                 samples.all { it.toInt() in -maxAllowed..maxAllowed },
-                "Amplitude out of bounds for ${frequency}Hz (maxAllowed=$maxAllowed)"
+                "Amplitude out of bounds for ${frequency}Hz (maxAllowed=$maxAllowed)",
             )
         }
     }
