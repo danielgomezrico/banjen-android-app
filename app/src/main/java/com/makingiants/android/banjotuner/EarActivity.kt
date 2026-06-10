@@ -1,29 +1,19 @@
 package com.makingiants.android.banjotuner
 
-import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioRecord
 import android.media.MediaRecorder
 import android.os.Bundle
-import androidx.activity.OnBackPressedCallback
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.compose.setContent
-import androidx.activity.SystemBarStyle
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.VisibleForTesting
 import androidx.activity.ComponentActivity
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -34,11 +24,9 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -57,17 +45,14 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -91,18 +76,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.content.ContextCompat
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -113,8 +95,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import kotlin.math.abs
-import kotlin.math.roundToInt
 
 private const val KEY_INSTRUMENT_INDEX = "instrument_index"
 private const val KEY_TUNING_INDEX = "tuning_index"
@@ -146,22 +126,6 @@ class EarActivity : ComponentActivity() {
     }
 
     private var savedPitch: Int = DEFAULT_PITCH
-
-    private val buttonsSubtitle =
-        listOf(
-            R.string.ear_button_4_subtitle,
-            R.string.ear_button_3_subtitle,
-            R.string.ear_button_2_subtitle,
-            R.string.ear_button_1_subtitle,
-        )
-
-    private val buttonsDescription =
-        listOf(
-            R.string.ear_button_4_description,
-            R.string.ear_button_3_description,
-            R.string.ear_button_2_description,
-            R.string.ear_button_1_description,
-        )
 
     private var sessionModeActive = mutableStateOf(false)
     private var audioRecord: AudioRecord? = null
@@ -380,7 +344,15 @@ class EarActivity : ComponentActivity() {
                             isVolumeLow.value = false
                         } else {
                             val note = currentTuningModel.notes.getOrNull(index) ?: return@BanjoStringCanvas
-                            Timber.d("tap: play index=%d note=%s freq=%.2fHz instrument=%s tuning=%s refPitch=%d", index, note.name, note.frequency, currentInstrument.name, currentTuningModel.name, referencePitch.intValue)
+                            Timber.d(
+                                "tap: play index=%d note=%s freq=%.2fHz instrument=%s tuning=%s refPitch=%d",
+                                index,
+                                note.name,
+                                note.frequency,
+                                currentInstrument.name,
+                                currentTuningModel.name,
+                                referencePitch.intValue,
+                            )
                             toneGenerator.play(note.frequency)
                             selectedOption.intValue = index
                             selectedStringIndex.intValue = index
@@ -588,82 +560,17 @@ class EarActivity : ComponentActivity() {
                         if (now - lastPitchLogMs >= 1000L) {
                             val detectedStr = if (result.detectedHz <= 0) "none" else "%.1fHz".format(result.detectedHz)
                             val centsStr = if (result.status == TuningStatus.NO_SIGNAL) "n/a" else "%+.1f".format(result.centDeviation)
-                            Timber.d("pitch: detected=%s target=%.1fHz cents=%s status=%s", detectedStr, targetFrequency, centsStr, result.status)
+                            Timber.d(
+                                "pitch: detected=%s target=%.1fHz cents=%s status=%s",
+                                detectedStr,
+                                targetFrequency,
+                                centsStr,
+                                result.status,
+                            )
                             lastPitchLogMs = now
                         }
                     }
                 }
-            }
-        }
-    }
-
-    @Composable
-    private fun TuningIndicator(result: PitchResult?) {
-        val accentColor = colorResource(id = R.color.banjen_accent)
-
-        Column(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 32.dp, vertical = 8.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            if (result == null || result.status == TuningStatus.NO_SIGNAL) {
-                Text(
-                    text = stringResource(R.string.no_signal),
-                    style = MaterialTheme.typography.bodyLarge.copy(color = accentColor),
-                )
-            } else {
-                val indicatorColor =
-                    when (result.status) {
-                        TuningStatus.IN_TUNE -> Color(0xFF4CAF50)
-                        TuningStatus.CLOSE -> Color(0xFFFFC107)
-                        TuningStatus.SHARP, TuningStatus.FLAT -> Color(0xFFF44336)
-                        TuningStatus.NO_SIGNAL -> Color.Gray
-                    }
-
-                if (result.status == TuningStatus.SHARP || (result.status == TuningStatus.CLOSE && result.centDeviation > 0)) {
-                    Text(
-                        text = stringResource(R.string.tune_down),
-                        style = MaterialTheme.typography.bodyMedium.copy(color = indicatorColor),
-                    )
-                } else if (result.status == TuningStatus.FLAT || (result.status == TuningStatus.CLOSE && result.centDeviation < 0)) {
-                    Text(
-                        text = stringResource(R.string.tune_up),
-                        style = MaterialTheme.typography.bodyMedium.copy(color = indicatorColor),
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Box(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth(0.7f)
-                            .height(12.dp)
-                            .background(indicatorColor, RoundedCornerShape(6.dp)),
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                val statusText =
-                    when (result.status) {
-                        TuningStatus.IN_TUNE -> stringResource(R.string.in_tune)
-                        else -> {
-                            val cents = abs(result.centDeviation).roundToInt()
-                            val direction = if (result.centDeviation > 0) "+" else "-"
-                            "${direction}$cents cents"
-                        }
-                    }
-
-                Text(
-                    text = statusText,
-                    style =
-                        MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            color = indicatorColor,
-                        ),
-                )
             }
         }
     }
@@ -830,192 +737,6 @@ class EarActivity : ComponentActivity() {
             },
             modifier = Modifier.wrapContentSize(),
         )
-    }
-
-    @Composable
-    private fun ColumnScope.NoteButton(
-        index: Int,
-        note: Note,
-        subtitle: Int,
-        description: Int,
-        selectedOption: MutableState<Int>,
-        isVolumeLow: MutableState<Boolean>,
-        snackbarHostState: SnackbarHostState,
-        pitchCheckMode: MutableState<Boolean>,
-        pitchResult: MutableState<PitchResult?>,
-        selectedStringIndex: MutableState<Int>,
-    ) {
-        val isSelected = selectedOption.value == index
-        val scope = rememberCoroutineScope()
-        val volumeLowMessage = stringResource(id = R.string.volume_low_message)
-        val buttonDescription = stringResource(id = description)
-
-        val permissionLauncher =
-            rememberLauncherForActivityResult(
-                ActivityResultContracts.RequestPermission(),
-            ) { granted ->
-                if (granted) {
-                    toneGenerator.stop()
-                    pitchCheckMode.value = true
-                    pitchResult.value = null
-                    selectedStringIndex.value = index
-                }
-            }
-
-        val showVolumeIcon = isSelected && isVolumeLow.value && !pitchCheckMode.value
-        val iconShakeAnimation =
-            if (showVolumeIcon) {
-                rememberInfiniteTransition(label = "icon-infinite")
-                    .animateFloat(
-                        initialValue = -3f,
-                        targetValue = 3f,
-                        animationSpec =
-                            infiniteRepeatable(
-                                animation = tween(250, easing = FastOutLinearInEasing),
-                                repeatMode = RepeatMode.Reverse,
-                            ),
-                        label = "icon shake animation",
-                    ).value
-            } else {
-                0f
-            }
-
-        ElevatedButton(
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .fillMaxWidth()
-                    .defaultMinSize(minHeight = 80.dp)
-                    .testTag("button_${index + 1}")
-                    .semantics { contentDescription = buttonDescription },
-            onClick = {
-                // If in pitch check mode, exit it and resume tone
-                if (pitchCheckMode.value) {
-                    pitchCheckMode.value = false
-                    pitchResult.value = null
-                    stopAudioCapture()
-
-                    if (selectedOption.value != index) {
-                        selectedOption.value = index
-                        selectedStringIndex.value = index
-                        isVolumeLow.value = isVolumeLow()
-                        toneGenerator.play(note.frequency)
-                    } else {
-                        toneGenerator.play(note.frequency)
-                    }
-                    return@ElevatedButton
-                }
-
-                if (selectedOption.value != index) {
-                    selectedOption.value = index
-                    selectedStringIndex.value = index
-                    isVolumeLow.value = isVolumeLow()
-                    toneGenerator.play(note.frequency)
-                    if (isVolumeLow.value) {
-                        scope.launch { snackbarHostState.showSnackbar(volumeLowMessage) }
-                    }
-                } else {
-                    toneGenerator.stop()
-                    selectedOption.value = -1
-                    selectedStringIndex.value = -1
-                    isVolumeLow.value = false
-                }
-            },
-            colors =
-                ButtonDefaults.elevatedButtonColors(
-                    containerColor =
-                        if (isSelected && !pitchCheckMode.value) {
-                            colorResource(id = R.color.banjen_accent)
-                        } else {
-                            colorResource(id = R.color.banjen_primary)
-                        },
-                    contentColor =
-                        if (isSelected && !pitchCheckMode.value) {
-                            colorResource(id = R.color.banjen_background)
-                        } else {
-                            colorResource(id = R.color.banjen_accent)
-                        },
-                ),
-            elevation =
-                ButtonDefaults.elevatedButtonElevation(
-                    defaultElevation = if (isSelected && !pitchCheckMode.value) 8.dp else 2.dp,
-                ),
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (showVolumeIcon) {
-                    Icon(
-                        imageVector = AppIcons.VolumeOff,
-                        contentDescription = volumeLowMessage,
-                        tint = Color.Red,
-                        modifier = Modifier.size(24.dp).graphicsLayer(translationX = iconShakeAnimation),
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                }
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = note.name,
-                        style =
-                            MaterialTheme.typography.headlineSmall.copy(
-                                textAlign = TextAlign.Center,
-                            ),
-                        maxLines = 1,
-                    )
-                    AnimatedVisibility(visible = !isSelected) {
-                        Text(
-                            text = stringResource(id = subtitle),
-                            style =
-                                MaterialTheme.typography.bodyMedium.copy(
-                                    color = colorResource(id = R.color.banjen_gray_light),
-                                    textAlign = TextAlign.Center,
-                                ),
-                            maxLines = 1,
-                        )
-                    }
-                }
-                // Show mic icon for pitch check when this string is selected and playing
-                if (isSelected && !pitchCheckMode.value) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(
-                        onClick = {
-                            val hasPermission =
-                                ContextCompat.checkSelfPermission(
-                                    this@EarActivity,
-                                    Manifest.permission.RECORD_AUDIO,
-                                ) == PackageManager.PERMISSION_GRANTED
-
-                            if (hasPermission) {
-                                toneGenerator.stop()
-                                pitchCheckMode.value = true
-                                pitchResult.value = null
-                                selectedStringIndex.value = index
-                            } else {
-                                permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-                            }
-                        },
-                        modifier = Modifier.size(36.dp),
-                    ) {
-                        Icon(
-                            imageVector = AppIcons.Mic,
-                            contentDescription = stringResource(R.string.check_tuning_button),
-                            tint = colorResource(id = R.color.banjen_accent),
-                            modifier = Modifier.size(20.dp),
-                        )
-                    }
-                }
-                // Show stop checking button when in pitch check mode for this string
-                if (isSelected && pitchCheckMode.value) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = stringResource(R.string.stop_checking),
-                        style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFFF44336)),
-                    )
-                }
-            }
-        }
     }
 
     @Composable

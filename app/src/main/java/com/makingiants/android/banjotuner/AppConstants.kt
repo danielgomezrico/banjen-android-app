@@ -14,8 +14,6 @@ fun canDecreasePitch(pitch: Int): Boolean = pitch > MIN_PITCH
 
 fun canIncreasePitch(pitch: Int): Boolean = pitch < MAX_PITCH
 
-const val KEY_SESSION_VOLUME = "session_volume"
-const val DEFAULT_SESSION_VOLUME = 0.3f
 const val SECONDS_PER_STRING = 5
 
 fun clampVolume(v: Float): Float = v.coerceIn(0.0f, 1.0f)

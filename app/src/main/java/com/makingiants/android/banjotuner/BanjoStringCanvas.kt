@@ -20,11 +20,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -37,6 +37,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.onClick
@@ -53,8 +54,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlin.math.PI
 import timber.log.Timber
+import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.exp
 import kotlin.math.pow
@@ -130,7 +131,13 @@ private fun lerp(
     fraction: Float,
 ): Float = start + (end - start) * fraction.coerceIn(0f, 1f)
 
-private fun ordinalSuffix(n: Int): String = when (n) { 1 -> "st"; 2 -> "nd"; 3 -> "rd"; else -> "th" }
+private fun ordinalSuffix(n: Int): String =
+    when (n) {
+        1 -> "st"
+        2 -> "nd"
+        3 -> "rd"
+        else -> "th"
+    }
 
 private fun computeStringPhysics(notes: List<Note>): List<StringPhysics> {
     val freqMin = notes.minOf { it.frequency }
@@ -305,248 +312,253 @@ fun BanjoStringCanvas(
                     .fillMaxSize()
                     .pointerInput(selectedString, numStrings) {
                         detectTapGestures { offset ->
-                        // Interrupt opening animation so tone starts immediately on tap
-                        if (revealProgress.any { it.value < 1f }) {
-                            Timber.d("tap: interrupted opening animation — snapping to full reveal")
-                            coroutineScope.launch {
-                                revealProgress.forEach { it.snapTo(1f) }
+                            // Interrupt opening animation so tone starts immediately on tap
+                            if (revealProgress.any { it.value < 1f }) {
+                                Timber.d("tap: interrupted opening animation — snapping to full reveal")
+                                coroutineScope.launch {
+                                    revealProgress.forEach { it.snapTo(1f) }
+                                }
                             }
-                        }
-                        val hPad = SAFE_PADDING_DP * density
-                        val availableWidth = size.width - 2 * hPad
-                        val bandWidth = availableWidth / numStrings
-                        val relX = offset.x - hPad
-                        if (relX < 0 || relX > availableWidth) return@detectTapGestures
-                        val tappedIndex = (relX / bandWidth).toInt().coerceIn(0, numStrings - 1)
+                            val hPad = SAFE_PADDING_DP * density
+                            val availableWidth = size.width - 2 * hPad
+                            val bandWidth = availableWidth / numStrings
+                            val relX = offset.x - hPad
+                            if (relX < 0 || relX > availableWidth) return@detectTapGestures
+                            val tappedIndex = (relX / bandWidth).toInt().coerceIn(0, numStrings - 1)
 
-                        // Precise Y normalization using string geometry refs
-                        val sTop = stringTopPx.floatValue
-                        val sBottom = stringBottomPx.floatValue
-                        val sLength = sBottom - sTop
-                        val yNorm =
-                            if (sLength > 0f) {
-                                ((offset.y.coerceIn(sTop, sBottom) - sTop) / sLength).coerceIn(0.05f, 0.95f)
+                            // Precise Y normalization using string geometry refs
+                            val sTop = stringTopPx.floatValue
+                            val sBottom = stringBottomPx.floatValue
+                            val sLength = sBottom - sTop
+                            val yNorm =
+                                if (sLength > 0f) {
+                                    ((offset.y.coerceIn(sTop, sBottom) - sTop) / sLength).coerceIn(0.05f, 0.95f)
+                                } else {
+                                    0.5f
+                                }
+                            touchYNorms[tappedIndex] = yNorm
+                            tapZone.intValue =
+                                when {
+                                    yNorm < 0.3f -> 0
+                                    yNorm > 0.7f -> 2
+                                    else -> 1
+                                }
+
+                            val zone =
+                                when (tapZone.intValue) {
+                                    0 -> "nut"
+                                    2 -> "bridge"
+                                    else -> "center"
+                                }
+                            val action = if (tappedIndex == selectedString) "toggle-off" else "select"
+                            Timber.d("tap: index=%d zone=%s yNorm=%.2f action=%s", tappedIndex, zone, yNorm, action)
+
+                            if (tappedIndex == selectedString) {
+                                onStringSelected(-1)
                             } else {
-                                0.5f
+                                onStringSelected(tappedIndex)
                             }
-                        touchYNorms[tappedIndex] = yNorm
-                        tapZone.intValue =
-                            when {
-                                yNorm < 0.3f -> 0
-                                yNorm > 0.7f -> 2
-                                else -> 1
-                            }
-
-                        val zone = when (tapZone.intValue) { 0 -> "nut"; 2 -> "bridge"; else -> "center" }
-                        val action = if (tappedIndex == selectedString) "toggle-off" else "select"
-                        Timber.d("tap: index=%d zone=%s yNorm=%.2f action=%s", tappedIndex, zone, yNorm, action)
-
-                        if (tappedIndex == selectedString) {
-                            onStringSelected(-1)
-                        } else {
-                            onStringSelected(tappedIndex)
                         }
-                    }
-                },
-    ) {
-        val w = size.width
-        val h = size.height
-        val density = this.density
-        val hPad = SAFE_PADDING_DP * density
-        val vPad = SAFE_PADDING_DP * density
-        val nutH = NUT_BRIDGE_HEIGHT_DP * density
-        val bridgeH = NUT_BRIDGE_HEIGHT_DP * density
+                    },
+        ) {
+            val w = size.width
+            val h = size.height
+            val density = this.density
+            val hPad = SAFE_PADDING_DP * density
+            val vPad = SAFE_PADDING_DP * density
+            val nutH = NUT_BRIDGE_HEIGHT_DP * density
+            val bridgeH = NUT_BRIDGE_HEIGHT_DP * density
 
-        // --- Background gradient ---
-        drawRect(
-            brush =
-                Brush.verticalGradient(
-                    colorStops = bgGradientStops.toTypedArray(),
-                ),
-        )
-
-        // --- Vignette ---
-        drawRect(
-            brush =
-                Brush.radialGradient(
-                    colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.40f)),
-                    center = Offset(w / 2, h / 2),
-                    radius = maxOf(w, h) * 0.85f,
-                ),
-        )
-
-        // --- Nut and Bridge ---
-        val nutY = vPad
-        val bridgeY = h - vPad - bridgeH
-        val barLeft = hPad
-        val barWidth = w - 2 * hPad
-        val cornerRadius = 2f * density
-
-        // Nut
-        drawRoundRect(
-            color = nutBridgeColor,
-            topLeft = Offset(barLeft, nutY),
-            size = Size(barWidth, nutH),
-            cornerRadius = CornerRadius(cornerRadius),
-        )
-        drawRect(
-            color = nutBridgeHighlight.copy(alpha = 0.60f),
-            topLeft = Offset(barLeft, nutY),
-            size = Size(barWidth, 1f * density),
-        )
-
-        // Bridge
-        drawRoundRect(
-            color = nutBridgeColor,
-            topLeft = Offset(barLeft, bridgeY),
-            size = Size(barWidth, bridgeH),
-            cornerRadius = CornerRadius(cornerRadius),
-        )
-        drawRect(
-            color = nutBridgeHighlight.copy(alpha = 0.60f),
-            topLeft = Offset(barLeft, bridgeY),
-            size = Size(barWidth, 1f * density),
-        )
-
-        // --- Fret lines ---
-        val stringTop = nutY + nutH
-        val stringBottom = bridgeY
-        val stringLength = stringBottom - stringTop
-
-        // Update refs for pointerInput scope
-        stringTopPx.floatValue = stringTop
-        stringBottomPx.floatValue = stringBottom
-
-        for (fretPos in fretPositions) {
-            val fretY = stringTop + stringLength * fretPos
+            // --- Background gradient ---
             drawRect(
-                color = fretColor.copy(alpha = 0.35f),
-                topLeft = Offset(barLeft, fretY),
+                brush =
+                    Brush.verticalGradient(
+                        colorStops = bgGradientStops.toTypedArray(),
+                    ),
+            )
+
+            // --- Vignette ---
+            drawRect(
+                brush =
+                    Brush.radialGradient(
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.40f)),
+                        center = Offset(w / 2, h / 2),
+                        radius = maxOf(w, h) * 0.85f,
+                    ),
+            )
+
+            // --- Nut and Bridge ---
+            val nutY = vPad
+            val bridgeY = h - vPad - bridgeH
+            val barLeft = hPad
+            val barWidth = w - 2 * hPad
+            val cornerRadius = 2f * density
+
+            // Nut
+            drawRoundRect(
+                color = nutBridgeColor,
+                topLeft = Offset(barLeft, nutY),
+                size = Size(barWidth, nutH),
+                cornerRadius = CornerRadius(cornerRadius),
+            )
+            drawRect(
+                color = nutBridgeHighlight.copy(alpha = 0.60f),
+                topLeft = Offset(barLeft, nutY),
                 size = Size(barWidth, 1f * density),
             )
+
+            // Bridge
+            drawRoundRect(
+                color = nutBridgeColor,
+                topLeft = Offset(barLeft, bridgeY),
+                size = Size(barWidth, bridgeH),
+                cornerRadius = CornerRadius(cornerRadius),
+            )
+            drawRect(
+                color = nutBridgeHighlight.copy(alpha = 0.60f),
+                topLeft = Offset(barLeft, bridgeY),
+                size = Size(barWidth, 1f * density),
+            )
+
+            // --- Fret lines ---
+            val stringTop = nutY + nutH
+            val stringBottom = bridgeY
+            val stringLength = stringBottom - stringTop
+
+            // Update refs for pointerInput scope
+            stringTopPx.floatValue = stringTop
+            stringBottomPx.floatValue = stringBottom
+
+            for (fretPos in fretPositions) {
+                val fretY = stringTop + stringLength * fretPos
+                drawRect(
+                    color = fretColor.copy(alpha = 0.35f),
+                    topLeft = Offset(barLeft, fretY),
+                    size = Size(barWidth, 1f * density),
+                )
+            }
+
+            // --- Strings ---
+            val availableWidth = w - 2 * hPad
+            val bandWidth = availableWidth / numStrings
+
+            for (i in 0 until numStrings) {
+                val centerX = hPad + bandWidth * (i + 0.5f)
+                val paletteIdx = (i + (5 - numStrings)) % 5
+                val palette = stringPalette[paletteIdx]
+                val p = physics[i]
+                val vibAmp = vibrationAmplitudes[i].value
+                val colorFactor = colorFactors[i].value
+                val opacity = stringOpacities[i].value
+
+                // Lerp between idle and active colors
+                val stringColor = lerpColor(palette.idle, palette.active, colorFactor)
+                val glowColor = palette.glow
+
+                // Determine effective alpha (breathing for idle, full for active)
+                val effectiveAlpha =
+                    if (vibAmp > 0.01f) {
+                        opacity
+                    } else {
+                        opacity * breatheAlpha
+                    }
+
+                // String thickness
+                val idleThick = p.idleThickDp * density
+                val activeThick = p.activeThickDp * density
+                val currentThick = idleThick + (activeThick - idleThick) * colorFactor
+
+                // Amplitude in pixels
+                val maxAmplitudePx = p.vibAmpDp * density * vibAmp
+                val shimmerAmpPx = 0.3f * density
+
+                // Breathing width factor during sustain
+                val isActive = vibAmp > 0.01f
+                val breathFactor =
+                    if (isActive) {
+                        1f + p.breathingAmplitude * sin(2f * PI.toFloat() * wavePhase / p.breathingPeriodS)
+                    } else {
+                        1f
+                    }
+                val glowAlpha = if (isActive) 0.45f else 0.20f
+
+                val coreWidth = currentThick * breathFactor
+                val blurWidth = coreWidth * BLUR_WIDTH_RATIO
+                val hazeWidth = coreWidth * HAZE_WIDTH_RATIO
+
+                // Layer 1: haze (outermost, faintest)
+                drawStringPath(
+                    centerX = centerX,
+                    stringTop = stringTop,
+                    stringLength = stringLength,
+                    amplitude = maxAmplitudePx,
+                    shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
+                    shimmerPhase = shimmerPhase,
+                    wavePhase = wavePhase,
+                    wavePeaks = p.vibWavePeaks,
+                    waveFreqHz = p.vibFreqHz,
+                    color = glowColor,
+                    alpha = glowAlpha * 0.15f * effectiveAlpha,
+                    strokeWidth = hazeWidth,
+                    revealProgress = revealProgress[i].value,
+                )
+                // Layer 2: blur
+                drawStringPath(
+                    centerX = centerX,
+                    stringTop = stringTop,
+                    stringLength = stringLength,
+                    amplitude = maxAmplitudePx,
+                    shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
+                    shimmerPhase = shimmerPhase,
+                    wavePhase = wavePhase,
+                    wavePeaks = p.vibWavePeaks,
+                    waveFreqHz = p.vibFreqHz,
+                    color = glowColor,
+                    alpha = glowAlpha * 0.40f * effectiveAlpha,
+                    strokeWidth = blurWidth,
+                    revealProgress = revealProgress[i].value,
+                )
+
+                // Layer 3: core (main string)
+                drawStringPath(
+                    centerX = centerX,
+                    stringTop = stringTop,
+                    stringLength = stringLength,
+                    amplitude = maxAmplitudePx,
+                    shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
+                    shimmerPhase = shimmerPhase,
+                    wavePhase = wavePhase,
+                    wavePeaks = p.vibWavePeaks,
+                    waveFreqHz = p.vibFreqHz,
+                    color = stringColor,
+                    alpha = effectiveAlpha,
+                    strokeWidth = coreWidth,
+                    sharpness = waveSharpness[i].value,
+                    touchYNorm = touchYNorms[i],
+                    attackProgress = attackProgress[i].value,
+                    revealProgress = revealProgress[i].value,
+                    isWound = p.isWound,
+                )
+
+                // --- Labels ---
+                val labelColor = palette.label
+                val labelAlpha = (if (isActive) 1f else effectiveAlpha * 0.65f) * revealProgress[i].value
+                val labelY = bridgeY - 76f * density
+                val ordinal = "${numStrings - i}${ordinalSuffix(numStrings - i)}"
+
+                drawStringLabel(
+                    textMeasurer = textMeasurer,
+                    primary = notes[i].name,
+                    secondary = ordinal,
+                    centerX = centerX,
+                    primaryY = labelY,
+                    color = labelColor,
+                    alpha = labelAlpha,
+                    density = density,
+                    fontScale = colorFactor,
+                )
+            }
         }
-
-        // --- Strings ---
-        val availableWidth = w - 2 * hPad
-        val bandWidth = availableWidth / numStrings
-
-        for (i in 0 until numStrings) {
-            val centerX = hPad + bandWidth * (i + 0.5f)
-            val paletteIdx = (i + (5 - numStrings)) % 5
-            val palette = stringPalette[paletteIdx]
-            val p = physics[i]
-            val vibAmp = vibrationAmplitudes[i].value
-            val colorFactor = colorFactors[i].value
-            val opacity = stringOpacities[i].value
-
-            // Lerp between idle and active colors
-            val stringColor = lerpColor(palette.idle, palette.active, colorFactor)
-            val glowColor = palette.glow
-
-            // Determine effective alpha (breathing for idle, full for active)
-            val effectiveAlpha =
-                if (vibAmp > 0.01f) {
-                    opacity
-                } else {
-                    opacity * breatheAlpha
-                }
-
-            // String thickness
-            val idleThick = p.idleThickDp * density
-            val activeThick = p.activeThickDp * density
-            val currentThick = idleThick + (activeThick - idleThick) * colorFactor
-
-            // Amplitude in pixels
-            val maxAmplitudePx = p.vibAmpDp * density * vibAmp
-            val shimmerAmpPx = 0.3f * density
-
-            // Breathing width factor during sustain
-            val isActive = vibAmp > 0.01f
-            val breathFactor =
-                if (isActive) {
-                    1f + p.breathingAmplitude * sin(2f * PI.toFloat() * wavePhase / p.breathingPeriodS)
-                } else {
-                    1f
-                }
-            val glowAlpha = if (isActive) 0.45f else 0.20f
-
-            val coreWidth = currentThick * breathFactor
-            val blurWidth = coreWidth * BLUR_WIDTH_RATIO
-            val hazeWidth = coreWidth * HAZE_WIDTH_RATIO
-
-            // Layer 1: haze (outermost, faintest)
-            drawStringPath(
-                centerX = centerX,
-                stringTop = stringTop,
-                stringLength = stringLength,
-                amplitude = maxAmplitudePx,
-                shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
-                shimmerPhase = shimmerPhase,
-                wavePhase = wavePhase,
-                wavePeaks = p.vibWavePeaks,
-                waveFreqHz = p.vibFreqHz,
-                color = glowColor,
-                alpha = glowAlpha * 0.15f * effectiveAlpha,
-                strokeWidth = hazeWidth,
-                revealProgress = revealProgress[i].value,
-            )
-            // Layer 2: blur
-            drawStringPath(
-                centerX = centerX,
-                stringTop = stringTop,
-                stringLength = stringLength,
-                amplitude = maxAmplitudePx,
-                shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
-                shimmerPhase = shimmerPhase,
-                wavePhase = wavePhase,
-                wavePeaks = p.vibWavePeaks,
-                waveFreqHz = p.vibFreqHz,
-                color = glowColor,
-                alpha = glowAlpha * 0.40f * effectiveAlpha,
-                strokeWidth = blurWidth,
-                revealProgress = revealProgress[i].value,
-            )
-
-            // Layer 3: core (main string)
-            drawStringPath(
-                centerX = centerX,
-                stringTop = stringTop,
-                stringLength = stringLength,
-                amplitude = maxAmplitudePx,
-                shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
-                shimmerPhase = shimmerPhase,
-                wavePhase = wavePhase,
-                wavePeaks = p.vibWavePeaks,
-                waveFreqHz = p.vibFreqHz,
-                color = stringColor,
-                alpha = effectiveAlpha,
-                strokeWidth = coreWidth,
-                sharpness = waveSharpness[i].value,
-                touchYNorm = touchYNorms[i],
-                attackProgress = attackProgress[i].value,
-                revealProgress = revealProgress[i].value,
-                isWound = p.isWound,
-            )
-
-            // --- Labels ---
-            val labelColor = palette.label
-            val labelAlpha = (if (isActive) 1f else effectiveAlpha * 0.65f) * revealProgress[i].value
-            val labelY = bridgeY - 76f * density
-            val ordinal = "${numStrings - i}${ordinalSuffix(numStrings - i)}"
-
-            drawStringLabel(
-                textMeasurer = textMeasurer,
-                primary = notes[i].name,
-                secondary = ordinal,
-                centerX = centerX,
-                primaryY = labelY,
-                color = labelColor,
-                alpha = labelAlpha,
-                density = density,
-                fontScale = colorFactor,
-            )
-        }
-    }
 
         // A11y overlay: one focusable semantic node per string band.
         // No clickable/pointerInput, so touches still reach the Canvas underneath
@@ -569,6 +581,7 @@ fun BanjoStringCanvas(
                         Modifier
                             .weight(1f)
                             .fillMaxHeight()
+                            .testTag("button_${i + 1}")
                             .semantics(mergeDescendants = false) {
                                 role = Role.Button
                                 contentDescription = descriptionText

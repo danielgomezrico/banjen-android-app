@@ -1,34 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="ear_button_1_text">1 - Re</string>
-  <string name="ear_button_2_text">2 - Si</string>
-  <string name="ear_button_3_text">3 - Sol</string>
-  <string name="ear_button_4_text">4 - Re</string>
-
-  <string name="ear_button_1_subtitle">Corda 1 (la più sottile)</string>
-  <string name="ear_button_2_subtitle">Corda 2</string>
-  <string name="ear_button_3_subtitle">Corda 3</string>
-  <string name="ear_button_4_subtitle">Corda 4 (la più spessa)</string>
-
-  <string name="ear_button_1_description">Corda 1, nota Re, la più sottile. Tocca per riprodurre.</string>
-  <string name="ear_button_2_description">Corda 2, nota Si. Tocca per riprodurre.</string>
-  <string name="ear_button_3_description">Corda 3, nota Sol. Tocca per riprodurre.</string>
-  <string name="ear_button_4_description">Corda 4, nota Re, la più spessa. Tocca per riprodurre.</string>
 
   <string name="volume_low_message">Il volume è basso. Alzalo per sentire i toni di accordatura.</string>
   <string name="reference_pitch_label">Tono di riferimento</string>
   <string name="session_mode_label">Modalità sessione</string>
   <string name="session_stop">Ferma</string>
   <string name="widget_description">Pulsanti di accordatura banjo ad accesso rapido</string>
-  <string name="check_tuning_button">Controlla Accordatura</string>
-  <string name="mic_permission_rationale">È necessario l\'accesso al microfono per controllare l\'accordatura.</string>
   <string name="tune_up">Alza &#x25B2;</string>
   <string name="tune_down">Abbassa &#x25BC;</string>
   <string name="in_tune">Accordato!</string>
   <string name="no_signal">Suona la corda&#x2026;</string>
-  <string name="stop_checking">Smetti di Controllare</string>
-  <string name="instrument_label">Strumento</string>
-  <string name="tuning_label">Accordatura</string>
   <string name="share_tuning">Condividi accordatura</string>
   <string name="settings_label">Impostazioni</string>
 </resources>

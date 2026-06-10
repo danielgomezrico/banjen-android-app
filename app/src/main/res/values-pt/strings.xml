@@ -1,34 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="ear_button_1_text">1 - Re</string>
-  <string name="ear_button_2_text">2 - Si</string>
-  <string name="ear_button_3_text">3 - Sol</string>
-  <string name="ear_button_4_text">4 - Re</string>
-
-  <string name="ear_button_1_subtitle">Corda 1 (a mais fina)</string>
-  <string name="ear_button_2_subtitle">Corda 2</string>
-  <string name="ear_button_3_subtitle">Corda 3</string>
-  <string name="ear_button_4_subtitle">Corda 4 (a mais grossa)</string>
-
-  <string name="ear_button_1_description">Corda 1, nota Re, a mais fina. Toque para reproduzir.</string>
-  <string name="ear_button_2_description">Corda 2, nota Si. Toque para reproduzir.</string>
-  <string name="ear_button_3_description">Corda 3, nota Sol. Toque para reproduzir.</string>
-  <string name="ear_button_4_description">Corda 4, nota Re, a mais grossa. Toque para reproduzir.</string>
 
   <string name="volume_low_message">O volume está baixo. Aumente para ouvir os tons de afinação.</string>
   <string name="reference_pitch_label">Tom de referência</string>
   <string name="session_mode_label">Modo sessão</string>
   <string name="session_stop">Parar</string>
   <string name="widget_description">Botões de afinação de banjo de acesso rápido</string>
-  <string name="check_tuning_button">Verificar Afinação</string>
-  <string name="mic_permission_rationale">Acesso ao microfone é necessário para verificar sua afinação.</string>
   <string name="tune_up">Suba &#x25B2;</string>
   <string name="tune_down">Baixe &#x25BC;</string>
   <string name="in_tune">Afinado!</string>
   <string name="no_signal">Toque a corda&#x2026;</string>
-  <string name="stop_checking">Parar de Verificar</string>
-  <string name="instrument_label">Instrumento</string>
-  <string name="tuning_label">Afinação</string>
   <string name="share_tuning">Compartilhar afinação</string>
   <string name="settings_label">Configurações</string>
 </resources>

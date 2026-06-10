@@ -110,13 +110,3 @@ data class PitchResult(
     val centDeviation: Double,
     val status: TuningStatus,
 )
-
-enum class BanjoString(
-    val noteName: String,
-    val frequencyHz: Double,
-) {
-    D4("D", 293.66),
-    B3("B", 246.94),
-    G3("G", 196.00),
-    D3("D", 146.83),
-}
