@@ -52,6 +52,8 @@ Instrumented tests use a Robot pattern (`EarRobot`/`withEarRobot`) with `Android
 - **`dependencies.gradle`**: `setup.targetSdk` (36), `setup.minSdk` (23), `deps.kotlin`.
 - **Localization**: en (default), es, pt, it — `res/values-*/strings.xml` (and `resConfigs`).
 - **Ads**: `play-services-ads-lite` (not the full SDK). Logging via Timber.
+- **Release size/perf hardening** (applies to every release artifact — CI, Fastlane deploy, local `assembleRelease`): `rules.pro` strips Log V/D/I (`-maximumremovedandroidloglevel 4`), Compose trace markers, and Kotlin null-check intrinsics (`-processkotlinnullchecks remove`), plus `-repackageclasses`; `build.gradle` sets release-only Kotlin flags (`jvmDefault NO_COMPATIBILITY`, `-Xno-*-assertions`), disables `dependenciesInfo`/`vcsInfo`, and excludes license/metadata files from packaging. Do NOT add blanket `-keep class androidx.work.**` rules — the AAR consumer rules cover the reflective surface.
+- **Baseline Profile**: `:baselineprofile` test module generates an ART profile (committed at `app/src/release/generated/baselineProfiles/baseline-prof.txt`, merged into every release build; CI needs no device). Regenerate after major UI/startup changes with a device attached: `./gradlew :app:generateBaselineProfile`. Benchmark plugin is 1.5.0-alpha (stable 1.4.x rejects AGP 9).
 
 ## Release Automation (Fastlane)
 
