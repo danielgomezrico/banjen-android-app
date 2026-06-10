@@ -87,13 +87,14 @@ class ToneGenerator {
 
     init {
         warmTrack.play()
-        warmJob = scope.launch(Dispatchers.IO) {
-            val silence = ShortArray(WARM_BUFFER_FRAMES) // zero-filled by JVM
-            while (isActive) {
-                val written = warmTrack.write(silence, 0, silence.size)
-                if (written <= 0) break // error or track released
+        warmJob =
+            scope.launch(Dispatchers.IO) {
+                val silence = ShortArray(WARM_BUFFER_FRAMES) // zero-filled by JVM
+                while (isActive) {
+                    val written = warmTrack.write(silence, 0, silence.size)
+                    if (written <= 0) break // error or track released
+                }
             }
-        }
     }
 
     val isPlaying: Boolean
@@ -154,7 +155,12 @@ class ToneGenerator {
                 trackMutex.withLock { audioTrack = track }
 
                 fadeIn(track)
-                Timber.d("play: fade-in complete freq=%fHz loopSamples=%d bufferSize=%d", frequency, loopSamples, bufferSize.coerceAtLeast(minBuf))
+                Timber.d(
+                    "play: fade-in complete freq=%fHz loopSamples=%d bufferSize=%d",
+                    frequency,
+                    loopSamples,
+                    bufferSize.coerceAtLeast(minBuf),
+                )
             }
     }
 
@@ -227,11 +233,12 @@ class ToneGenerator {
 
     private fun buildWarmTrack(): AudioTrack {
         val bufferBytes = WARM_BUFFER_FRAMES * 2 // 16-bit = 2 bytes per frame
-        val minBuf = AudioTrack.getMinBufferSize(
-            TONE_SAMPLE_RATE,
-            AudioFormat.CHANNEL_OUT_MONO,
-            AudioFormat.ENCODING_PCM_16BIT,
-        )
+        val minBuf =
+            AudioTrack.getMinBufferSize(
+                TONE_SAMPLE_RATE,
+                AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT,
+            )
         return AudioTrack
             .Builder()
             .setAudioAttributes(
@@ -240,16 +247,14 @@ class ToneGenerator {
                     .setUsage(AudioAttributes.USAGE_MEDIA)
                     .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
                     .build(),
-            )
-            .setAudioFormat(
+            ).setAudioFormat(
                 AudioFormat
                     .Builder()
                     .setSampleRate(TONE_SAMPLE_RATE)
                     .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
                     .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                     .build(),
-            )
-            .setBufferSizeInBytes(bufferBytes.coerceAtLeast(minBuf))
+            ).setBufferSizeInBytes(bufferBytes.coerceAtLeast(minBuf))
             .setTransferMode(AudioTrack.MODE_STREAM)
             .build()
             .also { it.setVolume(0f) }
