@@ -62,6 +62,11 @@ android {
             minifyEnabled true
             shrinkResources true
 
+            // Git SHA in META-INF/version-control-info.textproto — debugging aid only.
+            vcsInfo {
+                include false
+            }
+
             if (project.hasProperty('BANJEN_SIGN_PATH')) {
                 signingConfig signingConfigs.release
             } else {
@@ -69,6 +74,13 @@ android {
             }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'rules.pro'
         }
+    }
+
+    // Encrypted dependency list in the signing block; only Play Console reads it
+    // and Play falls back to its own analysis when absent.
+    dependenciesInfo {
+        includeInApk false
+        includeInBundle false
     }
 
     bundle {
@@ -93,7 +105,11 @@ android {
                 'kotlin/**',
                 '**.kotlin_builtins',
                 '**.kotlin_metadata',
-                'DebugProbesKt.bin'
+                'DebugProbesKt.bin',
+                'META-INF/androidx/**/LICENSE.txt',
+                'META-INF/*.version',
+                'kotlin-tooling-metadata.json',
+                '*.properties'
             ]
         }
     }
@@ -115,6 +131,26 @@ android {
 
 }
 
+// Release-only Kotlin compiler optimizations. AGP 9's variant API does not
+// expose Kotlin options, so configure the KGP task by name; tasks.named() at
+// top level fails because AGP registers the task late.
+// - jvmDefault NO_COMPATIBILITY: JVM default methods without DefaultImpls
+//   compat classes (nothing consumes this app as a library).
+// - -Xno-*-assertions: drop Kotlin null-check intrinsics at codegen, matching
+//   the -processkotlinnullchecks remove R8 rule in rules.pro.
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach { t ->
+    if (t.name == "compileReleaseKotlin") {
+        t.compilerOptions {
+            jvmDefault = org.jetbrains.kotlin.gradle.dsl.JvmDefaultMode.NO_COMPATIBILITY
+            freeCompilerArgs.addAll(
+                "-Xno-param-assertions",
+                "-Xno-call-assertions",
+                "-Xno-receiver-assertions"
+            )
+        }
+    }
+}
+
 dependencies {
     implementation "com.google.android.gms:play-services-ads-lite:24.8.0"
 
@@ -128,10 +164,16 @@ dependencies {
     // material-icons-extended removed (~10-15 MB before R8). Core icons used directly;
     // extended-only icons (Stop, Remove, Mic, Headphones, VolumeOff) inlined in AppIcons.kt.
     implementation 'androidx.compose.material:material-icons-core'
-    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.compose.ui:ui'
+
+    // Tooling/test-only — never packaged in the release APK/AAB:
+    // debugImplementation = debug variant only; testImplementation = local JVM
+    // tests; androidTestImplementation = separate instrumentation test APK.
+    // ui-tooling-preview was the one tooling dep on the release classpath
+    // (dropped together with the non-rendering @Preview on an EarActivity
+    // instance method).
     debugImplementation 'androidx.compose.ui:ui-tooling'
     debugImplementation 'androidx.compose.ui:ui-test-manifest'
-    implementation 'androidx.compose.ui:ui'
     implementation 'androidx.activity:activity-compose:1.12.4'
 
     implementation 'com.jakewharton.timber:timber:5.0.1'
