@@ -7,14 +7,48 @@
 # depends on Room. R8 full mode (android.enableR8.fullMode=true) strips the
 # no-arg constructors and reflective members that Room uses to instantiate
 # its generated *_Impl classes, causing androidx.startup.InitializationProvider
-# to crash on process start. Keep the reflective surface explicitly.
+# to crash on process start. Keep the reflective surface explicitly — but ONLY
+# that surface: a blanket `-keep class androidx.work.** { *; }` pinned ~300KB
+# of dex that the consumer rules shipped inside the WorkManager/Room AARs
+# already cover.
 -keep class * extends androidx.room.RoomDatabase {
     <init>();
     public ** createInvalidationTracker();
     public void clearAllTables();
 }
 -keep class androidx.room.RoomDatabase$JournalMode { *; }
--keep class androidx.work.** { *; }
 -keep class * extends androidx.work.ListenableWorker {
     public <init>(android.content.Context, androidx.work.WorkerParameters);
 }
+
+# Collapse all obfuscated classes into the root package: shorter names,
+# better zip compression, smaller string section.
+-repackageclasses
+
+# Release builds plant no Timber tree (BuildConfig.DEBUG check), but library
+# code still calls android.util.Log directly. Strip non-error log calls.
+# -maximumremovedandroidloglevel is the R8-native form: it also folds
+# Log.isLoggable() and removes the dead guarded blocks (4 = strip V/D/I).
+-maximumremovedandroidloglevel 4
+-assumenosideeffects class android.util.Log {
+    public static int v(...);
+    public static int d(...);
+    public static int i(...);
+}
+
+# Compose composition-tracing markers are deliberately NOT covered by the
+# Compose runtime's consumer rules (so release tracing stays possible).
+# Every restartable composable otherwise embeds an unobfuscated
+# "Name (file.kt:line)" string in release dex. Official removal recipe:
+# https://developer.android.com/develop/ui/compose/tooling/tracing
+-assumenosideeffects public class androidx.compose.runtime.ComposerKt {
+    boolean isTraceInProgress();
+    void traceEventStart(int,int,int,java.lang.String);
+    void traceEventStart(int,java.lang.String);
+    void traceEventEnd();
+}
+
+# Remove Kotlin null-check intrinsics entirely (AGP 9 R8 global option).
+# The default (remove_message) already strips the parameter-name strings,
+# so failure messages are gone either way; this drops the residual checks.
+-processkotlinnullchecks remove
