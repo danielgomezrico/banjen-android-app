@@ -1,5 +1,6 @@
 .DEFAULT_GOAL := help
 
+ANDROID_DIR := android
 KTLINT_VERSION := 1.5.0
 KTLINT := .ktlint/ktlint
 
@@ -9,30 +10,30 @@ help: ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
 
 build: ## Build release APK
-	./gradlew assembleRelease
+	cd $(ANDROID_DIR) && ./gradlew assembleRelease
 
 run: ## Uninstall, install and run on connected device (use DEVICE=<serial> for multiple devices)
 	adb $(if $(DEVICE),-s $(DEVICE)) uninstall com.makingiants.android.banjotuner || true
-	$(if $(DEVICE),ANDROID_SERIAL=$(DEVICE) )./gradlew installDebug
+	cd $(ANDROID_DIR) && $(if $(DEVICE),ANDROID_SERIAL=$(DEVICE) )./gradlew installDebug
 	adb $(if $(DEVICE),-s $(DEVICE)) shell am start -n com.makingiants.android.banjotuner/.EarActivity
 
 
 run_release: ## Uninstall, install and run on connected device on release (use DEVICE=<serial> for multiple devices)
 	adb $(if $(DEVICE),-s $(DEVICE)) uninstall com.makingiants.android.banjotuner || true
-	$(if $(DEVICE),ANDROID_SERIAL=$(DEVICE) )./gradlew installRelease
+	cd $(ANDROID_DIR) && $(if $(DEVICE),ANDROID_SERIAL=$(DEVICE) )./gradlew installRelease
 
 uninstall: ## Uninstall app from connected device (use DEVICE=<serial> for multiple devices)
 	adb $(if $(DEVICE),-s $(DEVICE)) uninstall com.makingiants.android.banjotuner
 
 test: ## Run unit tests
-	./gradlew test
+	cd $(ANDROID_DIR) && ./gradlew test
 
 $(KTLINT):
 	@mkdir -p .ktlint
 	@curl -sSLO "https://github.com/pinterest/ktlint/releases/download/$(KTLINT_VERSION)/ktlint" && chmod +x ktlint && mv ktlint $(KTLINT)
 
 format: $(KTLINT) ## Format all Kotlin code with ktlint
-	$(KTLINT) --format "app/src/**/*.kt"
+	$(KTLINT) --format "$(ANDROID_DIR)/app/src/**/*.kt"
 
 deploy-metadata: ## Upload metadata to Play Store via fastlane (no build)
-	bundle exec fastlane upload_metadata
+	cd $(ANDROID_DIR) && bundle exec fastlane upload_metadata

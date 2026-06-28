@@ -26,9 +26,10 @@ jobs:
         with:
           ruby-version: '3.3'
           bundler-cache: true
+          working-directory: android
 
       - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+        run: chmod +x android/gradlew
 
       - name: Configure git for version commit
         run: |
@@ -36,6 +37,7 @@ jobs:
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Prepare signing config
+        working-directory: android
         env:
           KEY: ${{ secrets.KEY }}
           BANJEN_SIGN_PWD: ${{ secrets.BANJEN_SIGN_PWD }}
@@ -57,6 +59,7 @@ jobs:
           echo "$KEY" | base64 -d > app/key.keystore
 
       - name: Deploy to Play Store
+        working-directory: android
         env:
           PLAY_STORE_SERVICE_ACCOUNT_JSON_B64: ${{ secrets.PLAY_STORE_SERVICE_ACCOUNT_JSON }}
         run: |
@@ -68,8 +71,8 @@ jobs:
         if: always()
         with:
           name: app-release
-          path: app/build/outputs/bundle/release/app-release.aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
 
       - name: Clean up signing files
         if: always()
-        run: rm -f app/key.keystore app/google-services.json
+        run: rm -f android/app/key.keystore android/app/google-services.json

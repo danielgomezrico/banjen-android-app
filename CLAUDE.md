@@ -8,29 +8,33 @@ Banjen is an Android banjo tuner app (package: `com.makingiants.android.banjotun
 
 **Primary user**: Harold M. persona — older beginner who prefers ear-training over visual tuners. Simplicity is the core value proposition: "The simplest way to tune your banjo by ear."
 
+## Repository Layout
+
+The Android/Gradle project lives under **`android/`** (Gradle wrapper, `app/`, `baselineprofile/`, `build.gradle`, `settings.gradle`, `fastlane/`, `Gemfile`). The repo root keeps only docs (`docs/`, `README.md`, `CLAUDE.md`), general scripts (`scripts/`), `Makefile`, and CI (`.github/`). Run Gradle/Fastlane from `android/`, or use the root `make` targets (which `cd android` for you).
+
 ## Build Commands
 
 ```bash
-make build          # Release APK (./gradlew assembleRelease)
+make build          # Release APK (cd android && ./gradlew assembleRelease)
 make run            # Uninstall + install debug + launch (DEVICE=<serial> for multi-device)
 make run_release    # Uninstall + install release
-make test           # Unit tests (./gradlew test) — JVM tests in app/src/test/
+make test           # Unit tests (cd android && ./gradlew test) — JVM tests in android/app/src/test/
 make format         # Format Kotlin with ktlint 1.5.0 (auto-downloads to .ktlint/)
 
-# Single unit test class / method
-./gradlew test --tests "com.makingiants.android.banjotuner.ToneGeneratorTest"
-./gradlew test --tests "com.makingiants.android.banjotuner.PitchDetectorTest.detect*"
+# Single unit test class / method (run from android/)
+(cd android && ./gradlew test --tests "com.makingiants.android.banjotuner.ToneGeneratorTest")
+(cd android && ./gradlew test --tests "com.makingiants.android.banjotuner.PitchDetectorTest.detect*")
 
 # Instrumented (Compose UI) tests — requires connected device/emulator
-./gradlew connectedAndroidTest
+(cd android && ./gradlew connectedAndroidTest)
 
 # Full build with coverage (jacoco runs automatically)
-./gradlew build
+(cd android && ./gradlew build)
 ```
 
 ## Architecture
 
-Single-module Gradle project (`app/`). All production code lives in one package, `com.makingiants.android.banjotuner`. Single activity, no ViewModel, no DI, no navigation — state is held in Compose `mutableStateOf`/`SharedPreferences`. Files:
+Single-module Gradle project (`android/app/`). All production code lives in one package, `com.makingiants.android.banjotuner`. Single activity, no ViewModel, no DI, no navigation — state is held in Compose `mutableStateOf`/`SharedPreferences`. Files:
 
 - **`EarActivity`** (~1100 lines) — The whole UI. `ComponentActivity` that sets Compose content directly. Owns `ToneGenerator`, `PitchDetector`, the `selectedStringIndex`, `pitchCheckMode`, `sessionModeActive` state, the `referencePitch`, and the current instrument/tuning selection. Hosts string buttons, the tuning animation, instrument/tuning dropdowns, reference-pitch (A=) control, banner ad, and the snackbar/volume-low alert. `AudioCaptureEffect` runs the `AudioRecord` → `PitchDetector` loop while pitch-check is active. Reads an autoplay `string_index` intent extra (from the home-screen widget). Tears down audio in `exitSessionMode`/`onPause`.
 - **`ToneGenerator`** — Synthesizes and loops a sine tone via `AudioTrack` (`MODE_STATIC`, hardware loop points). No MP3 assets. Key tricks, all to kill click/cold-start noise: a permanent silent **warm-up track** keeps the audio path hot; 200ms fade-in/out; `calculateLoopSampleCount` picks a loop length whose boundary minimizes `1-cos` (full-cycle, not half-cycle) to avoid a phase-flip thump. Coroutine-driven; `play()`/`stop()`/`release()` are main-thread-safe.
@@ -42,22 +46,22 @@ Single-module Gradle project (`app/`). All production code lives in one package,
 - **`TunerWidget`** — Glance home-screen app widget (`TunerWidgetReceiver`). Four string buttons that `actionStartActivity<EarActivity>` with a `string_index` extra. Pulls in WorkManager+Room transitively (see ProGuard note below).
 - **`AppIcons`** — Hand-inlined vector icons (Stop, Remove, Mic, Headphones, VolumeOff). `material-icons-extended` was dropped (~10–15 MB) to shrink the APK.
 
-Instrumented tests use a Robot pattern (`EarRobot`/`withEarRobot`) with `AndroidComposeTestRule`. Unit tests now exist and are substantial — `app/src/test/` covers `ToneGenerator`, `PitchDetector`, pitch math, `TuningModel`, session mode, widget, and animation state.
+Instrumented tests use a Robot pattern (`EarRobot`/`withEarRobot`) with `AndroidComposeTestRule`. Unit tests now exist and are substantial — `android/app/src/test/` covers `ToneGenerator`, `PitchDetector`, pitch math, `TuningModel`, session mode, widget, and animation state.
 
 ## Key Config
 
 - **Build tooling**: AGP **9.0.1**, Kotlin **2.3.10**, Compose BOM **2026.02.00**, Firebase BOM **34.9.0**, JDK 17 source/target. CI builds with JDK 21.
-- **`android.enableR8.fullMode=true`** (`gradle.properties`). Release uses `minifyEnabled`/`shrinkResources` + AAB ABI/density/language splits. R8 full mode strips reflective members Room/WorkManager need — `app/rules.pro` keeps the Room/WorkManager/Startup surface, and `packaging` must NOT exclude `META-INF/proguard/*.pro` (consumer rules), or `InitializationProvider` crashes on launch.
+- **`android.enableR8.fullMode=true`** (`gradle.properties`). Release uses `minifyEnabled`/`shrinkResources` + AAB ABI/density/language splits. R8 full mode strips reflective members Room/WorkManager need — `android/app/rules.pro` keeps the Room/WorkManager/Startup surface, and `packaging` must NOT exclude `META-INF/proguard/*.pro` (consumer rules), or `InitializationProvider` crashes on launch.
 - **Signing & ads**: read from gradle properties / env (`BANJEN_SIGN_*`, `BANJEN_ADS_UNIT_ID_BANNER`, `BANJEN_ADMOB_APP_ID`); injected as `resValue`. CI reads from GitHub secrets. See `gradle.properties.example`.
 - **`dependencies.gradle`**: `setup.targetSdk` (36), `setup.minSdk` (23), `deps.kotlin`.
 - **Localization**: en (default), es, pt, it — `res/values-*/strings.xml` (and `resConfigs`).
 - **Ads**: `play-services-ads-lite` (not the full SDK). Logging via Timber.
 - **Release size/perf hardening** (applies to every release artifact — CI, Fastlane deploy, local `assembleRelease`): `rules.pro` strips Log V/D/I (`-maximumremovedandroidloglevel 4`), Compose trace markers, and Kotlin null-check intrinsics (`-processkotlinnullchecks remove`), plus `-repackageclasses`; `build.gradle` sets release-only Kotlin flags (`jvmDefault NO_COMPATIBILITY`, `-Xno-*-assertions`), disables `dependenciesInfo`/`vcsInfo`, and excludes license/metadata files from packaging. Do NOT add blanket `-keep class androidx.work.**` rules — the AAR consumer rules cover the reflective surface.
-- **Baseline Profile**: `:baselineprofile` test module generates an ART profile (committed at `app/src/release/generated/baselineProfiles/baseline-prof.txt`, merged into every release build; CI needs no device). Regenerate after major UI/startup changes with a device attached: `./gradlew :app:generateBaselineProfile`. Benchmark plugin is 1.5.0-alpha (stable 1.4.x rejects AGP 9).
+- **Baseline Profile**: `:baselineprofile` test module generates an ART profile (committed at `android/app/src/release/generated/baselineProfiles/baseline-prof.txt`, merged into every release build; CI needs no device). Regenerate after major UI/startup changes with a device attached: `(cd android && ./gradlew :app:generateBaselineProfile)`. Benchmark plugin is 1.5.0-alpha (stable 1.4.x rejects AGP 9).
 
 ## Release Automation (Fastlane)
 
-`fastlane/Fastfile` `deploy` lane drives versioning from **conventional commits** (`analyze_commits`): `feat`→minor, `fix`/`perf`→patch, breaking→major. It patches `appVersionName`/`appVersionCode` in `app/build.gradle`, commits, builds the AAB, uploads to Play Store **internal/draft** track, and tags. So commit-message types directly drive the next published version — follow conventional commits strictly. Ruby 3.3.10 (`.ruby-version`). `make deploy-metadata` uploads store metadata only.
+`android/fastlane/Fastfile` `deploy` lane drives versioning from **conventional commits** (`analyze_commits`): `feat`→minor, `fix`/`perf`→patch, breaking→major. It patches `appVersionName`/`appVersionCode` in `android/app/build.gradle`, commits, builds the AAB, uploads to Play Store **internal/draft** track, and tags. So commit-message types directly drive the next published version — follow conventional commits strictly. Ruby 3.3.10 (`.ruby-version`). `make deploy-metadata` uploads store metadata only.
 
 ## Known Technical Debt
 
