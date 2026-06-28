@@ -3,6 +3,8 @@
 #
 #
 
+cd "$(dirname "$0")/../android" || exit 1
+
 ./gradlew assembleAndroidTest
 
 RESULT_PATH=app/build/outputs/apk

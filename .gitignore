@@ -1,12 +1,12 @@
 .ktlint/
-app/gradle.properties
-app/newrelic.properties
-app/google-services.json
+android/app/gradle.properties
+android/app/newrelic.properties
+android/app/google-services.json
 captures/
 *.keystore
 *.hprof
 play-store.json
-fastlane/play-store-credentials.json
+android/fastlane/play-store-credentials.json
 
 gradle.properties
 
@@ -175,8 +175,8 @@ Temporary Items
 .claude-output/
 
 # Fastlane
-fastlane/play-store-credentials.json
-fastlane/report.xml
-fastlane/README.md
+android/fastlane/play-store-credentials.json
+android/fastlane/report.xml
+android/fastlane/README.md
 .agents/
 .gitnexus/

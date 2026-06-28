@@ -17,16 +17,18 @@ jobs:
           distribution: 'temurin'
           cache: gradle
       - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+        run: chmod +x android/gradlew
 
       - name: Prepare Env
+        working-directory: android
         env:
           GOOGLE_SERVICES: ${{ secrets.GOOGLE_SERVICES }}
         run: |
           echo "org.gradle.jvmargs=-Xmx2048M -Dkotlin.daemon.jvm.options=-Xmx2048M" >> gradle.properties
           echo "android.useAndroidX=true" >> gradle.properties
-          
+
           echo "$GOOGLE_SERVICES" | base64 -d > app/google-services.json
 
       - name: Build with Gradle
+        working-directory: android
         run: ./gradlew build
