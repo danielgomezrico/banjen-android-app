@@ -2,7 +2,9 @@ package com.makingiants.android.banjotuner
 
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class SessionModeTest {
     @Test
@@ -48,5 +50,23 @@ class SessionModeTest {
     @Test
     fun `autoAdvanceNextIndex from 3 returns null`() {
         assertNull(autoAdvanceNextIndex(3))
+    }
+
+    @Test
+    fun `isVolumeLow at 100 percent returns false`() {
+        assertFalse(isVolumeLow(15, 15))
+        assertFalse(isVolumeLow(30, 30))
+    }
+
+    @Test
+    fun `isVolumeLow below 100 percent returns true`() {
+        assertTrue(isVolumeLow(14, 15))
+        assertTrue(isVolumeLow(0, 15))
+        assertTrue(isVolumeLow(7, 15))
+    }
+
+    @Test
+    fun `isVolumeLow with max 0 returns false`() {
+        assertFalse(isVolumeLow(0, 0))
     }
 }

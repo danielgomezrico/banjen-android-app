@@ -96,6 +96,7 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
+import com.google.firebase.analytics.FirebaseAnalytics
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -132,6 +133,8 @@ class EarActivity : ComponentActivity() {
         getSystemService(Context.AUDIO_SERVICE) as AudioManager
     }
 
+    private val analytics: FirebaseAnalytics by lazy { FirebaseAnalytics.getInstance(this) }
+
     private var savedPitch: Int = DEFAULT_PITCH
 
     private var sessionModeActive = mutableStateOf(false)
@@ -167,7 +170,24 @@ class EarActivity : ComponentActivity() {
     private fun isVolumeLow(): Boolean {
         val current = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
         val max = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-        return current < max / 2
+        return isVolumeLow(current, max)
+    }
+
+    private fun logEvent(name: String, params: Map<String, Any?> = emptyMap()) {
+        val bundle = Bundle()
+        params.forEach { (key, value) ->
+            when (value) {
+                is String -> bundle.putString(key, value)
+                is Int -> bundle.putInt(key, value)
+                is Long -> bundle.putLong(key, value)
+                is Double -> bundle.putDouble(key, value)
+                is Boolean -> bundle.putBoolean(key, value)
+                null -> {}
+                else -> bundle.putString(key, value.toString())
+            }
+        }
+        analytics.logEvent(name, bundle)
+        Timber.d("Analytics: $name $params")
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -210,6 +230,9 @@ class EarActivity : ComponentActivity() {
         if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
         MobileAds.initialize(this)
         val autoPlayIndex = parseStringIndex(intent)
+        if (autoPlayIndex >= 0) {
+            logEvent("widget_string_tapped", mapOf("index" to autoPlayIndex))
+        }
         setContent { Contents(autoPlayIndex) }
     }
 
@@ -300,6 +323,10 @@ class EarActivity : ComponentActivity() {
                 selectedOption.intValue = -1
                 return@LaunchedEffect
             }
+            isVolumeLow.value = isVolumeLow()
+            if (isVolumeLow.value) {
+                scope.launch { snackbarHostState.showSnackbar(volumeLowMessage) }
+            }
             var index = 0
             val totalStrings = currentTuningModel.notes.size
             while (index < totalStrings && sessionModeActive.value) {
@@ -329,7 +356,16 @@ class EarActivity : ComponentActivity() {
             floatingActionButton = {
                 if (sessionModeActive.value) {
                     FloatingActionButton(
-                        onClick = { exitSessionMode() },
+                        onClick = {
+                            logEvent(
+                                "session_stopped",
+                                mapOf(
+                                    "instrument" to currentInstrument.name,
+                                    "tuning" to currentTuningModel.name,
+                                ),
+                            )
+                            exitSessionMode()
+                        },
                         containerColor = colorResource(id = R.color.banjen_accent),
                     ) {
                         Box(
@@ -370,6 +406,14 @@ class EarActivity : ComponentActivity() {
                         }
                         if (index == -1) {
                             Timber.d("tap: stop prevIndex=%d", selectedOption.intValue)
+                            logEvent(
+                                "string_stopped",
+                                mapOf(
+                                    "index" to selectedOption.intValue,
+                                    "instrument" to currentInstrument.name,
+                                    "tuning" to currentTuningModel.name,
+                                ),
+                            )
                             toneGenerator.stop()
                             selectedOption.intValue = -1
                             selectedStringIndex.intValue = -1
@@ -384,6 +428,16 @@ class EarActivity : ComponentActivity() {
                                 currentInstrument.name,
                                 currentTuningModel.name,
                                 referencePitch.intValue,
+                            )
+                            logEvent(
+                                "string_played",
+                                mapOf(
+                                    "index" to index,
+                                    "note" to note.name,
+                                    "instrument" to currentInstrument.name,
+                                    "tuning" to currentTuningModel.name,
+                                    "ref_pitch" to referencePitch.intValue,
+                                ),
                             )
                             toneGenerator.play(note.frequency)
                             selectedOption.intValue = index
@@ -433,9 +487,26 @@ class EarActivity : ComponentActivity() {
                         toneGenerator.stop()
                         selectedOption.intValue = -1
                         Timber.d("session: start tuning=%s strings=%d", currentTuningModel.name, currentTuningModel.notes.size)
+                        logEvent(
+                            "session_started",
+                            mapOf(
+                                "instrument" to currentInstrument.name,
+                                "tuning" to currentTuningModel.name,
+                                "strings" to currentTuningModel.notes.size,
+                            ),
+                        )
                         sessionModeActive.value = true
                     },
-                    onSettingsClick = { showSettings = true },
+                    onSettingsClick = {
+                        logEvent(
+                            "settings_opened",
+                            mapOf(
+                                "instrument" to currentInstrument.name,
+                                "tuning" to currentTuningModel.name,
+                            ),
+                        )
+                        showSettings = true
+                    },
                 )
             }
         }
@@ -458,8 +529,10 @@ class EarActivity : ComponentActivity() {
                         tuningName = currentTuningModel.name,
                         instruments = ALL_INSTRUMENTS,
                         onInstrumentSelected = { newIndex ->
+                            val name = ALL_INSTRUMENTS[newIndex].name
+                            Timber.d("instrumentChange: newIndex=%d name=%s", newIndex, name)
+                            logEvent("instrument_selected", mapOf("name" to name, "index" to newIndex))
                             showSettings = false
-                            Timber.d("instrumentChange: newIndex=%d name=%s", newIndex, ALL_INSTRUMENTS[newIndex].name)
                             toneGenerator.stop()
                             selectedOption.intValue = -1
                             isVolumeLow.value = false
@@ -473,8 +546,10 @@ class EarActivity : ComponentActivity() {
                         },
                         tunings = currentInstrument.tunings,
                         onTuningSelected = { newIndex ->
+                            val name = currentInstrument.tunings[newIndex].name
+                            Timber.d("tuningChange: newIndex=%d name=%s", newIndex, name)
+                            logEvent("tuning_selected", mapOf("name" to name, "index" to newIndex))
                             showSettings = false
-                            Timber.d("tuningChange: newIndex=%d name=%s", newIndex, currentInstrument.tunings[newIndex].name)
                             toneGenerator.stop()
                             selectedOption.intValue = -1
                             isVolumeLow.value = false
@@ -484,7 +559,16 @@ class EarActivity : ComponentActivity() {
                                 .putInt(KEY_TUNING_INDEX, newIndex)
                                 .apply()
                         },
-                        onShareTuning = { shareTuning(currentTuningModel) },
+                        onShareTuning = {
+                            logEvent(
+                                "tuning_shared",
+                                mapOf(
+                                    "instrument" to currentInstrument.name,
+                                    "tuning" to currentTuningModel.name,
+                                ),
+                            )
+                            shareTuning(currentTuningModel)
+                        },
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     Box(
@@ -534,13 +618,18 @@ class EarActivity : ComponentActivity() {
                         Text("banner unit: $maskedUnit", style = MaterialTheme.typography.bodySmall)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Button(
-                                onClick = { forceDebugAd.value = !forceDebugAd.value },
+                                onClick = {
+                                    val newVal = !forceDebugAd.value
+                                    logEvent("debug_force_ad_toggled", mapOf("enabled" to newVal))
+                                    forceDebugAd.value = newVal
+                                },
                                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp),
                             ) {
                                 Text(if (forceDebugAd.value) "hide debug ad" else "force show ad", style = MaterialTheme.typography.labelSmall)
                             }
                             TextButton(
                                 onClick = {
+                                    logEvent("debug_ad_re_request")
                                     forceDebugAd.value = true
                                     adDebugStatus.value = "re-request"
                                 },
@@ -769,8 +858,10 @@ class EarActivity : ComponentActivity() {
         ) {
             IconButton(
                 onClick = {
-                    val newPitch = clampPitch(referencePitch.value - 1)
+                    val oldPitch = referencePitch.value
+                    val newPitch = clampPitch(oldPitch - 1)
                     referencePitch.value = newPitch
+                    logEvent("pitch_decreased", mapOf("from" to oldPitch, "to" to newPitch))
                     onPitchChanged(newPitch)
                 },
                 enabled = canDecreasePitch(referencePitch.value),
@@ -796,8 +887,10 @@ class EarActivity : ComponentActivity() {
             Spacer(modifier = Modifier.width(8.dp))
             IconButton(
                 onClick = {
-                    val newPitch = clampPitch(referencePitch.value + 1)
+                    val oldPitch = referencePitch.value
+                    val newPitch = clampPitch(oldPitch + 1)
                     referencePitch.value = newPitch
+                    logEvent("pitch_increased", mapOf("from" to oldPitch, "to" to newPitch))
                     onPitchChanged(newPitch)
                 },
                 enabled = canIncreasePitch(referencePitch.value),

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-  <string name="volume_low_message">Il volume è basso. Alzalo per sentire i toni di accordatura.</string>
+  <string name="volume_low_message">Imposta il volume al 100% per sentire i toni di accordatura.</string>
   <string name="reference_pitch_label">Tono di riferimento</string>
   <string name="session_mode_label">Modalità sessione</string>
   <string name="session_stop">Ferma</string>

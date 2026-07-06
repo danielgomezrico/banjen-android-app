@@ -19,3 +19,5 @@ const val SECONDS_PER_STRING = 5
 fun clampVolume(v: Float): Float = v.coerceIn(0.0f, 1.0f)
 
 fun autoAdvanceNextIndex(current: Int): Int? = if (current < 3) current + 1 else null
+
+fun isVolumeLow(current: Int, max: Int): Boolean = max > 0 && current < max

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-  <string name="volume_low_message">El volumen está bajo. Súbelo para escuchar los tonos de afinación.</string>
+  <string name="volume_low_message">Pon el volumen al 100% para escuchar los tonos de afinación.</string>
   <string name="reference_pitch_label">Tono de referencia</string>
   <string name="session_mode_label">Modo sesión</string>
   <string name="session_stop">Detener</string>
