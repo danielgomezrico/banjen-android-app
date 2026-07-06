@@ -44,7 +44,7 @@ Single-module Gradle project (`android/app/`). All production code lives in one 
 - **`BanjoStringCanvas`** (~730 lines) — Custom-drawn string visualization with per-string semantic (accessibility) buttons overlaid on the Canvas.
 - **`TuningAnimation`** — Canvas-based concentric-ring "breathing" animation. **Rive was removed** (APK size); `deriveTuningAnimationState`, `pitchCheckMode`, and cent-deviation are still computed for future reuse but only the Canvas fallback renders.
 - **`TunerWidget`** — Glance home-screen app widget (`TunerWidgetReceiver`). Four string buttons that `actionStartActivity<EarActivity>` with a `string_index` extra. Pulls in WorkManager+Room transitively (see ProGuard note below).
-- **`AppIcons`** — Hand-inlined vector icons (Stop, Remove, Mic, Headphones, VolumeOff). `material-icons-extended` was dropped (~10–15 MB) to shrink the APK.
+- **`AppIcons`** — Hand-inlined vector icons (Remove only). Stop kept as PNG drawable (from design source). `material-icons-extended` was dropped (~10–15 MB) to shrink the APK.
 
 Instrumented tests use a Robot pattern (`EarRobot`/`withEarRobot`) with `AndroidComposeTestRule`. Unit tests now exist and are substantial — `android/app/src/test/` covers `ToneGenerator`, `PitchDetector`, pitch math, `TuningModel`, session mode, widget, and animation state.
 

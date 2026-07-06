@@ -1,0 +1,792 @@
+{
+  "builtTestProducts" : [
+    {
+      "binaryPath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.xctest/Contents/MacOS/BanjenCorePackageTests",
+      "packagePath" : "/Users/dan/projects/banjen/ios/BanjenCore",
+      "productName" : "BanjenCorePackageTests"
+    }
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.BanjenCore-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/sources",
+      "importPath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/AppConstants.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/BanjenCore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/PitchDetector.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/ToneMath.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/TuningAnimationState.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/TuningModel.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "BanjenCore",
+      "moduleOutputPath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules/BanjenCore.swiftmodule",
+      "objects" : [
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/AppConstants.swift.o",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/BanjenCore.swift.o",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/PitchDetector.swift.o",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/ToneMath.swift.o",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningAnimationState.swift.o",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningModel.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-j14",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/include/BanjenCore-Swift.h",
+        "-swift-version",
+        "6",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "banjencore"
+      ],
+      "outputFileMapPath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/AppConstants.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/BanjenCore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/PitchDetector.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/ToneMath.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningAnimationState.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningModel.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules/BanjenCore.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/AppConstants.swift",
+        "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/BanjenCore.swift",
+        "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/PitchDetector.swift",
+        "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/ToneMath.swift",
+        "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/TuningAnimationState.swift",
+        "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/TuningModel.swift"
+      ],
+      "tempsPath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.BanjenCorePackageTests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.build/sources",
+      "importPath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.derived/runner.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules/BanjenCoreTests.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "BanjenCorePackageTests",
+      "moduleOutputPath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules/BanjenCorePackageTests.swiftmodule",
+      "objects" : [
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.build/runner.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j14",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-emit-objc-header",
+        "-emit-objc-header-path",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.build/include/BanjenCorePackageTests-Swift.h",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "banjencore"
+      ],
+      "outputFileMapPath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules/BanjenCorePackageTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.derived/runner.swift"
+      ],
+      "tempsPath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.build",
+      "wholeModuleOptimization" : false
+    },
+    "C.BanjenCoreTests-arm64-apple-macosx-debug.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/sources",
+      "importPath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/AppConstantsTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/PitchDetectorTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/SmokeTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/ToneMathTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/TuningAnimationStateTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/TuningModelTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules/BanjenCore.swiftmodule"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/sources"
+        }
+      ],
+      "isLibrary" : true,
+      "moduleName" : "BanjenCoreTests",
+      "moduleOutputPath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules/BanjenCoreTests.swiftmodule",
+      "objects" : [
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/AppConstantsTests.swift.o",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/PitchDetectorTests.swift.o",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/SmokeTests.swift.o",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/ToneMathTests.swift.o",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningAnimationStateTests.swift.o",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningModelTests.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx14.0",
+        "-incremental",
+        "-enable-batch-mode",
+        "-serialize-diagnostics",
+        "-index-store-path",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/index/store",
+        "-Onone",
+        "-enable-testing",
+        "-Xfrontend",
+        "-enable-cross-import-overlays",
+        "-j14",
+        "-DSWIFT_PACKAGE",
+        "-DDEBUG",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/ModuleCache",
+        "-parseable-output",
+        "-parse-as-library",
+        "-swift-version",
+        "6",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "banjencore"
+      ],
+      "outputFileMapPath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/AppConstantsTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/PitchDetectorTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/SmokeTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/ToneMathTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningAnimationStateTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningModelTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules/BanjenCoreTests.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/AppConstantsTests.swift",
+        "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/PitchDetectorTests.swift",
+        "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/SmokeTests.swift",
+        "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/ToneMathTests.swift",
+        "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/TuningAnimationStateTests.swift",
+        "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/TuningModelTests.swift"
+      ],
+      "tempsPath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build",
+      "wholeModuleOptimization" : false
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "BanjenCore" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "BanjenCore",
+      "-package-name",
+      "banjencore",
+      "-c",
+      "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/AppConstants.swift",
+      "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/BanjenCore.swift",
+      "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/PitchDetector.swift",
+      "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/ToneMath.swift",
+      "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/TuningAnimationState.swift",
+      "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/TuningModel.swift",
+      "-I",
+      "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-j14",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/include/BanjenCore-Swift.h",
+      "-swift-version",
+      "6",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "banjencore",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "BanjenCorePackageTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "BanjenCorePackageTests",
+      "-package-name",
+      "banjencore",
+      "-c",
+      "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.derived/runner.swift",
+      "-I",
+      "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j14",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-emit-objc-header",
+      "-emit-objc-header-path",
+      "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.build/include/BanjenCorePackageTests-Swift.h",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "banjencore",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ],
+    "BanjenCoreTests" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "BanjenCoreTests",
+      "-package-name",
+      "banjencore",
+      "-c",
+      "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/AppConstantsTests.swift",
+      "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/PitchDetectorTests.swift",
+      "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/SmokeTests.swift",
+      "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/ToneMathTests.swift",
+      "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/TuningAnimationStateTests.swift",
+      "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/TuningModelTests.swift",
+      "-I",
+      "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/Modules",
+      "-target",
+      "arm64-apple-macosx14.0",
+      "-incremental",
+      "-enable-batch-mode",
+      "-serialize-diagnostics",
+      "-index-store-path",
+      "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/index/store",
+      "-Onone",
+      "-enable-testing",
+      "-Xfrontend",
+      "-enable-cross-import-overlays",
+      "-j14",
+      "-DSWIFT_PACKAGE",
+      "-DDEBUG",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/ModuleCache",
+      "-parseable-output",
+      "-parse-as-library",
+      "-swift-version",
+      "6",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.5.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "banjencore",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "BanjenCore" : [
+
+    ],
+    "BanjenCorePackageTests" : [
+      "BanjenCoreTests",
+      "BanjenCore"
+    ],
+    "BanjenCoreTests" : [
+      "BanjenCore"
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+    "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.derived/runner.swift" : {
+      "inputs" : [
+
+      ],
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.derived/runner.swift"
+        }
+      ]
+    }
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/AppConstants.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/BanjenCore.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/PitchDetector.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/ToneMath.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/TuningAnimationState.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/TuningModel.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/sources"
+    },
+    "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.derived/runner.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.build/sources"
+    },
+    "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/AppConstants.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/BanjenCore.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/PitchDetector.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/ToneMath.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningAnimationState.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningModel.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.build/runner.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/AppConstantsTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/PitchDetectorTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/SmokeTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/ToneMathTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningAnimationStateTests.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningModelTests.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCorePackageTests.product/Objects.LinkFileList"
+    },
+    "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/AppConstantsTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/PitchDetectorTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/SmokeTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/ToneMathTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/TuningAnimationStateTests.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/TuningModelTests.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/sources"
+    },
+    "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

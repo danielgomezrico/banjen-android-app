@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Music note group (for animation) -->
+    <group android:name="note_group">
+        <!-- Note head -->
+        <path
+            android:name="note_head"
+            android:fillColor="#49251E"
+            android:pathData="M22,68 a6,5 0 1,0 0.1,0 z" />
+        <!-- Stem -->
+        <path
+            android:name="note_stem"
+            android:fillColor="#49251E"
+            android:pathData="M27,68 L27,42 Q28,40 30,42 L30,66 z" />
+        <!-- Flag -->
+        <path
+            android:name="note_flag"
+            android:fillColor="#49251E"
+            android:pathData="M30,42 Q38,48 36,55 Q40,52 38,58 Q32,50 30,42" />
+    </group>
+
+    <!-- Headstock body -->
+    <path
+        android:name="headstock"
+        android:fillColor="#49251E"
+        android:pathData="M48,22
+            Q58,18 66,24
+            L72,32
+            Q74,42 70,58
+            L66,72
+            Q58,78 48,74
+            L42,60
+            Q40,40 44,26 z" />
+
+    <!-- Tuning pegs -->
+    <path android:name="peg1" android:fillColor="#6B4035" android:pathData="M46,30 a3.5,3.5 0 1,0 0.1,0 z" />
+    <path android:name="peg2" android:fillColor="#6B4035" android:pathData="M62,28 a3.5,3.5 0 1,0 0.1,0 z" />
+    <path android:name="peg3" android:fillColor="#6B4035" android:pathData="M48,46 a3.2,3.2 0 1,0 0.1,0 z" />
+    <path android:name="peg4" android:fillColor="#6B4035" android:pathData="M64,44 a3.2,3.2 0 1,0 0.1,0 z" />
+
+    <!-- Peg buttons (light) -->
+    <path android:fillColor="#FFFBE9" android:pathData="M44.5,28.5 a1,1 0 1,0 0.1,0 z" />
+    <path android:fillColor="#FFFBE9" android:pathData="M60.5,26.5 a1,1 0 1,0 0.1,0 z" />
+    <path android:fillColor="#FFFBE9" android:pathData="M46.5,44.5 a0.9,0.9 0 1,0 0.1,0 z" />
+    <path android:fillColor="#FFFBE9" android:pathData="M62.5,42.5 a0.9,0.9 0 1,0 0.1,0 z" />
+
+    <!-- Strings group for vibration animation -->
+    <group android:name="strings_group">
+        <path android:name="string1" android:fillColor="#3A2A1F" android:pathData="M50,26 L50,76 L51,76 L51,26 z" />
+        <path android:name="string2" android:fillColor="#3A2A1F" android:pathData="M54,24 L54,78 L55,78 L55,24 z" />
+        <path android:name="string3" android:fillColor="#3A2A1F" android:pathData="M58,25 L58,77 L59,77 L59,25 z" />
+        <path android:name="string4" android:fillColor="#3A2A1F" android:pathData="M62,27 L62,75 L63,75 L63,27 z" />
+    </group>
+
+    <!-- Top curl decoration -->
+    <path
+        android:fillColor="#3A2A1F"
+        android:pathData="M52,20 Q55,15 60,18 Q58,22 55,21" />
+
+</vector>

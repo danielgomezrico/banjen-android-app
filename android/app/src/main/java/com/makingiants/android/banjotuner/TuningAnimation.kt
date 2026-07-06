@@ -83,14 +83,14 @@ object TuningAnimationConstants {
 // Per-string accent colors (indexed by string position 0–3)
 internal val stringAccentColors =
     listOf(
-        Color(0xFFA67B5B), // Index 0: D3 — Deep Copper
-        Color(0xFF6D94A1), // Index 1: G3 — Muted Teal
-        Color(0xFFC4915A), // Index 2: B3 — Soft Amber
-        Color(0xFFD4A84B), // Index 3: D4 — Warm Gold
+        Color(0xFF8D5746), // D3 — dark brown
+        Color(0xFFCBE6F7), // G3 — light blue
+        Color(0xFFE8B36B), // B3 — warm amber
+        Color(0xFFFB4F00), // D4 — bright orange
     )
-internal val neutralColor = Color(0xFFF5E6D3)
-internal val coolShiftColor = Color(0xFF8BA6B3)
-internal val warmGoldColor = Color(0xFFD4A84B)
+internal val neutralColor = Color(0xFFFFFBE9)
+internal val coolShiftColor = Color(0xFF6B9AB8)
+internal val warmGoldColor = Color(0xFFE8B36B)
 
 internal fun deriveTuningAnimationState(
     selectedOption: Int,

@@ -52,3 +52,22 @@
 # The default (remove_message) already strips the parameter-name strings,
 # so failure messages are gone either way; this drops the residual checks.
 -processkotlinnullchecks remove
+
+# Google Mobile Ads (play-services-ads-lite)
+# Investigation (shipped consumer rules + source usage + fullMode + repackage):
+# SDK ships only narrow rules (mediation adapters, LiteSdkInfo, some MobileAds
+# reflectives, offline util, protos, NativeAd recordEvent).
+# App directly references: AdView, AdRequest, AdSize, MobileAds.
+# Banner creatives + ad fetch use many com.google.android.gms.internal.ads.*
+# and internal that static analysis + full R8 can drop under -repackageclasses.
+# These explicit keeps are the minimal additional surface required for ads
+# to initialize, request, and render without silent no-fill or class errors.
+# Kept narrow (no blanket com.google.android.gms.**) to match project style.
+-keep class com.google.android.gms.ads.AdView { *; }
+-keep class com.google.android.gms.ads.AdRequest { *; }
+-keep class com.google.android.gms.ads.AdSize { *; }
+-keep class com.google.android.gms.ads.MobileAds { *; }
+-keep class com.google.android.gms.ads.AdListener { *; }
+-keep class com.google.android.gms.ads.LoadAdError { *; }
+-keep class com.google.android.gms.internal.ads.** { *; }
+-keep class com.google.android.gms.ads.internal.** { *; }

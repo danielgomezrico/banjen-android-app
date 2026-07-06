@@ -180,3 +180,7 @@ android/fastlane/report.xml
 android/fastlane/README.md
 .agents/
 .gitnexus/
+
+# iOS — secrets injected at build time (never commit real ids/keys)
+ios/Config/Ads.local.xcconfig
+ios/Banjen/GoogleService-Info.plist

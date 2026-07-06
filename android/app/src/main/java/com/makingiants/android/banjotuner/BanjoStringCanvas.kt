@@ -66,10 +66,10 @@ import kotlin.math.sin
 
 private val bgGradientStops =
     listOf(
-        0.00f to Color(0xFF1A1210),
-        0.35f to Color(0xFF231A15),
-        0.65f to Color(0xFF1E1512),
-        1.00f to Color(0xFF141010),
+        0.00f to Color(0xFFFFFBE9),
+        0.35f to Color(0xFFF8F4E0),
+        0.65f to Color(0xFFF2EBD5),
+        1.00f to Color(0xFFEDE4C8),
     )
 
 private data class StringColors(
@@ -85,15 +85,13 @@ private data class StringColors(
 // 5-string: i=0→0(g4), i=1→1(D3), i=2→2(G3), i=3→3(B3), i=4→4(D4)
 private val stringPalette =
     listOf(
-        StringColors(Color(0xFF5C7B58), Color(0xFF78C870), Color(0xFF78C870), Color(0xFF90B082)), // g4 drone
-        StringColors(Color(0xFF8C7161), Color(0xFFD4956A), Color(0xFFD4956A), Color(0xFFB89A86)), // D3
-        StringColors(Color(0xFF6B8490), Color(0xFF5AAFCB), Color(0xFF5AAFCB), Color(0xFF8EADB8)), // G3
-        StringColors(Color(0xFF8C8062), Color(0xFFCBA55A), Color(0xFFCBA55A), Color(0xFFB8A882)), // B3
-        StringColors(Color(0xFF907466), Color(0xFFE07850), Color(0xFFE07850), Color(0xFFC09A8A)), // D4
+        StringColors(Color(0xFF4F6B7A), Color(0xFF9BC8DC), Color(0xFF9BC8DC), Color(0xFF6B8A9A)), // g4 drone (blue family)
+        StringColors(Color(0xFF49251E), Color(0xFF8D5746), Color(0xFF8D5746), Color(0xFFFFFBE9)), // D3 dark brown
+        StringColors(Color(0xFF5A7C90), Color(0xFFCBE6F7), Color(0xFFCBE6F7), Color(0xFF2E2420)), // G3 light blue
+        StringColors(Color(0xFF8C6640), Color(0xFFE8B36B), Color(0xFFE8B36B), Color(0xFF3D322A)), // B3 warm amber
+        StringColors(Color(0xFF9F3A0A), Color(0xFFFB4F00), Color(0xFFFB4F00), Color(0xFFFFFBE9)), // D4 bright orange
     )
 
-private val nutBridgeColor = Color(0xFF3D322A)
-private val nutBridgeHighlight = Color(0xFF5C4A3E)
 private val fretColor = Color(0xFF2E2420)
 
 private val fretPositions = floatArrayOf(0.18f, 0.33f, 0.45f, 0.55f, 0.65f)
@@ -104,8 +102,6 @@ private const val BREATHING_OPACITY_MAX = 1.0f
 private const val DIMMED_OPACITY = 0.35f
 private const val BLUR_WIDTH_RATIO = 2.0f
 private const val HAZE_WIDTH_RATIO = 3.5f
-private const val NUT_BRIDGE_HEIGHT_DP = 12f
-private const val SAFE_PADDING_DP = 16f
 
 // --- Per-string physics derived from frequency ---
 
@@ -246,7 +242,7 @@ fun BanjoStringCanvas(
         }
     }
 
-    // Opening animation: reveal each string nut-to-bridge, staggered left-to-right
+    // Opening animation: reveal each string top-to-bridge, staggered left-to-right
     // Re-runs when numStrings changes (instrument switch)
     LaunchedEffect(numStrings) {
         for (i in 0 until numStrings) {
@@ -319,8 +315,8 @@ fun BanjoStringCanvas(
                                     revealProgress.forEach { it.snapTo(1f) }
                                 }
                             }
-                            val hPad = SAFE_PADDING_DP * density
-                            val availableWidth = size.width - 2 * hPad
+                            val hPad = 0f  // full edge-to-edge hit areas
+                            val availableWidth = size.width
                             val bandWidth = availableWidth / numStrings
                             val relX = offset.x - hPad
                             if (relX < 0 || relX > availableWidth) return@detectTapGestures
@@ -364,10 +360,9 @@ fun BanjoStringCanvas(
             val w = size.width
             val h = size.height
             val density = this.density
-            val hPad = SAFE_PADDING_DP * density
-            val vPad = SAFE_PADDING_DP * density
-            val nutH = NUT_BRIDGE_HEIGHT_DP * density
-            val bridgeH = NUT_BRIDGE_HEIGHT_DP * density
+            val hPad = 0f  // strings from both screen edges completely (no side padding)
+            val barLeft = 0f
+            val barWidth = w
 
             // --- Background gradient ---
             drawRect(
@@ -387,42 +382,9 @@ fun BanjoStringCanvas(
                     ),
             )
 
-            // --- Nut and Bridge ---
-            val nutY = vPad
-            val bridgeY = h - vPad - bridgeH
-            val barLeft = hPad
-            val barWidth = w - 2 * hPad
-            val cornerRadius = 2f * density
-
-            // Nut
-            drawRoundRect(
-                color = nutBridgeColor,
-                topLeft = Offset(barLeft, nutY),
-                size = Size(barWidth, nutH),
-                cornerRadius = CornerRadius(cornerRadius),
-            )
-            drawRect(
-                color = nutBridgeHighlight.copy(alpha = 0.60f),
-                topLeft = Offset(barLeft, nutY),
-                size = Size(barWidth, 1f * density),
-            )
-
-            // Bridge
-            drawRoundRect(
-                color = nutBridgeColor,
-                topLeft = Offset(barLeft, bridgeY),
-                size = Size(barWidth, bridgeH),
-                cornerRadius = CornerRadius(cornerRadius),
-            )
-            drawRect(
-                color = nutBridgeHighlight.copy(alpha = 0.60f),
-                topLeft = Offset(barLeft, bridgeY),
-                size = Size(barWidth, 1f * density),
-            )
-
             // --- Fret lines ---
-            val stringTop = nutY + nutH
-            val stringBottom = bridgeY
+            val stringTop = 0f
+            val stringBottom = h  // full height, no bottom bridge bar
             val stringLength = stringBottom - stringTop
 
             // Update refs for pointerInput scope
@@ -432,18 +394,18 @@ fun BanjoStringCanvas(
             for (fretPos in fretPositions) {
                 val fretY = stringTop + stringLength * fretPos
                 drawRect(
-                    color = fretColor.copy(alpha = 0.35f),
+                    color = fretColor.copy(alpha = 0.04f),
                     topLeft = Offset(barLeft, fretY),
                     size = Size(barWidth, 1f * density),
                 )
             }
 
             // --- Strings ---
-            val availableWidth = w - 2 * hPad
+            val availableWidth = w
             val bandWidth = availableWidth / numStrings
 
             for (i in 0 until numStrings) {
-                val centerX = hPad + bandWidth * (i + 0.5f)
+                val centerX = bandWidth * (i + 0.5f)  // edge-to-edge, no hPad offset
                 val paletteIdx = (i + (5 - numStrings)) % 5
                 val palette = stringPalette[paletteIdx]
                 val p = physics[i]
@@ -543,7 +505,7 @@ fun BanjoStringCanvas(
                 // --- Labels ---
                 val labelColor = palette.label
                 val labelAlpha = (if (isActive) 1f else effectiveAlpha * 0.65f) * revealProgress[i].value
-                val labelY = bridgeY - 76f * density
+                val labelY = h * 0.5f - 30f * density  // centered vertically on screen
                 val ordinal = "${numStrings - i}${ordinalSuffix(numStrings - i)}"
 
                 drawStringLabel(
@@ -567,7 +529,7 @@ fun BanjoStringCanvas(
             modifier =
                 Modifier
                     .fillMaxSize()
-                    .padding(horizontal = SAFE_PADDING_DP.dp),
+                    .padding(horizontal = 0.dp),  // match edge-to-edge strings
         ) {
             for (i in 0 until numStrings) {
                 val ordinalNum = numStrings - i

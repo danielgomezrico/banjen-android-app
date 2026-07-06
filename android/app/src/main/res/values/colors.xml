@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <!-- Concrete hex values; previous @color/primary_material_dark / primary_dark_material_dark
-       came from AppCompat which is no longer a dependency. -->
-  <color name="banjen_primary">#212121</color>
-  <color name="banjen_accent">#6d94a1</color>
+  <!-- Concrete hex values -->
+  <color name="banjen_primary">#FFFBE9</color>
+  <color name="banjen_accent">#6B9AB8</color>
   <color name="banjen_background">@color/banjen_primary</color>
   <color name="banjen_gray">#666666</color>
   <color name="banjen_gray_light">#BBB</color>

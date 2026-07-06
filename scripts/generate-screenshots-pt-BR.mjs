@@ -25,10 +25,10 @@ const reset = `
 
 function appUiSvg(width, height, activeString = -1) {
   const strings = [
-    { label: 'D3', sol: 'Ré',  idle: '#8C7161', active: '#D4956A' },
-    { label: 'G3', sol: 'Sol', idle: '#6B8490', active: '#5AAFCB' },
-    { label: 'B3', sol: 'Si',  idle: '#8C8062', active: '#CBA55A' },
-    { label: 'D4', sol: 'Ré',  idle: '#907466', active: '#E07850' },
+    { label: 'D3', sol: 'Ré',  idle: '#49251E', active: '#8D5746' },
+    { label: 'G3', sol: 'Sol', idle: '#5A7C90', active: '#CBE6F7' },
+    { label: 'B3', sol: 'Si',  idle: '#8C6640', active: '#E8B36B' },
+    { label: 'D4', sol: 'Ré',  idle: '#9F3A0A', active: '#FB4F00' },
   ];
 
   const pad = 20;
@@ -161,7 +161,7 @@ body {
 const appUiMini = appUiSvg(540, 960, 1);
 const appUriMini = svgDataUri(appUiMini);
 
-function soundWavesSvg(color = '#5AAFCB') {
+function soundWavesSvg(color = '#CBE6F7') {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none">
   <circle cx="150" cy="150" r="60"  fill="none" stroke="${color}" stroke-width="2" opacity="0.25"/>
   <circle cx="150" cy="150" r="90"  fill="none" stroke="${color}" stroke-width="1.5" opacity="0.15"/>
@@ -196,7 +196,7 @@ body {
   </div>
   <div class="app-wrap">
     <img src="${appUriMini}" alt="app">
-    <div class="waves">${soundWavesSvg('#5AAFCB')}</div>
+    <div class="waves">${soundWavesSvg('#CBE6F7')}</div>
   </div>
 </body></html>`;
 

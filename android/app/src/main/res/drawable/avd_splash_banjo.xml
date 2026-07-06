@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_banjo_splash">
+
+    <!-- Music note gentle bounce + rock (playful "tune" feel) -->
+    <target android:name="note_group">
+        <objectAnimator
+            android:propertyName="translateY"
+            android:duration="620"
+            android:valueFrom="0"
+            android:valueTo="-4"
+            android:repeatCount="infinite"
+            android:repeatMode="reverse"
+            android:interpolator="@android:interpolator/accelerate_decelerate" />
+        <objectAnimator
+            android:propertyName="rotation"
+            android:duration="780"
+            android:valueFrom="-6"
+            android:valueTo="6"
+            android:repeatCount="infinite"
+            android:repeatMode="reverse"
+            android:interpolator="@android:interpolator/accelerate_decelerate" />
+    </target>
+
+    <!-- Strings subtle vibration (ear training / strum vibe) -->
+    <target android:name="strings_group">
+        <objectAnimator
+            android:propertyName="translateX"
+            android:duration="380"
+            android:valueFrom="-1.2"
+            android:valueTo="1.2"
+            android:repeatCount="infinite"
+            android:repeatMode="reverse"
+            android:interpolator="@android:interpolator/linear" />
+    </target>
+
+    <!-- Optional: gentle overall scale pulse on headstock -->
+    <target android:name="headstock">
+        <objectAnimator
+            android:propertyName="scaleX"
+            android:duration="1100"
+            android:valueFrom="1"
+            android:valueTo="1.015"
+            android:repeatCount="infinite"
+            android:repeatMode="reverse"
+            android:interpolator="@android:interpolator/accelerate_decelerate" />
+        <objectAnimator
+            android:propertyName="scaleY"
+            android:duration="1100"
+            android:valueFrom="1"
+            android:valueTo="1.015"
+            android:repeatCount="infinite"
+            android:repeatMode="reverse"
+            android:interpolator="@android:interpolator/accelerate_decelerate" />
+    </target>
+
+</animated-vector>

@@ -20,6 +20,7 @@
         <activity
             android:name=".EarActivity"
             android:exported="true"
+            android:theme="@style/Theme.Banjen.Starting"
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

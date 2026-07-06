@@ -1,0 +1,47 @@
+{
+  "": {
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/primary.swiftdeps"
+  },
+  "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/AppConstants.swift": {
+    "dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/AppConstants.d",
+    "object": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/AppConstants.swift.o",
+    "swiftmodule": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/AppConstants~partial.swiftmodule",
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/AppConstants.swiftdeps",
+    "diagnostics": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/AppConstants.dia"
+  },
+  "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/BanjenCore.swift": {
+    "dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/BanjenCore.d",
+    "object": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/BanjenCore.swift.o",
+    "swiftmodule": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/BanjenCore~partial.swiftmodule",
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/BanjenCore.swiftdeps",
+    "diagnostics": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/BanjenCore.dia"
+  },
+  "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/PitchDetector.swift": {
+    "dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/PitchDetector.d",
+    "object": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/PitchDetector.swift.o",
+    "swiftmodule": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/PitchDetector~partial.swiftmodule",
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/PitchDetector.swiftdeps",
+    "diagnostics": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/PitchDetector.dia"
+  },
+  "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/ToneMath.swift": {
+    "dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/ToneMath.d",
+    "object": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/ToneMath.swift.o",
+    "swiftmodule": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/ToneMath~partial.swiftmodule",
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/ToneMath.swiftdeps",
+    "diagnostics": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/ToneMath.dia"
+  },
+  "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/TuningAnimationState.swift": {
+    "dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningAnimationState.d",
+    "object": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningAnimationState.swift.o",
+    "swiftmodule": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningAnimationState~partial.swiftmodule",
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningAnimationState.swiftdeps",
+    "diagnostics": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningAnimationState.dia"
+  },
+  "/Users/dan/projects/banjen/ios/BanjenCore/Sources/BanjenCore/TuningModel.swift": {
+    "dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningModel.d",
+    "object": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningModel.swift.o",
+    "swiftmodule": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningModel~partial.swiftmodule",
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningModel.swiftdeps",
+    "diagnostics": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCore.build/TuningModel.dia"
+  }
+}

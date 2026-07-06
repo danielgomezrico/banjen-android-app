@@ -1,0 +1,19 @@
+// AdMob configuration — committed defaults are Google's official TEST ids
+// (safe to click during development; never serve real ads to yourself).
+//
+// Real production ids are injected at build time, NOT committed: CI (or a
+// local dev) writes `Ads.local.xcconfig` next to this file with the real
+// values, and the optional include below lets them override these defaults.
+// This mirrors the Android `BANJEN_ADMOB_*` gradle properties pattern.
+//
+// Build wiring:
+//   - `Info.plist` reads $(ADMOB_APP_ID) and $(ADMOB_BANNER_UNIT_ID)
+//   - `AdBannerView` reads the banner id from the Info dictionary at runtime
+
+// Google sample TEST app id
+ADMOB_APP_ID = ca-app-pub-3940256099942544~1458002511
+// Google sample TEST banner unit id
+ADMOB_BANNER_UNIT_ID = ca-app-pub-3940256099942544/2435281174
+
+// Optional override file (gitignored). Present in CI / local prod builds.
+#include? "Ads.local.xcconfig"

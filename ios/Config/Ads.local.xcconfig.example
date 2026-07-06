@@ -1,0 +1,12 @@
+// Copy to `Ads.local.xcconfig` (gitignored) and fill in the REAL AdMob ids.
+// In CI, generate this file from secrets before building — e.g.:
+//
+//   cat > ios/Config/Ads.local.xcconfig <<EOF
+//   ADMOB_APP_ID = ${BANJEN_IOS_ADMOB_APP_ID}
+//   ADMOB_BANNER_UNIT_ID = ${BANJEN_IOS_ADS_UNIT_ID_BANNER}
+//   EOF
+//
+// These override the TEST defaults in Ads.xcconfig.
+
+ADMOB_APP_ID = ca-app-pub-1572359805006702~7127016244
+ADMOB_BANNER_UNIT_ID = ca-app-pub-1572359805006702/4493114045

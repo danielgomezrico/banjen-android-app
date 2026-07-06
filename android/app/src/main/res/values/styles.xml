@@ -10,4 +10,15 @@
     <item name="android:windowBackground">@color/banjen_background</item>
   </style>
 
+  <!-- Splash screen theme (used on launch for API 23+ via core-splashscreen).
+       On API 31+ this provides the animated centered icon + solid bg during
+       app cold start. postSplashScreenTheme switches to AppTheme once ready.
+       We match the cream background used by the rest of the UI. -->
+  <style name="Theme.Banjen.Starting" parent="Theme.SplashScreen">
+    <item name="windowSplashScreenBackground">@color/banjen_primary</item>
+    <item name="windowSplashScreenAnimatedIcon">@drawable/avd_splash_banjo</item>
+    <item name="windowSplashScreenIconBackgroundColor">@color/banjen_primary</item>
+    <item name="postSplashScreenTheme">@style/AppTheme</item>
+  </style>
+
 </resources>

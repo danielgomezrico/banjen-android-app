@@ -13,11 +13,15 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.splashscreen.SplashScreenViewProvider
+import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.annotation.VisibleForTesting
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -43,8 +47,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -57,6 +61,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -84,9 +90,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.google.android.gms.ads.AdListener
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -163,8 +171,24 @@ class EarActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge(statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT))
+
+        // Animate splash exit using the SplashScreen SDK (custom fade + subtle shrink for smooth handoff)
+        splashScreen.setOnExitAnimationListener { splashScreenViewProvider ->
+            val splashScreenView = splashScreenViewProvider.view
+            splashScreenView.animate()
+                .alpha(0f)
+                .scaleX(0.92f)
+                .scaleY(0.92f)
+                .setDuration(280)
+                .setInterpolator(AccelerateDecelerateInterpolator())
+                .withEndAction {
+                    splashScreenViewProvider.remove()
+                }
+                .start()
+        }
         volumeControlStream = AudioManager.STREAM_MUSIC
 
         savedPitch = prefs.getInt(KEY_REFERENCE_PITCH, DEFAULT_PITCH)
@@ -266,6 +290,10 @@ class EarActivity : ComponentActivity() {
         val isVolumeLow = remember { mutableStateOf(false) }
         val volumeLowMessage = stringResource(id = R.string.volume_low_message)
 
+        // Debug state for ads (and future): surfaced only in DEBUG builds via settings sheet.
+        val adDebugStatus = remember { mutableStateOf("idle") }
+        val forceDebugAd = remember { mutableStateOf(false) }
+
         // Session mode: auto-plays through each string while keeping the main UI visible
         LaunchedEffect(sessionModeActive.value) {
             if (!sessionModeActive.value) {
@@ -304,11 +332,17 @@ class EarActivity : ComponentActivity() {
                         onClick = { exitSessionMode() },
                         containerColor = colorResource(id = R.color.banjen_accent),
                     ) {
-                        Icon(
-                            imageVector = AppIcons.Stop,
-                            contentDescription = stringResource(id = R.string.session_stop),
-                            tint = colorResource(id = R.color.banjen_background),
-                        )
+                        Box(
+                            modifier = Modifier.size(24.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_stop),
+                                contentDescription = stringResource(id = R.string.session_stop),
+                                tint = colorResource(id = R.color.banjen_background),
+                                modifier = Modifier.size(24.dp),
+                            )
+                        }
                     }
                 }
             },
@@ -368,16 +402,27 @@ class EarActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                 )
 
-                // Show ad banner only when no string is active
-                if (selectedOption.intValue == -1) {
+                // Show ad banner only when no string is active (or force in debug for testing).
+                val showAd = selectedOption.intValue == -1 || (BuildConfig.DEBUG && forceDebugAd.value)
+                if (showAd) {
                     Box(
                         modifier =
                             Modifier
                                 .align(Alignment.BottomCenter)
                                 .padding(bottom = 8.dp),
                     ) {
-                        AdBanner()
+                        AdBanner { status -> adDebugStatus.value = status }
                     }
+                }
+
+                // Debug indicator (always visible in DEBUG) + status from ad loads.
+                if (BuildConfig.DEBUG) {
+                    Text(
+                        "DBG:${adDebugStatus.value}",
+                        modifier = Modifier.align(Alignment.TopStart).padding(4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color(0xFFFF6B6B),
+                    )
                 }
 
                 // Overlay: BANJEN wordmark + pill buttons float over the canvas
@@ -399,7 +444,7 @@ class EarActivity : ComponentActivity() {
             ModalBottomSheet(
                 onDismissRequest = { showSettings = false },
                 sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-                containerColor = Color(0xFF1A1210),
+                containerColor = colorResource(id = R.color.banjen_background),
             ) {
                 Column(
                     modifier =
@@ -447,7 +492,7 @@ class EarActivity : ComponentActivity() {
                             Modifier
                                 .fillMaxWidth()
                                 .height(1.dp)
-                                .background(Color(0xFF2E2420)),
+                                .background(Color(0xFF49251E)),
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     PitchControl(referencePitch) { newPitch ->
@@ -463,6 +508,48 @@ class EarActivity : ComponentActivity() {
                         }
                     }
                     Spacer(modifier = Modifier.height(24.dp))
+
+                    // Debug page (DEBUG builds only). Shows ad config + live status from AdListener.
+                    // Allows forcing the banner for ad testing independent of string selection.
+                    // Use to verify init, unit IDs, load success/fail codes after R8 changes.
+                    if (BuildConfig.DEBUG) {
+                        Box(
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth()
+                                    .height(1.dp)
+                                    .background(Color(0xFF49251E)),
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            "DEBUG",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFFFF6B6B),
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text("ad status: ${adDebugStatus.value}", style = MaterialTheme.typography.bodySmall)
+                        val maskedUnit = stringResource(id = R.string.ads_unit_id_banner).let { u ->
+                            if (u.length > 8) u.take(8) + "..." + u.takeLast(4) else u
+                        }
+                        Text("banner unit: $maskedUnit", style = MaterialTheme.typography.bodySmall)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = { forceDebugAd.value = !forceDebugAd.value },
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                            ) {
+                                Text(if (forceDebugAd.value) "hide debug ad" else "force show ad", style = MaterialTheme.typography.labelSmall)
+                            }
+                            TextButton(
+                                onClick = {
+                                    forceDebugAd.value = true
+                                    adDebugStatus.value = "re-request"
+                                },
+                                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 8.dp, vertical = 4.dp),
+                            ) {
+                                Text("re-request", style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -606,6 +693,7 @@ class EarActivity : ComponentActivity() {
                     imageVector = Icons.Default.Share,
                     contentDescription = stringResource(id = R.string.share_tuning),
                     tint = colorResource(id = R.color.banjen_accent),
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }
@@ -624,8 +712,8 @@ class EarActivity : ComponentActivity() {
                 modifier =
                     Modifier
                         .clip(RoundedCornerShape(50))
-                        .background(Color(0xFF2A1F1A))
-                        .border(1.dp, Color(0xFF5C4A3E), RoundedCornerShape(50))
+                        .background(Color(0xFF49251E))
+                        .border(1.dp, Color(0xFF6B4035), RoundedCornerShape(50))
                         .clickable { expanded = true }
                         .padding(horizontal = 16.dp, vertical = 10.dp),
             ) {
@@ -635,13 +723,15 @@ class EarActivity : ComponentActivity() {
                         style =
                             MaterialTheme.typography.bodyLarge.copy(
                                 fontWeight = FontWeight.Medium,
-                                color = Color(0xFFB89A86),
+                                color = Color(0xFFFFFBE9),
                             ),
                     )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Icon(
                         imageVector = Icons.Default.ArrowDropDown,
                         contentDescription = null,
-                        tint = Color(0xFFB89A86),
+                        tint = Color(0xFFFFFBE9),
+                        modifier = Modifier.size(20.dp),
                     )
                 }
             }
@@ -690,6 +780,7 @@ class EarActivity : ComponentActivity() {
                     imageVector = AppIcons.Remove,
                     contentDescription = "$pitchLabel -1",
                     tint = colorResource(id = R.color.banjen_accent),
+                    modifier = Modifier.size(24.dp),
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
@@ -716,21 +807,35 @@ class EarActivity : ComponentActivity() {
                     imageVector = Icons.Filled.Add,
                     contentDescription = "$pitchLabel +1",
                     tint = colorResource(id = R.color.banjen_accent),
+                    modifier = Modifier.size(24.dp),
                 )
             }
         }
     }
 
     @Composable
-    private fun AdBanner() {
-        val adsAppId = stringResource(id = R.string.ads_unit_id_banner)
+    private fun AdBanner(onStatusUpdate: (String) -> Unit = {}) {
+        val adsUnitId = stringResource(id = R.string.ads_unit_id_banner)
 
         AndroidView(
             factory = { context ->
                 AdView(context).apply {
-                    adUnitId = adsAppId
+                    adUnitId = adsUnitId
                     setAdSize(AdSize.BANNER)
+                    adListener = object : AdListener() {
+                        override fun onAdLoaded() {
+                            Timber.i("Ad: loaded unit=%s", adsUnitId.take(12) + "...")
+                            onStatusUpdate("loaded")
+                        }
+                        override fun onAdFailedToLoad(loadAdError: LoadAdError) {
+                            Timber.w("Ad: failed code=%d msg=%s domain=%s", loadAdError.code, loadAdError.message, loadAdError.domain)
+                            onStatusUpdate("failed:${loadAdError.code}")
+                        }
+                        override fun onAdOpened() { Timber.d("Ad: opened") }
+                        override fun onAdClosed() { Timber.d("Ad: closed") }
+                    }
                     loadAd(AdRequest.Builder().build())
+                    onStatusUpdate("requested")
                 }
             },
             modifier = Modifier.wrapContentSize(),
@@ -762,7 +867,7 @@ class EarActivity : ComponentActivity() {
         ) {
             if (!isSessionActive) {
                 PillIconButton(
-                    icon = AppIcons.Headphones,
+                    icon = painterResource(id = R.drawable.ic_play),
                     contentDescription = stringResource(id = R.string.session_mode_label),
                     onClick = onSessionClick,
                 )
@@ -776,13 +881,13 @@ class EarActivity : ComponentActivity() {
                     androidx.compose.ui.text.TextStyle(
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Medium,
-                        color = Color(0xFFB89A86),
+                        color = Color(0xFFFFFBE9),
                         letterSpacing = 4.sp,
                     ),
             )
 
             PillIconButton(
-                icon = Icons.Default.Settings,
+                icon = painterResource(id = R.drawable.ic_gear),
                 contentDescription = stringResource(id = R.string.settings_label),
                 onClick = onSettingsClick,
             )
@@ -791,7 +896,7 @@ class EarActivity : ComponentActivity() {
 
     @Composable
     private fun PillIconButton(
-        icon: ImageVector,
+        icon: androidx.compose.ui.graphics.painter.Painter,
         contentDescription: String,
         onClick: () -> Unit,
         modifier: Modifier = Modifier,
@@ -808,23 +913,23 @@ class EarActivity : ComponentActivity() {
             modifier =
                 modifier
                     .graphicsLayer(scaleX = scale, scaleY = scale)
+                    .size(40.dp)
                     .clip(RoundedCornerShape(50))
-                    .background(Color(0xFF2A1F1A))
-                    .border(1.dp, Color(0xFF5C4A3E), RoundedCornerShape(50)),
+                    .background(Color(0xFF49251E))
+                    .border(1.dp, Color(0xFF6B4035), RoundedCornerShape(50))
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = LocalIndication.current,
+                        onClick = onClick,
+                    ),
             contentAlignment = Alignment.Center,
         ) {
-            IconButton(
-                onClick = onClick,
-                modifier = Modifier.size(40.dp),
-                interactionSource = interactionSource,
-            ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = contentDescription,
-                    tint = Color(0xFFB89A86),
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+            Icon(
+                painter = icon,
+                contentDescription = contentDescription,
+                tint = Color(0xFFFFFBE9),
+                modifier = Modifier.size(20.dp),
+            )
         }
     }
 }

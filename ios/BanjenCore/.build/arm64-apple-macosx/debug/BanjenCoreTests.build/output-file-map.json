@@ -1,0 +1,47 @@
+{
+  "": {
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/primary.swiftdeps"
+  },
+  "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/AppConstantsTests.swift": {
+    "dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/AppConstantsTests.d",
+    "object": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/AppConstantsTests.swift.o",
+    "swiftmodule": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/AppConstantsTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/AppConstantsTests.swiftdeps",
+    "diagnostics": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/AppConstantsTests.dia"
+  },
+  "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/PitchDetectorTests.swift": {
+    "dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/PitchDetectorTests.d",
+    "object": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/PitchDetectorTests.swift.o",
+    "swiftmodule": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/PitchDetectorTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/PitchDetectorTests.swiftdeps",
+    "diagnostics": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/PitchDetectorTests.dia"
+  },
+  "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/SmokeTests.swift": {
+    "dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/SmokeTests.d",
+    "object": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/SmokeTests.swift.o",
+    "swiftmodule": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/SmokeTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/SmokeTests.swiftdeps",
+    "diagnostics": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/SmokeTests.dia"
+  },
+  "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/ToneMathTests.swift": {
+    "dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/ToneMathTests.d",
+    "object": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/ToneMathTests.swift.o",
+    "swiftmodule": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/ToneMathTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/ToneMathTests.swiftdeps",
+    "diagnostics": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/ToneMathTests.dia"
+  },
+  "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/TuningAnimationStateTests.swift": {
+    "dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningAnimationStateTests.d",
+    "object": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningAnimationStateTests.swift.o",
+    "swiftmodule": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningAnimationStateTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningAnimationStateTests.swiftdeps",
+    "diagnostics": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningAnimationStateTests.dia"
+  },
+  "/Users/dan/projects/banjen/ios/BanjenCore/Tests/BanjenCoreTests/TuningModelTests.swift": {
+    "dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningModelTests.d",
+    "object": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningModelTests.swift.o",
+    "swiftmodule": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningModelTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningModelTests.swiftdeps",
+    "diagnostics": "/Users/dan/projects/banjen/ios/BanjenCore/.build/arm64-apple-macosx/debug/BanjenCoreTests.build/TuningModelTests.dia"
+  }
+}
