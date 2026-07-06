@@ -1,7 +1,11 @@
 .ktlint/
 android/app/gradle.properties
 android/app/newrelic.properties
-android/app/google-services.json
+
+# Firebase / Google Services client configs (contain api keys / app ids; never commit)
+**/google-services.json
+**/GoogleService-Info.plist
+
 captures/
 *.keystore
 *.hprof
@@ -183,4 +187,3 @@ android/fastlane/README.md
 
 # iOS — secrets injected at build time (never commit real ids/keys)
 ios/Config/Ads.local.xcconfig
-ios/Banjen/GoogleService-Info.plist
