@@ -87,6 +87,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -353,35 +354,6 @@ class EarActivity : ComponentActivity() {
             },
             containerColor = colorResource(id = R.color.banjen_background),
             contentWindowInsets = WindowInsets(0),
-            floatingActionButton = {
-                if (sessionModeActive.value) {
-                    FloatingActionButton(
-                        onClick = {
-                            logEvent(
-                                "session_stopped",
-                                mapOf(
-                                    "instrument" to currentInstrument.name,
-                                    "tuning" to currentTuningModel.name,
-                                ),
-                            )
-                            exitSessionMode()
-                        },
-                        containerColor = colorResource(id = R.color.banjen_accent),
-                    ) {
-                        Box(
-                            modifier = Modifier.size(24.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_stop),
-                                contentDescription = stringResource(id = R.string.session_stop),
-                                tint = colorResource(id = R.color.banjen_background),
-                                modifier = Modifier.size(24.dp),
-                            )
-                        }
-                    }
-                }
-            },
         ) { paddingValues ->
             Box(
                 modifier =
@@ -506,6 +478,16 @@ class EarActivity : ComponentActivity() {
                             ),
                         )
                         showSettings = true
+                    },
+                    onStopClick = {
+                        logEvent(
+                            "session_stopped",
+                            mapOf(
+                                "instrument" to currentInstrument.name,
+                                "tuning" to currentTuningModel.name,
+                            ),
+                        )
+                        exitSessionMode()
                     },
                 )
             }
@@ -941,6 +923,7 @@ class EarActivity : ComponentActivity() {
         isStringActive: Boolean,
         onSessionClick: () -> Unit,
         onSettingsClick: () -> Unit,
+        onStopClick: () -> Unit,
     ) {
         val overlayAlpha by animateFloatAsState(
             targetValue = if (isStringActive) 0.35f else 1f,
@@ -948,42 +931,67 @@ class EarActivity : ComponentActivity() {
             label = "overlay-alpha",
         )
 
-        Row(
+        Box(
             modifier =
                 Modifier
                     .fillMaxWidth()
                     .windowInsetsPadding(WindowInsets.statusBars)
                     .padding(horizontal = 12.dp, vertical = 8.dp)
                     .graphicsLayer(alpha = overlayAlpha),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (!isSessionActive) {
-                PillIconButton(
-                    icon = painterResource(id = R.drawable.ic_play),
-                    contentDescription = stringResource(id = R.string.session_mode_label),
-                    onClick = onSessionClick,
+            // Main row: play (or space), title, settings. Title stays aligned to play level.
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                // Reserve space for play button (and potential stop below)
+                Box(modifier = Modifier.size(48.dp)) {
+                    PillIconButton(
+                        icon = painterResource(id = R.drawable.ic_play),
+                        contentDescription = stringResource(id = R.string.session_mode_label),
+                        onClick = onSessionClick,
+                        size = 48.dp,
+                        iconSize = 24.dp,
+                    )
+                }
+
+                Text(
+                    text = "BANJEN",
+                    style =
+                        androidx.compose.ui.text.TextStyle(
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color(0xFFFFFBE9),
+                            letterSpacing = 4.sp,
+                        ),
                 )
-            } else {
-                Spacer(modifier = Modifier.size(40.dp))
+
+                PillIconButton(
+                    icon = painterResource(id = R.drawable.ic_gear),
+                    contentDescription = stringResource(id = R.string.settings_label),
+                    onClick = onSettingsClick,
+                    size = 48.dp,
+                    iconSize = 24.dp,
+                )
             }
 
-            Text(
-                text = "BANJEN",
-                style =
-                    androidx.compose.ui.text.TextStyle(
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = Color(0xFFFFFBE9),
-                        letterSpacing = 4.sp,
-                    ),
-            )
-
-            PillIconButton(
-                icon = painterResource(id = R.drawable.ic_gear),
-                contentDescription = stringResource(id = R.string.settings_label),
-                onClick = onSettingsClick,
-            )
+            // Stop button placed below the play button when session active.
+            // Positioned to the left, below the play pill. Easy to spot.
+            if (isSessionActive) {
+                Box(
+                    modifier = Modifier
+                        .padding(start = 0.dp, top = 52.dp)  // below the 48dp play + small gap
+                ) {
+                    PillIconButton(
+                        icon = painterResource(id = R.drawable.ic_stop),
+                        contentDescription = stringResource(id = R.string.session_stop),
+                        onClick = onStopClick,
+                        size = 48.dp,
+                        iconSize = 24.dp,
+                    )
+                }
+            }
         }
     }
 
@@ -992,6 +1000,8 @@ class EarActivity : ComponentActivity() {
         icon: androidx.compose.ui.graphics.painter.Painter,
         contentDescription: String,
         onClick: () -> Unit,
+        size: Dp = 40.dp,
+        iconSize: Dp = 20.dp,
         modifier: Modifier = Modifier,
     ) {
         val interactionSource = remember { MutableInteractionSource() }
@@ -1006,7 +1016,7 @@ class EarActivity : ComponentActivity() {
             modifier =
                 modifier
                     .graphicsLayer(scaleX = scale, scaleY = scale)
-                    .size(40.dp)
+                    .size(size)
                     .clip(RoundedCornerShape(50))
                     .background(Color(0xFF49251E))
                     .border(1.dp, Color(0xFF6B4035), RoundedCornerShape(50))
@@ -1021,7 +1031,7 @@ class EarActivity : ComponentActivity() {
                 painter = icon,
                 contentDescription = contentDescription,
                 tint = Color(0xFFFFFBE9),
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(iconSize),
             )
         }
     }

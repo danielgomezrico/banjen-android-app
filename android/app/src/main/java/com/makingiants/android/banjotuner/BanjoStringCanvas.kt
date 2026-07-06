@@ -86,15 +86,11 @@ private data class StringColors(
 private val stringPalette =
     listOf(
         StringColors(Color(0xFF4F6B7A), Color(0xFF9BC8DC), Color(0xFF9BC8DC), Color(0xFF6B8A9A)), // g4 drone (blue family)
-        StringColors(Color(0xFF49251E), Color(0xFF8D5746), Color(0xFF8D5746), Color(0xFFFFFBE9)), // D3 dark brown
+        StringColors(Color(0xFF49251E), Color(0xFF8D5746), Color(0xFF8D5746), Color(0xFF3D2A25)), // D3 dark brown
         StringColors(Color(0xFF5A7C90), Color(0xFFCBE6F7), Color(0xFFCBE6F7), Color(0xFF2E2420)), // G3 light blue
-        StringColors(Color(0xFF8C6640), Color(0xFFE8B36B), Color(0xFFE8B36B), Color(0xFF3D322A)), // B3 warm amber
-        StringColors(Color(0xFF9F3A0A), Color(0xFFFB4F00), Color(0xFFFB4F00), Color(0xFFFFFBE9)), // D4 bright orange
+        StringColors(Color(0xFF9C5C2A), Color(0xFFE89C5A), Color(0xFFE89C5A), Color(0xFF3D322A)), // B3 orange
+        StringColors(Color(0xFFBF4A1A), Color(0xFFFB6A2A), Color(0xFFFB6A2A), Color(0xFF5C2F1F)), // D4 peach orange
     )
-
-private val fretColor = Color(0xFF2E2420)
-
-private val fretPositions = floatArrayOf(0.18f, 0.33f, 0.45f, 0.55f, 0.65f)
 
 private const val BREATHING_PERIOD_MS = 2400
 private const val BREATHING_OPACITY_MIN = 0.70f
@@ -135,6 +131,8 @@ private fun ordinalSuffix(n: Int): String =
         else -> "th"
     }
 
+private fun stringOrdinal(n: Int): String = "${n}ª"
+
 private fun computeStringPhysics(notes: List<Note>): List<StringPhysics> {
     val freqMin = notes.minOf { it.frequency }
     val freqMax = notes.maxOf { it.frequency }
@@ -142,8 +140,8 @@ private fun computeStringPhysics(notes: List<Note>): List<StringPhysics> {
     return notes.mapIndexed { i, note ->
         val fn = if (freqMax > freqMin) (note.frequency - freqMin) / (freqMax - freqMin) else 0.5f
         StringPhysics(
-            idleThickDp = lerp(4.0f, 2.0f, fn),
-            activeThickDp = lerp(5.5f, 2.8f, fn),
+            idleThickDp = lerp(2.0f, 1.2f, fn),
+            activeThickDp = lerp(3.2f, 1.8f, fn),
             vibAmpDp = lerp(8.0f, 4.0f, fn),
             vibFreqHz = lerp(3.0f, 6.0f, fn),
             vibWavePeaks = lerp(2.5f, 4.0f, fn),
@@ -364,7 +362,12 @@ fun BanjoStringCanvas(
             val barLeft = 0f
             val barWidth = w
 
-            // --- Background gradient ---
+            // Top margin for strings (reduced by 50dp from previous).
+            // ~24-32 dp below the App Name area, extra room for stop button below play.
+            val stringTop = (220f - 50f) * density
+            val stringBottom = h
+
+            // --- Background gradient (full) ---
             drawRect(
                 brush =
                     Brush.verticalGradient(
@@ -382,27 +385,23 @@ fun BanjoStringCanvas(
                     ),
             )
 
-            // --- Fret lines ---
-            val stringTop = 0f
-            val stringBottom = h  // full height, no bottom bridge bar
-            val stringLength = stringBottom - stringTop
-
             // Update refs for pointerInput scope
             stringTopPx.floatValue = stringTop
             stringBottomPx.floatValue = stringBottom
 
-            for (fretPos in fretPositions) {
-                val fretY = stringTop + stringLength * fretPos
-                drawRect(
-                    color = fretColor.copy(alpha = 0.04f),
-                    topLeft = Offset(barLeft, fretY),
-                    size = Size(barWidth, 1f * density),
-                )
-            }
+            // No frets for clean string look (matches target UI)
 
             // --- Strings ---
             val availableWidth = w
             val bandWidth = availableWidth / numStrings
+
+            // Labels (string names) more centered on screen, with some top margin so they sit a little below center.
+            // (Previously low; now repositioned for better visual balance.)
+            val labelY = h * 0.55f
+            val gapTop = labelY - 8f * density
+            val gapBottom = labelY + 65f * density
+            val upperLen = (gapTop - stringTop).coerceAtLeast(0f)
+            val lowerLen = (stringBottom - gapBottom).coerceAtLeast(0f)
 
             for (i in 0 until numStrings) {
                 val centerX = bandWidth * (i + 0.5f)  // edge-to-edge, no hPad offset
@@ -442,71 +441,130 @@ fun BanjoStringCanvas(
                     } else {
                         1f
                     }
-                val glowAlpha = if (isActive) 0.45f else 0.20f
+                val glowAlpha = if (isActive) 0.45f else 0.08f
 
                 val coreWidth = currentThick * breathFactor
-                val blurWidth = coreWidth * BLUR_WIDTH_RATIO
-                val hazeWidth = coreWidth * HAZE_WIDTH_RATIO
+                val blurWidth = coreWidth * if (isActive) BLUR_WIDTH_RATIO else 1.15f
+                val hazeWidth = coreWidth * if (isActive) HAZE_WIDTH_RATIO else 1.5f
 
-                // Layer 1: haze (outermost, faintest)
-                drawStringPath(
-                    centerX = centerX,
-                    stringTop = stringTop,
-                    stringLength = stringLength,
-                    amplitude = maxAmplitudePx,
-                    shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
-                    shimmerPhase = shimmerPhase,
-                    wavePhase = wavePhase,
-                    wavePeaks = p.vibWavePeaks,
-                    waveFreqHz = p.vibFreqHz,
-                    color = glowColor,
-                    alpha = glowAlpha * 0.15f * effectiveAlpha,
-                    strokeWidth = hazeWidth,
-                    revealProgress = revealProgress[i].value,
-                )
-                // Layer 2: blur
-                drawStringPath(
-                    centerX = centerX,
-                    stringTop = stringTop,
-                    stringLength = stringLength,
-                    amplitude = maxAmplitudePx,
-                    shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
-                    shimmerPhase = shimmerPhase,
-                    wavePhase = wavePhase,
-                    wavePeaks = p.vibWavePeaks,
-                    waveFreqHz = p.vibFreqHz,
-                    color = glowColor,
-                    alpha = glowAlpha * 0.40f * effectiveAlpha,
-                    strokeWidth = blurWidth,
-                    revealProgress = revealProgress[i].value,
-                )
+                // Strings are full length to bottom (no container). Draw in two parts so the
+                // names can float on top in the gap (matches the example: long upper + short lower tails).
+                if (upperLen > 0f) {
+                    // Layer 1: haze (upper)
+                    drawStringPath(
+                        centerX = centerX,
+                        stringTop = stringTop,
+                        stringLength = upperLen,
+                        amplitude = maxAmplitudePx,
+                        shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
+                        shimmerPhase = shimmerPhase,
+                        wavePhase = wavePhase,
+                        wavePeaks = p.vibWavePeaks,
+                        waveFreqHz = p.vibFreqHz,
+                        color = glowColor,
+                        alpha = glowAlpha * 0.15f * effectiveAlpha,
+                        strokeWidth = hazeWidth,
+                        revealProgress = revealProgress[i].value,
+                    )
+                    // Layer 2: blur (upper)
+                    drawStringPath(
+                        centerX = centerX,
+                        stringTop = stringTop,
+                        stringLength = upperLen,
+                        amplitude = maxAmplitudePx,
+                        shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
+                        shimmerPhase = shimmerPhase,
+                        wavePhase = wavePhase,
+                        wavePeaks = p.vibWavePeaks,
+                        waveFreqHz = p.vibFreqHz,
+                        color = glowColor,
+                        alpha = glowAlpha * 0.40f * effectiveAlpha,
+                        strokeWidth = blurWidth,
+                        revealProgress = revealProgress[i].value,
+                    )
 
-                // Layer 3: core (main string)
-                drawStringPath(
-                    centerX = centerX,
-                    stringTop = stringTop,
-                    stringLength = stringLength,
-                    amplitude = maxAmplitudePx,
-                    shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
-                    shimmerPhase = shimmerPhase,
-                    wavePhase = wavePhase,
-                    wavePeaks = p.vibWavePeaks,
-                    waveFreqHz = p.vibFreqHz,
-                    color = stringColor,
-                    alpha = effectiveAlpha,
-                    strokeWidth = coreWidth,
-                    sharpness = waveSharpness[i].value,
-                    touchYNorm = touchYNorms[i],
-                    attackProgress = attackProgress[i].value,
-                    revealProgress = revealProgress[i].value,
-                    isWound = p.isWound,
-                )
+                    // Layer 3: core (upper)
+                    drawStringPath(
+                        centerX = centerX,
+                        stringTop = stringTop,
+                        stringLength = upperLen,
+                        amplitude = maxAmplitudePx,
+                        shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
+                        shimmerPhase = shimmerPhase,
+                        wavePhase = wavePhase,
+                        wavePeaks = p.vibWavePeaks,
+                        waveFreqHz = p.vibFreqHz,
+                        color = stringColor,
+                        alpha = effectiveAlpha,
+                        strokeWidth = coreWidth,
+                        sharpness = waveSharpness[i].value,
+                        touchYNorm = touchYNorms[i],
+                        attackProgress = attackProgress[i].value,
+                        revealProgress = revealProgress[i].value,
+                        isWound = p.isWound,
+                    )
+                }
 
-                // --- Labels ---
+                if (lowerLen > 0f) {
+                    // Layer 1: haze (lower tail)
+                    drawStringPath(
+                        centerX = centerX,
+                        stringTop = gapBottom,
+                        stringLength = lowerLen,
+                        amplitude = maxAmplitudePx,
+                        shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
+                        shimmerPhase = shimmerPhase,
+                        wavePhase = wavePhase,
+                        wavePeaks = p.vibWavePeaks,
+                        waveFreqHz = p.vibFreqHz,
+                        color = glowColor,
+                        alpha = glowAlpha * 0.15f * effectiveAlpha,
+                        strokeWidth = hazeWidth,
+                        revealProgress = revealProgress[i].value,
+                    )
+                    // Layer 2: blur (lower)
+                    drawStringPath(
+                        centerX = centerX,
+                        stringTop = gapBottom,
+                        stringLength = lowerLen,
+                        amplitude = maxAmplitudePx,
+                        shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
+                        shimmerPhase = shimmerPhase,
+                        wavePhase = wavePhase,
+                        wavePeaks = p.vibWavePeaks,
+                        waveFreqHz = p.vibFreqHz,
+                        color = glowColor,
+                        alpha = glowAlpha * 0.40f * effectiveAlpha,
+                        strokeWidth = blurWidth,
+                        revealProgress = revealProgress[i].value,
+                    )
+
+                    // Layer 3: core (lower)
+                    drawStringPath(
+                        centerX = centerX,
+                        stringTop = gapBottom,
+                        stringLength = lowerLen,
+                        amplitude = maxAmplitudePx,
+                        shimmerAmp = if (!isActive) shimmerAmpPx else 0f,
+                        shimmerPhase = shimmerPhase,
+                        wavePhase = wavePhase,
+                        wavePeaks = p.vibWavePeaks,
+                        waveFreqHz = p.vibFreqHz,
+                        color = stringColor,
+                        alpha = effectiveAlpha,
+                        strokeWidth = coreWidth,
+                        sharpness = waveSharpness[i].value,
+                        touchYNorm = touchYNorms[i],
+                        attackProgress = attackProgress[i].value,
+                        revealProgress = revealProgress[i].value,
+                        isWound = p.isWound,
+                    )
+                }
+
+                // --- Labels floating on top of the strings (no dedicated container area) ---
                 val labelColor = palette.label
-                val labelAlpha = (if (isActive) 1f else effectiveAlpha * 0.65f) * revealProgress[i].value
-                val labelY = h * 0.5f - 30f * density  // centered vertically on screen
-                val ordinal = "${numStrings - i}${ordinalSuffix(numStrings - i)}"
+                val labelAlpha = (if (isActive) 1f else effectiveAlpha * 0.85f) * revealProgress[i].value
+                val ordinal = stringOrdinal(numStrings - i)
 
                 drawStringLabel(
                     textMeasurer = textMeasurer,
@@ -655,21 +713,22 @@ private fun DrawScope.drawStringLabel(
     density: Float,
     fontScale: Float,
 ) {
-    val primarySp = 28f + (36f - 28f) * fontScale.coerceIn(0f, 1f)
-    val secondarySp = 19f + (26f - 19f) * fontScale.coerceIn(0f, 1f)
+    // Increased letter size for the note names and ordinals (floating on strings).
+    val primarySp = 20f + (24f - 20f) * fontScale.coerceIn(0f, 1f)
+    val secondarySp = 13f + (15f - 13f) * fontScale.coerceIn(0f, 1f)
     val primaryStyle =
         TextStyle(
             fontSize = primarySp.sp,
             fontWeight = FontWeight.Medium,
             color = color.copy(alpha = alpha.coerceIn(0f, 1f)),
-            letterSpacing = 1.5.sp,
+            letterSpacing = 0.8.sp,
         )
     val secondaryStyle =
         TextStyle(
             fontSize = secondarySp.sp,
             fontWeight = FontWeight.Normal,
-            color = color.copy(alpha = (alpha * 0.8f).coerceIn(0f, 1f)),
-            letterSpacing = 0.5.sp,
+            color = color.copy(alpha = (alpha * 0.85f).coerceIn(0f, 1f)),
+            letterSpacing = 0.3.sp,
         )
 
     val primaryResult = textMeasurer.measure(primary, primaryStyle)
@@ -688,7 +747,7 @@ private fun DrawScope.drawStringLabel(
         topLeft =
             Offset(
                 centerX - secondaryResult.size.width / 2f,
-                primaryY + primaryResult.size.height + 4f * density,
+                primaryY + primaryResult.size.height + 1.5f * density,
             ),
     )
 }

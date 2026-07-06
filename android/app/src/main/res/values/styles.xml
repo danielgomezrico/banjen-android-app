@@ -16,7 +16,7 @@
        We match the cream background used by the rest of the UI. -->
   <style name="Theme.Banjen.Starting" parent="Theme.SplashScreen">
     <item name="windowSplashScreenBackground">@color/banjen_primary</item>
-    <item name="windowSplashScreenAnimatedIcon">@drawable/avd_splash_banjo</item>
+    <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
     <item name="windowSplashScreenIconBackgroundColor">@color/banjen_primary</item>
     <item name="postSplashScreenTheme">@style/AppTheme</item>
   </style>

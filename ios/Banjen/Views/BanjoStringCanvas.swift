@@ -30,17 +30,11 @@ private struct StringColors {
 // paletteIdx = (i + (5 - numStrings)) % 5
 private let stringPalette: [StringColors] = [
     StringColors(idle: Color(hex: 0x4F6B7A), active: Color(hex: 0x9BC8DC), glow: Color(hex: 0x9BC8DC), label: Color(hex: 0x6B8A9A)), // g4
-    StringColors(idle: Color(hex: 0x49251E), active: Color(hex: 0x8D5746), glow: Color(hex: 0x8D5746), label: Color(hex: 0xFFFBE9)), // D3
+    StringColors(idle: Color(hex: 0x49251E), active: Color(hex: 0x8D5746), glow: Color(hex: 0x8D5746), label: Color(hex: 0x3D2A25)), // D3
     StringColors(idle: Color(hex: 0x5A7C90), active: Color(hex: 0xCBE6F7), glow: Color(hex: 0xCBE6F7), label: Color(hex: 0x2E2420)), // G3
-    StringColors(idle: Color(hex: 0x8C6640), active: Color(hex: 0xE8B36B), glow: Color(hex: 0xE8B36B), label: Color(hex: 0x3D322A)), // B3
-    StringColors(idle: Color(hex: 0x9F3A0A), active: Color(hex: 0xFB4F00), glow: Color(hex: 0xFB4F00), label: Color(hex: 0xFFFBE9)), // D4
+    StringColors(idle: Color(hex: 0x9C5C2A), active: Color(hex: 0xE89C5A), glow: Color(hex: 0xE89C5A), label: Color(hex: 0x3D322A)), // B3
+    StringColors(idle: Color(hex: 0xBF4A1A), active: Color(hex: 0xFB6A2A), glow: Color(hex: 0xFB6A2A), label: Color(hex: 0x5C2F1F)), // D4
 ]
-
-private let nutBridgeColor = Color(hex: 0x49251E)
-private let nutBridgeHighlight = Color(hex: 0x6B4035)
-private let fretColor = Color(hex: 0x2E2420)
-
-private let fretPositions: [CGFloat] = [0.18, 0.33, 0.45, 0.55, 0.65]
 
 private let breathingPeriodMs: Double = 2400
 private let breathingOpacityMin: Double = 0.70
@@ -48,7 +42,6 @@ private let breathingOpacityMax: Double = 1.00
 private let dimmedOpacity: Double = 0.35
 private let blurWidthRatio: CGFloat = 2.0
 private let hazeWidthRatio: CGFloat = 3.5
-private let bridgeHeightDp: CGFloat = 12
 private let safePaddingDp: CGFloat = 16
 private let shimmerPeriodMs: Double = 3200
 
@@ -86,8 +79,8 @@ private func computeStringPhysics(_ notes: [Note]) -> [StringPhysics] {
             ? Double((note.frequency - freqMin) / (freqMax - freqMin))
             : 0.5
         return StringPhysics(
-            idleThickPt: CGFloat(lerp(4.0, 2.0, fn)),
-            activeThickPt: CGFloat(lerp(5.5, 2.8, fn)),
+            idleThickPt: CGFloat(lerp(2.0, 1.2, fn)),
+            activeThickPt: CGFloat(lerp(3.2, 1.8, fn)),
             vibAmpPt: CGFloat(lerp(8.0, 4.0, fn)),
             vibFreqHz: lerp(3.0, 6.0, fn),
             vibWavePeaks: lerp(2.5, 4.0, fn),
@@ -106,6 +99,8 @@ private func computeStringPhysics(_ notes: [Note]) -> [StringPhysics] {
 private func ordinalSuffix(_ n: Int) -> String {
     switch n { case 1: "st"; case 2: "nd"; case 3: "rd"; default: "th" }
 }
+
+private func stringOrdinal(_ n: Int) -> String { "\(n)ª" }
 
 // MARK: - Per-string animation state
 
@@ -321,8 +316,6 @@ struct BanjoStringCanvas: View {
         let h = size.height
         let hPad = safePaddingDp
         let vPad = safePaddingDp
-        let bridgeH = bridgeHeightDp
-        let cornerRadius: CGFloat = 2
 
         // Compute global time-based animation values
         let breatheT = (now.truncatingRemainder(dividingBy: breathingPeriodMs / 1000)) / (breathingPeriodMs / 1000)
@@ -350,24 +343,14 @@ struct BanjoStringCanvas: View {
             with: .radialGradient(vigGradient, center: CGPoint(x: w/2, y: h/2), startRadius: 0, endRadius: vigRadius)
         )
 
-        // --- Bridge ---
-        let bridgeY = h - vPad - bridgeH
+        // --- Strings area (no bridge bar, no frets) ---
         let barLeft = hPad
         let barWidth = w - 2 * hPad
+        let stringTop: CGFloat = 50  // top margin of strings -50 from previous
+        let stringBottom = h - vPad
+        let stringLength = max(1, stringBottom - stringTop)
 
-        let bridgeRect = CGRect(x: barLeft, y: bridgeY, width: barWidth, height: bridgeH)
-        ctx.fill(Path(roundedRect: bridgeRect, cornerRadius: cornerRadius), with: .color(nutBridgeColor))
-        ctx.fill(
-            Path(CGRect(x: barLeft, y: bridgeY, width: barWidth, height: 1)),
-            with: .color(nutBridgeHighlight.opacity(0.60))
-        )
-
-        // --- Frets ---
-        let stringTop: CGFloat = 0
-        let stringBottom = bridgeY
-        let stringLength = stringBottom - stringTop
-
-        // Store geometry for tap handling (DispatchQueue.main.async to avoid mutation during view update)
+        // Store geometry for tap handling
         if stringTopPt != stringTop || stringBottomPt != stringBottom {
             let top = stringTop
             let bot = stringBottom
@@ -377,13 +360,13 @@ struct BanjoStringCanvas: View {
             }
         }
 
-        for fretPos in fretPositions {
-            let fretY = stringTop + stringLength * fretPos
-            ctx.fill(
-                Path(CGRect(x: barLeft, y: fretY, width: barWidth, height: 1)),
-                with: .color(fretColor.opacity(0.35))
-            )
-        }
+        // Labels (string names) more centered on screen, with some top margin so they sit a little below center.
+        // (Previously low; now repositioned for better visual balance.)
+        let labelY = h * 0.55
+        let gapTop = labelY - 8
+        let gapBottom = labelY + 65
+        let upperLen = max(0.0, gapTop - stringTop)
+        let lowerLen = max(0.0, stringBottom - gapBottom)
 
         // --- Strings ---
         let availableWidth = w - 2 * hPad
@@ -417,75 +400,138 @@ struct BanjoStringCanvas: View {
                 ? CGFloat(1 + p.breathingAmplitude * sin(2 * .pi * now / p.breathingPeriodS))
                 : 1
 
-            let glowAlpha: CGFloat = isActive ? 0.45 : 0.20
+            let glowAlpha: CGFloat = isActive ? 0.45 : 0.08
             let coreWidth = currentThick * breathFactor
-            let blurWidth = coreWidth * blurWidthRatio
-            let hazeWidth = coreWidth * hazeWidthRatio
+            let blurWidth = coreWidth * (isActive ? blurWidthRatio : 1.15)
+            let hazeWidth = coreWidth * (isActive ? hazeWidthRatio : 1.5)
 
-            // Layer 1: haze
-            drawStringPath(
-                ctx: &ctx,
-                centerX: centerX,
-                stringTop: stringTop,
-                stringLength: stringLength,
-                amplitude: maxAmpPx,
-                shimmerAmp: isActive ? 0 : shimmerAmpPx,
-                shimmerPhase: shimmerPhase,
-                wavePhase: now,
-                wavePeaks: p.vibWavePeaks,
-                waveFreqHz: p.vibFreqHz,
-                color: glowColor,
-                alpha: glowAlpha * 0.15 * effectiveAlpha,
-                strokeWidth: hazeWidth,
-                revealProgress: CGFloat(anim.revealProgress)
-            )
+            // Strings full to bottom of screen (with top margin). Gapped so names float on top
+            // and lower tails continue below labels to end of screen.
+            if upperLen > 0.0 {
+                // Layer 1: haze (upper)
+                drawStringPath(
+                    ctx: &ctx,
+                    centerX: centerX,
+                    stringTop: stringTop,
+                    stringLength: upperLen,
+                    amplitude: maxAmpPx,
+                    shimmerAmp: isActive ? 0 : shimmerAmpPx,
+                    shimmerPhase: shimmerPhase,
+                    wavePhase: now,
+                    wavePeaks: p.vibWavePeaks,
+                    waveFreqHz: p.vibFreqHz,
+                    color: glowColor,
+                    alpha: glowAlpha * 0.15 * effectiveAlpha,
+                    strokeWidth: hazeWidth,
+                    revealProgress: CGFloat(anim.revealProgress)
+                )
 
-            // Layer 2: blur
-            drawStringPath(
-                ctx: &ctx,
-                centerX: centerX,
-                stringTop: stringTop,
-                stringLength: stringLength,
-                amplitude: maxAmpPx,
-                shimmerAmp: isActive ? 0 : shimmerAmpPx,
-                shimmerPhase: shimmerPhase,
-                wavePhase: now,
-                wavePeaks: p.vibWavePeaks,
-                waveFreqHz: p.vibFreqHz,
-                color: glowColor,
-                alpha: glowAlpha * 0.40 * effectiveAlpha,
-                strokeWidth: blurWidth,
-                revealProgress: CGFloat(anim.revealProgress)
-            )
+                // Layer 2: blur (upper)
+                drawStringPath(
+                    ctx: &ctx,
+                    centerX: centerX,
+                    stringTop: stringTop,
+                    stringLength: upperLen,
+                    amplitude: maxAmpPx,
+                    shimmerAmp: isActive ? 0 : shimmerAmpPx,
+                    shimmerPhase: shimmerPhase,
+                    wavePhase: now,
+                    wavePeaks: p.vibWavePeaks,
+                    waveFreqHz: p.vibFreqHz,
+                    color: glowColor,
+                    alpha: glowAlpha * 0.40 * effectiveAlpha,
+                    strokeWidth: blurWidth,
+                    revealProgress: CGFloat(anim.revealProgress)
+                )
 
-            // Layer 3: core
-            drawStringPath(
-                ctx: &ctx,
-                centerX: centerX,
-                stringTop: stringTop,
-                stringLength: stringLength,
-                amplitude: maxAmpPx,
-                shimmerAmp: isActive ? 0 : shimmerAmpPx,
-                shimmerPhase: shimmerPhase,
-                wavePhase: now,
-                wavePeaks: p.vibWavePeaks,
-                waveFreqHz: p.vibFreqHz,
-                color: stringColor,
-                alpha: effectiveAlpha,
-                strokeWidth: coreWidth,
-                sharpness: anim.waveSharpness,
-                touchYNorm: anim.touchYNorm,
-                attackProgress: anim.attackProgress,
-                revealProgress: CGFloat(anim.revealProgress),
-                isWound: p.isWound
-            )
+                // Layer 3: core (upper)
+                drawStringPath(
+                    ctx: &ctx,
+                    centerX: centerX,
+                    stringTop: stringTop,
+                    stringLength: upperLen,
+                    amplitude: maxAmpPx,
+                    shimmerAmp: isActive ? 0 : shimmerAmpPx,
+                    shimmerPhase: shimmerPhase,
+                    wavePhase: now,
+                    wavePeaks: p.vibWavePeaks,
+                    waveFreqHz: p.vibFreqHz,
+                    color: stringColor,
+                    alpha: effectiveAlpha,
+                    strokeWidth: coreWidth,
+                    sharpness: anim.waveSharpness,
+                    touchYNorm: anim.touchYNorm,
+                    attackProgress: anim.attackProgress,
+                    revealProgress: CGFloat(anim.revealProgress),
+                    isWound: p.isWound
+                )
+            }
 
-            // --- Label ---
+            if lowerLen > 0.0 {
+                // Layer 1: haze (lower tail)
+                drawStringPath(
+                    ctx: &ctx,
+                    centerX: centerX,
+                    stringTop: gapBottom,
+                    stringLength: lowerLen,
+                    amplitude: maxAmpPx,
+                    shimmerAmp: isActive ? 0 : shimmerAmpPx,
+                    shimmerPhase: shimmerPhase,
+                    wavePhase: now,
+                    wavePeaks: p.vibWavePeaks,
+                    waveFreqHz: p.vibFreqHz,
+                    color: glowColor,
+                    alpha: glowAlpha * 0.15 * effectiveAlpha,
+                    strokeWidth: hazeWidth,
+                    revealProgress: CGFloat(anim.revealProgress)
+                )
+
+                // Layer 2: blur (lower)
+                drawStringPath(
+                    ctx: &ctx,
+                    centerX: centerX,
+                    stringTop: gapBottom,
+                    stringLength: lowerLen,
+                    amplitude: maxAmpPx,
+                    shimmerAmp: isActive ? 0 : shimmerAmpPx,
+                    shimmerPhase: shimmerPhase,
+                    wavePhase: now,
+                    wavePeaks: p.vibWavePeaks,
+                    waveFreqHz: p.vibFreqHz,
+                    color: glowColor,
+                    alpha: glowAlpha * 0.40 * effectiveAlpha,
+                    strokeWidth: blurWidth,
+                    revealProgress: CGFloat(anim.revealProgress)
+                )
+
+                // Layer 3: core (lower)
+                drawStringPath(
+                    ctx: &ctx,
+                    centerX: centerX,
+                    stringTop: gapBottom,
+                    stringLength: lowerLen,
+                    amplitude: maxAmpPx,
+                    shimmerAmp: isActive ? 0 : shimmerAmpPx,
+                    shimmerPhase: shimmerPhase,
+                    wavePhase: now,
+                    wavePeaks: p.vibWavePeaks,
+                    waveFreqHz: p.vibFreqHz,
+                    color: stringColor,
+                    alpha: effectiveAlpha,
+                    strokeWidth: coreWidth,
+                    sharpness: anim.waveSharpness,
+                    touchYNorm: anim.touchYNorm,
+                    attackProgress: anim.attackProgress,
+                    revealProgress: CGFloat(anim.revealProgress),
+                    isWound: p.isWound
+                )
+            }
+
+            // --- Label (floating on strings, ª style to match target) ---
             let labelColor = palette.label
-            let labelAlpha = (isActive ? 1.0 : Double(effectiveAlpha) * 0.65) * anim.revealProgress
-            let labelY = bridgeY - 76
+            let labelAlpha = (isActive ? 1.0 : Double(effectiveAlpha) * 0.85) * anim.revealProgress
             let ordinalNum = n - i
-            let ordinal = "\(ordinalNum)\(ordinalSuffix(ordinalNum))"
+            let ordinal = stringOrdinal(ordinalNum)
 
             drawStringLabel(
                 ctx: &ctx,
@@ -589,18 +635,19 @@ struct BanjoStringCanvas: View {
     ) {
         guard alpha > 0.001 else { return }
 
-        let primarySp: CGFloat = 28 + (36 - 28) * colorFactor.clamped(to: 0...1)
-        let secondarySp: CGFloat = 19 + (26 - 19) * colorFactor.clamped(to: 0...1)
+        // Increased letter size for the note names and ordinals (floating on strings).
+        let primarySp: CGFloat = 20 + (24 - 20) * colorFactor.clamped(to: 0...1)
+        let secondarySp: CGFloat = 13 + (15 - 13) * colorFactor.clamped(to: 0...1)
 
         let primaryText = Text(primary)
             .font(.system(size: primarySp, weight: .medium))
             .foregroundColor(color.opacity(Double(alpha.clamped(to: 0...1))))
-            .kerning(1.5)
+            .kerning(0.8)
 
         let secondaryText = Text(secondary)
             .font(.system(size: secondarySp, weight: .regular))
-            .foregroundColor(color.opacity(Double((alpha * 0.8).clamped(to: 0...1))))
-            .kerning(0.5)
+            .foregroundColor(color.opacity(Double((alpha * 0.85).clamped(to: 0...1))))
+            .kerning(0.3)
 
         let resolvedPrimary = ctx.resolve(primaryText)
         let resolvedSecondary = ctx.resolve(secondaryText)
@@ -609,7 +656,7 @@ struct BanjoStringCanvas: View {
         let secondarySize = resolvedSecondary.measure(in: CGSize(width: 200, height: 200))
 
         ctx.draw(resolvedPrimary, at: CGPoint(x: centerX - primarySize.width / 2, y: primaryY), anchor: .topLeading)
-        ctx.draw(resolvedSecondary, at: CGPoint(x: centerX - secondarySize.width / 2, y: primaryY + primarySize.height + 4), anchor: .topLeading)
+        ctx.draw(resolvedSecondary, at: CGPoint(x: centerX - secondarySize.width / 2, y: primaryY + primarySize.height + 1.5), anchor: .topLeading)
     }
 
     // MARK: - Accessibility overlay
