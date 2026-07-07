@@ -100,7 +100,7 @@ Every feature built should reference at least one v3 persona and one v3 pain.
 ## CI/CD
 
 - **Build** (`.github/workflows/build.yaml`): Runs on all branch pushes. Gradle build with JDK 21.
-- **Deploy** (`.github/workflows/deploy.yaml`): Runs on master push. Builds release AAB, uploads as artifact. No automated Play Store upload (use the Fastlane `deploy` lane for that).
+- **Deploy** (`.github/workflows/deploy.yaml`): Runs on push to master (and manual `workflow_dispatch`). Executes Fastlane `deploy` lane: if releasable conventional commits since last tag, bumps version + commits + pushes, builds AAB, uploads to Play internal/draft, tags. Safe no-op otherwise.
 
 ## Guidelines
 

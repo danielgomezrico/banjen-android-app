@@ -9,7 +9,10 @@ platform :android do
     is_releasable = analyze_commits(match: '[0-9]*.[0-9]*.[0-9]*')
 
     next_version = lane_context[SharedValues::RELEASE_NEXT_VERSION]
-    UI.user_error!("No releasable commits since last tag. Use conventional commit messages (feat:, fix:, etc.)") unless next_version
+    unless next_version
+      UI.important("No releasable commits since last tag. Nothing to deploy.")
+      next
+    end
 
     # Patch versionName and versionCode in build.gradle before building.
     # Version code: current value + 1.
