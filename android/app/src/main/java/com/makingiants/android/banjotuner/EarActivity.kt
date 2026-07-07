@@ -17,8 +17,14 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.splashscreen.SplashScreenViewProvider
 import android.view.animation.AccelerateDecelerateInterpolator
 import androidx.annotation.VisibleForTesting
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.LocalIndication
@@ -926,7 +932,9 @@ class EarActivity : ComponentActivity() {
         onStopClick: () -> Unit,
     ) {
         val overlayAlpha by animateFloatAsState(
-            targetValue = if (isStringActive) 0.35f else 1f,
+            // Keep chrome fully visible during a session so the Stop button stays clear;
+            // only dim when a single string is manually being played.
+            targetValue = if (isStringActive && !isSessionActive) 0.35f else 1f,
             animationSpec = tween(300),
             label = "overlay-alpha",
         )
@@ -945,14 +953,12 @@ class EarActivity : ComponentActivity() {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Reserve space for play button (and potential stop below)
+                // Single toggle: Play when idle, Stop while a session is running.
                 Box(modifier = Modifier.size(48.dp)) {
-                    PillIconButton(
-                        icon = painterResource(id = R.drawable.ic_play),
-                        contentDescription = stringResource(id = R.string.session_mode_label),
-                        onClick = onSessionClick,
-                        size = 48.dp,
-                        iconSize = 24.dp,
+                    SessionTogglePill(
+                        isSessionActive = isSessionActive,
+                        onSessionClick = onSessionClick,
+                        onStopClick = onStopClick,
                     )
                 }
 
@@ -960,9 +966,9 @@ class EarActivity : ComponentActivity() {
                     text = "BANJEN",
                     style =
                         androidx.compose.ui.text.TextStyle(
-                            fontSize = 18.sp,
+                            fontSize = 20.sp,
                             fontWeight = FontWeight.Medium,
-                            color = Color(0xFFFFFBE9),
+                            color = Color(0xFF5C4A3E),
                             letterSpacing = 4.sp,
                         ),
                 )
@@ -976,21 +982,59 @@ class EarActivity : ComponentActivity() {
                 )
             }
 
-            // Stop button placed below the play button when session active.
-            // Positioned to the left, below the play pill. Easy to spot.
-            if (isSessionActive) {
-                Box(
-                    modifier = Modifier
-                        .padding(start = 0.dp, top = 52.dp)  // below the 48dp play + small gap
-                ) {
-                    PillIconButton(
-                        icon = painterResource(id = R.drawable.ic_stop),
-                        contentDescription = stringResource(id = R.string.session_stop),
-                        onClick = onStopClick,
-                        size = 48.dp,
-                        iconSize = 24.dp,
-                    )
-                }
+        }
+    }
+
+    // Play/Stop toggle pill. Cross-fades + scales between the two icons (micro-interaction)
+    // as the session starts/stops, and routes taps to the matching handler.
+    @Composable
+    private fun SessionTogglePill(
+        isSessionActive: Boolean,
+        onSessionClick: () -> Unit,
+        onStopClick: () -> Unit,
+    ) {
+        val interactionSource = remember { MutableInteractionSource() }
+        val pressed by interactionSource.collectIsPressedAsState()
+        val scale by animateFloatAsState(
+            targetValue = if (pressed) 0.92f else 1f,
+            animationSpec = tween(100),
+            label = "session-toggle-scale",
+        )
+
+        Box(
+            modifier =
+                Modifier
+                    .graphicsLayer(scaleX = scale, scaleY = scale)
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(Color(0xFF49251E))
+                    .border(1.dp, Color(0xFF6B4035), RoundedCornerShape(50))
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = LocalIndication.current,
+                        onClick = { if (isSessionActive) onStopClick() else onSessionClick() },
+                    ),
+            contentAlignment = Alignment.Center,
+        ) {
+            AnimatedContent(
+                targetState = isSessionActive,
+                transitionSpec = {
+                    (scaleIn(initialScale = 0.5f) + fadeIn(tween(200))) togetherWith
+                        (scaleOut(targetScale = 0.5f) + fadeOut(tween(200)))
+                },
+                label = "session-toggle-icon",
+            ) { active ->
+                Icon(
+                    painter = painterResource(id = if (active) R.drawable.ic_stop else R.drawable.ic_play),
+                    contentDescription =
+                        if (active) {
+                            stringResource(id = R.string.session_stop)
+                        } else {
+                            stringResource(id = R.string.session_mode_label)
+                        },
+                    tint = Color(0xFFFFFBE9),
+                    modifier = Modifier.size(24.dp),
+                )
             }
         }
     }

@@ -23,13 +23,10 @@ struct AdBannerView: View {
     }()
 
     var body: some View {
-        ZStack {
-            // Dark backing so the slot matches the app while the ad loads (no white flash).
-            Color(red: 0x14 / 255, green: 0x10 / 255, blue: 0x10 / 255)
-            BannerContainer(adUnitID: Self.bannerUnitID)
-                .frame(width: 320, height: 50)
-        }
-        .frame(maxWidth: .infinity)
+        // Floats over the (cream) tuning surface like Android's AdView — transparent
+        // until a banner actually loads, so no dark box shows over the canvas.
+        BannerContainer(adUnitID: Self.bannerUnitID)
+            .frame(width: 320, height: 50)
     }
 }
 

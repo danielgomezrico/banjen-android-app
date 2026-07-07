@@ -8,72 +8,60 @@ struct EarView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        VStack(spacing: 0) {
-            // ── Tuning surface: canvas + all overlays, fills remaining height ──
-            ZStack {
-                // Background extends under status bar
-                AppColors.background.ignoresSafeArea()
+        // Full-screen ZStack (mirrors Android's Box.fillMaxSize): the canvas bleeds to
+        // every edge so the strings reach the very bottom and the vignette radius matches.
+        ZStack {
+            // Background behind everything (incl. status-bar & home-indicator areas)
+            AppColors.background.ignoresSafeArea()
 
-                // Canvas fills the full ZStack area
-                BanjoStringCanvas(
-                    notes: viewModel.currentTuning.notes,
-                    selectedString: viewModel.selectedStringIndex,
-                    onStringSelected: { index in
-                        guard !viewModel.sessionModeActive else { return }
-                        if viewModel.pitchCheckMode {
-                            viewModel.pitchCheckMode = false
-                            viewModel.pitchResult = nil
-                            pitchCaptureEngine?.stop()
-                            pitchCaptureEngine = nil
-                        }
-                        viewModel.selectString(index)
+            // Canvas fills the entire screen, edge to edge
+            BanjoStringCanvas(
+                notes: viewModel.currentTuning.notes,
+                selectedString: viewModel.selectedStringIndex,
+                onStringSelected: { index in
+                    guard !viewModel.sessionModeActive else { return }
+                    if viewModel.pitchCheckMode {
+                        viewModel.pitchCheckMode = false
+                        viewModel.pitchResult = nil
+                        pitchCaptureEngine?.stop()
+                        pitchCaptureEngine = nil
                     }
-                )
-                .ignoresSafeArea() // strings bleed full-screen; overlay row below stays inset
-
-                // Top overlay row + volume-low banner, stacked inside the canvas ZStack
-                VStack(spacing: 0) {
-                    CanvasOverlayRow(
-                        isSessionActive: viewModel.sessionModeActive,
-                        isStringActive: viewModel.selectedStringIndex >= 0,
-                        onSessionClick: { viewModel.startSessionMode() },
-                        onSettingsClick: { showSettings = true }
-                    )
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-
-                    Spacer()
-
-                    if viewModel.isVolumeLow {
-                        VolumeLowBanner()
-                            .padding(.bottom, 12)
-                    }
+                    viewModel.selectString(index)
                 }
+            )
+            .ignoresSafeArea()
 
-                // Session stop FAB — bottom trailing, inside canvas area
-                if viewModel.sessionModeActive {
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            StopSessionButton { viewModel.exitSessionMode() }
-                                .padding(.trailing, 16)
-                                .padding(.bottom, 20)
-                        }
-                    }
+            // Top overlay row + volume-low banner (respect safe areas — inset below status bar)
+            VStack(spacing: 0) {
+                CanvasOverlayRow(
+                    isSessionActive: viewModel.sessionModeActive,
+                    isStringActive: viewModel.selectedStringIndex >= 0,
+                    onSessionClick: { viewModel.startSessionMode() },
+                    onSettingsClick: { showSettings = true },
+                    onStopClick: { viewModel.exitSessionMode() }
+                )
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+
+                Spacer()
+
+                if viewModel.isVolumeLow {
+                    VolumeLowBanner()
+                        .padding(.bottom, 12)
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // ── Ad banner: fixed 50pt slot BELOW the canvas, never overlaps it ──
-            AdBannerView()
-                .frame(height: 50)
-                // Keep height reserved at all times (no layout shift); just fade content
-                .opacity(viewModel.selectedStringIndex == -1 ? 1 : 0)
+            // Ad banner floats over the canvas bottom, only when idle (Android parity:
+            // aligned bottom-center, 8pt above the safe area — never a layout-shifting slot).
+            if viewModel.selectedStringIndex == -1 {
+                VStack {
+                    Spacer()
+                    AdBannerView()
+                        .frame(width: 320, height: 50)
+                        .padding(.bottom, 8)
+                }
+            }
         }
-        // Dark background behind EVERYTHING (incl. home-indicator area and the ad slot)
-        // so no white shows, and fading the ad while playing reveals dark, not white.
-        .background(AppColors.background.ignoresSafeArea())
         .sheet(isPresented: $showSettings) {
             SettingsSheet(viewModel: viewModel)
                 .presentationDetents([.medium])
@@ -126,24 +114,22 @@ private struct CanvasOverlayRow: View {
     let isStringActive: Bool
     let onSessionClick: () -> Void
     let onSettingsClick: () -> Void
+    let onStopClick: () -> Void
 
     var body: some View {
         HStack {
-            if !isSessionActive {
-                PillIconButton(
-                    image: "PlayIcon",
-                    label: String(localized: "session_mode_label"),
-                    action: onSessionClick
-                )
-            } else {
-                Color.clear.frame(width: 40, height: 40)
-            }
+            // Single toggle: Play when idle, Stop while a session is running.
+            SessionToggleButton(
+                isSessionActive: isSessionActive,
+                onSession: onSessionClick,
+                onStop: onStopClick
+            )
 
             Spacer()
 
             Text("BANJEN")
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(AppColors.wordmark)
+                .font(.system(size: 20, weight: .medium))
+                .foregroundColor(AppColors.title)
                 .tracking(4)
 
             Spacer()
@@ -154,8 +140,50 @@ private struct CanvasOverlayRow: View {
                 action: onSettingsClick
             )
         }
-        .opacity(isStringActive ? 0.35 : 1.0)
+        // Keep chrome fully visible during a session so Stop stays clear; only dim
+        // when a single string is manually being played.
+        .opacity(isStringActive && !isSessionActive ? 0.35 : 1.0)
         .animation(.easeInOut(duration: 0.3), value: isStringActive)
+    }
+}
+
+// MARK: - SessionToggleButton
+// Play/Stop toggle pill. Cross-fades, scales and rotates between the two icons
+// (micro-interaction) as the session starts/stops.
+private struct SessionToggleButton: View {
+    let isSessionActive: Bool
+    let onSession: () -> Void
+    let onStop: () -> Void
+
+    var body: some View {
+        Button(action: { isSessionActive ? onStop() : onSession() }) {
+            ZStack {
+                Image("PlayIcon")
+                    .resizable().scaledToFit()
+                    .frame(width: 24, height: 24)
+                    .foregroundColor(AppColors.wordmark)
+                    .opacity(isSessionActive ? 0 : 1)
+                    .scaleEffect(isSessionActive ? 0.5 : 1)
+                    .rotationEffect(.degrees(isSessionActive ? -90 : 0))
+
+                Image("StopIcon")
+                    .resizable().scaledToFit()
+                    .frame(width: 24, height: 24)
+                    .foregroundColor(AppColors.wordmark)
+                    .opacity(isSessionActive ? 1 : 0)
+                    .scaleEffect(isSessionActive ? 1 : 0.5)
+                    .rotationEffect(.degrees(isSessionActive ? 0 : 90))
+            }
+            .frame(width: 48, height: 48)
+            .background(AppColors.pillBg)
+            .clipShape(Capsule())
+            .overlay(Capsule().stroke(AppColors.pillBorder, lineWidth: 1))
+        }
+        .buttonStyle(PressScaleButtonStyle())
+        .animation(.spring(response: 0.35, dampingFraction: 0.7), value: isSessionActive)
+        .accessibilityLabel(isSessionActive
+            ? String(localized: "session_stop")
+            : String(localized: "session_mode_label"))
     }
 }
 
@@ -171,9 +199,9 @@ private struct PillIconButton: View {
             Image(image)
                 .resizable()
                 .scaledToFit()
-                .frame(width: 20, height: 20)
+                .frame(width: 24, height: 24)
                 .foregroundColor(AppColors.wordmark)
-                .frame(width: 40, height: 40)
+                .frame(width: 48, height: 48)
                 .background(AppColors.pillBg)
                 .clipShape(Capsule())
                 .overlay(Capsule().stroke(AppColors.pillBorder, lineWidth: 1))
@@ -216,23 +244,3 @@ private struct VolumeLowBanner: View {
     }
 }
 
-// MARK: - StopSessionButton
-
-private struct StopSessionButton: View {
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Image("StopIcon")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 20, height: 20)
-                .foregroundColor(AppColors.background)
-                .frame(width: 56, height: 56)
-                .background(AppColors.accent)
-                .clipShape(Circle())
-                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-        }
-        .accessibilityLabel(String(localized: "session_stop"))
-    }
-}

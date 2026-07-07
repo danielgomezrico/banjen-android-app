@@ -1,7 +1,7 @@
 import SwiftUI
 import BanjenCore
 
-// MARK: - Color palette
+// MARK: - Color palette (mirrors BanjoStringCanvas.kt exactly)
 
 private extension Color {
     init(hex: UInt32) {
@@ -42,10 +42,13 @@ private let breathingOpacityMax: Double = 1.00
 private let dimmedOpacity: Double = 0.35
 private let blurWidthRatio: CGFloat = 2.0
 private let hazeWidthRatio: CGFloat = 3.5
-private let safePaddingDp: CGFloat = 16
 private let shimmerPeriodMs: Double = 3200
 
-// MARK: - Per-string physics
+// Android draws strings edge-to-edge with NO horizontal padding (hPad = 0),
+// starting 170dp below the top (= (220 - 50) in Kotlin), running to the bottom.
+private let stringTopMargin: CGFloat = 170
+
+// MARK: - Per-string physics (mirrors computeStringPhysics in Kotlin)
 
 private struct StringPhysics {
     let idleThickPt: CGFloat
@@ -53,7 +56,7 @@ private struct StringPhysics {
     let vibAmpPt: CGFloat
     let vibFreqHz: Double
     let vibWavePeaks: Double
-    let springStiffness: Double    // used to set animation response
+    let springStiffness: Double
     let springDamping: Double
     let releaseDurationMs: Double
     let initialSharpness: Double
@@ -102,18 +105,73 @@ private func ordinalSuffix(_ n: Int) -> String {
 
 private func stringOrdinal(_ n: Int) -> String { "\(n)ª" }
 
-// MARK: - Per-string animation state
+// MARK: - Time-driven tween engine
+//
+// SwiftUI's `withAnimation` cannot interpolate a stored value that is read
+// imperatively inside a Canvas draw closure — it would snap to the target.
+// To reproduce Android's `Animatable.animateTo` curves we drive every
+// per-string value manually from the TimelineView clock.
 
-private struct StringAnimState {
-    // All values range [0,1] except sharpness and opacityFactor
-    var vibrationAmp: Double = 0         // 0 = still, 1 = full vibration
-    var colorFactor: Double = 0          // 0 = idle color, 1 = active color
-    var opacityFactor: Double = 1        // 1 = full, dimmedOpacity when dimmed
-    var waveSharpness: Double = 3.0      // 3 = pure sine; lower = angular
-    var attackProgress: Double = 1       // 0 = biased gaussian, 1 = symmetric
-    var revealProgress: Double = 0       // 0 = hidden, 1 = fully drawn
-    var touchYNorm: Double = 0.5         // last tap Y (0=nut, 1=bridge)
+private enum Curve {
+    case linear, easeOutCubic, easeOutQuad
+
+    func ease(_ t: Double) -> Double {
+        let x = min(max(t, 0), 1)
+        switch self {
+        case .linear: return x
+        case .easeOutCubic: return 1 - pow(1 - x, 3)
+        case .easeOutQuad: return 1 - pow(1 - x, 2)
+        }
+    }
 }
+
+// Underdamped spring step response (0 → 1), matching Compose `spring(stiffness, dampingRatio)`
+// with mass = 1: naturalFreq ωn = sqrt(stiffness). Naturally overshoots then settles at 1.
+private func springStep(_ elapsed: Double, stiffness: Double, zeta: Double) -> Double {
+    if elapsed <= 0 { return 0 }
+    let wn = sqrt(stiffness)
+    let z = min(max(zeta, 0.0001), 0.9999)
+    let wd = wn * sqrt(1 - z * z)
+    let e = exp(-z * wn * elapsed)
+    let v = 1 - e * (cos(wd * elapsed) + (z / sqrt(1 - z * z)) * sin(wd * elapsed))
+    return v
+}
+
+private struct Tween {
+    var from: Double
+    var to: Double
+    var start: Double        // absolute time (timeIntervalSinceReferenceDate)
+    var duration: Double     // seconds
+    var curve: Curve = .linear
+    var spring: (stiffness: Double, zeta: Double)? = nil
+
+    static func constant(_ v: Double) -> Tween {
+        Tween(from: v, to: v, start: 0, duration: 0)
+    }
+
+    func value(at now: Double) -> Double {
+        if let sp = spring {
+            let e = now - start
+            if e <= 0 { return from }
+            return from + (to - from) * springStep(e, stiffness: sp.stiffness, zeta: sp.zeta)
+        }
+        if duration <= 0 { return now >= start ? to : from }
+        let t = (now - start) / duration
+        return from + (to - from) * curve.ease(t)
+    }
+}
+
+private struct StringAnim {
+    var vibration = Tween.constant(0)   // 0 = still, 1 = full vibration
+    var color = Tween.constant(0)       // 0 = idle color, 1 = active color
+    var opacity = Tween.constant(1)     // 1 = full, dimmedOpacity when dimmed
+    var sharpness = Tween.constant(3)   // 3 = pure sine; lower = angular
+    var attack = Tween.constant(1)      // 0 = biased gaussian, 1 = symmetric
+    var reveal = Tween.constant(0)      // 0 = hidden, 1 = fully drawn
+    var touchYNorm: Double = 0.5
+}
+
+private func nowRef() -> Double { Date().timeIntervalSinceReferenceDate }
 
 // MARK: - BanjoStringCanvas
 
@@ -122,33 +180,22 @@ struct BanjoStringCanvas: View {
     let selectedString: Int
     let onStringSelected: (Int) -> Void
 
-    // Per-string animation state (driven from .onChange)
-    @State private var animStates: [StringAnimState]
-    // Global continuous phase (elapsed seconds, advanced by TimelineView)
-    @State private var wavePhase: Double = 0
-    // Shared breathing and shimmer (global, computed from phase)
-    // Tap zone: 0=nut, 1=center, 2=bridge
+    @State private var anims: [StringAnim]
+    @State private var physics: [StringPhysics]
+    // Tap zone: 0 = nut, 1 = center, 2 = bridge
     @State private var tapZone: Int = 1
-
     // String geometry (top/bottom Y in points) — updated during draw, read during tap
     @State private var stringTopPt: CGFloat = 0
     @State private var stringBottomPt: CGFloat = 0
-
     // Real view size captured by GeometryReader; used in tap band computation
     @State private var viewSize: CGSize = .zero
-
-    // Physics derived from notes
-    @State private var physics: [StringPhysics]
-
-    // Track previous selectedString so we can react on change
-    @State private var prevSelected: Int = -2   // sentinel
 
     init(notes: [Note], selectedString: Int, onStringSelected: @escaping (Int) -> Void) {
         self.notes = notes
         self.selectedString = selectedString
         self.onStringSelected = onStringSelected
         let n = notes.count
-        _animStates = State(initialValue: Array(repeating: StringAnimState(), count: n))
+        _anims = State(initialValue: Array(repeating: StringAnim(), count: n))
         _physics = State(initialValue: computeStringPhysics(notes))
     }
 
@@ -158,46 +205,25 @@ struct BanjoStringCanvas: View {
             Canvas { ctx, size in
                 drawFrame(ctx: &ctx, size: size, now: now)
             }
-            .onChange(of: now) { _, newNow in
-                // Advance wavePhase at ~60fps (TimelineView drives this)
-                // We keep a simple elapsed-second counter via the timeline date
-                wavePhase = newNow.truncatingRemainder(dividingBy: 3600) // keep it small
-            }
             .onChange(of: notes) { _, newNotes in
                 physics = computeStringPhysics(newNotes)
                 let n = newNotes.count
-                animStates = Array(repeating: StringAnimState(), count: n)
-                // Stagger reveal animations
-                for i in 0..<n {
-                    let delay = Double(i) * 0.15
-                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                        withAnimation(.timingCurve(0.25, 0.46, 0.45, 0.94, duration: 0.38)) {
-                            if i < animStates.count { animStates[i].revealProgress = 1 }
-                        }
-                    }
+                if n != anims.count {
+                    // Instrument switch (string count changed): reset + replay reveal.
+                    anims = Array(repeating: StringAnim(), count: n)
+                    triggerReveal(count: n)
                 }
             }
-            .onChange(of: selectedString) { oldVal, newVal in
+            .onChange(of: selectedString) { _, newVal in
                 handleSelectionChange(newSelected: newVal)
             }
             .onAppear {
-                // Trigger opening reveal stagger
-                let n = notes.count
-                for i in 0..<n {
-                    let delay = Double(i) * 0.15
-                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                        withAnimation(.timingCurve(0.25, 0.46, 0.45, 0.94, duration: 0.38)) {
-                            if i < animStates.count { animStates[i].revealProgress = 1 }
-                        }
-                    }
-                }
+                triggerReveal(count: notes.count)
             }
             .contentShape(Rectangle())
             .gesture(
                 DragGesture(minimumDistance: 0)
-                    .onEnded { value in
-                        handleTap(at: value.location)
-                    }
+                    .onEnded { value in handleTap(at: value.location) }
             )
             .background(
                 GeometryReader { geo in
@@ -210,21 +236,37 @@ struct BanjoStringCanvas: View {
         }
     }
 
+    // MARK: - Reveal (initial micro-interaction)
+    // Staggered left-to-right (150ms apart), each drawing top-to-bridge over 380ms EaseOutCubic.
+    private func triggerReveal(count n: Int) {
+        guard n > 0 else { return }
+        let base = nowRef()
+        for i in 0..<min(n, anims.count) {
+            anims[i].reveal = Tween(
+                from: 0, to: 1,
+                start: base + Double(i) * 0.15,
+                duration: 0.38,
+                curve: .easeOutCubic
+            )
+        }
+    }
+
     // MARK: - Tap handling
 
     private func handleTap(at location: CGPoint) {
         let n = notes.count
         guard n > 0, viewSize.width > 0 else { return }
 
-        // Snap reveal if mid-animation
-        let anyRevealing = animStates.contains { $0.revealProgress < 1 }
+        // Snap reveal to full if mid-animation so the tone starts immediately.
+        let t = nowRef()
+        let anyRevealing = anims.contains { $0.reveal.value(at: t) < 1 }
         if anyRevealing {
-            for i in 0..<animStates.count { animStates[i].revealProgress = 1 }
+            for i in 0..<anims.count { anims[i].reveal = .constant(1) }
         }
 
-        // Band index from X (mirrors Kotlin: relX / bandWidth, clamped)
-        let avail = viewSize.width - 2 * safePaddingDp
-        let relX = location.x - safePaddingDp
+        // Band index from X (edge-to-edge, hPad = 0; mirrors Kotlin relX / bandWidth clamped)
+        let avail = viewSize.width
+        let relX = location.x
         guard relX >= 0, relX <= avail else { return }
         let band = Int(relX / (avail / CGFloat(n))).clamped(to: 0...(n - 1))
 
@@ -235,73 +277,52 @@ struct BanjoStringCanvas: View {
         if sLen > 0 {
             let yNorm = ((location.y - sTop) / sLen).clamped(to: 0.05...0.95)
             tapZone = yNorm < 0.3 ? 0 : yNorm > 0.7 ? 2 : 1
-        }
-        if band < animStates.count {
-            animStates[band].touchYNorm = sLen > 0
-                ? Double(((location.y - sTop) / sLen).clamped(to: 0.05...0.95))
-                : 0.5
+            if band < anims.count {
+                anims[band].touchYNorm = Double(yNorm)
+            }
+        } else if band < anims.count {
+            anims[band].touchYNorm = 0.5
         }
 
         // Toggle off if tapping active string, else select
-        if band == selectedString {
-            onStringSelected(-1)
-        } else {
-            onStringSelected(band)
-        }
+        onStringSelected(band == selectedString ? -1 : band)
     }
 
-    // MARK: - Selection change
+    // MARK: - Selection change (mirrors Kotlin LaunchedEffect(selectedString, i))
 
     private func handleSelectionChange(newSelected: Int) {
-        let n = animStates.count
-        for i in 0..<n {
+        let now = nowRef()
+        for i in 0..<anims.count {
             let p = physics[i]
             if newSelected == i {
-                // Sharpness offset by tap zone
+                // Active — spring onset + color/sharpness/attack attack.
                 let sharpnessOffset: Double = tapZone == 0 ? 0.05 : tapZone == 2 ? 0.10 : 0
-                // Spring onset for vibration
-                withAnimation(.interpolatingSpring(stiffness: p.springStiffness, damping: p.springDamping)) {
-                    animStates[i].vibrationAmp = 1
-                }
-                // Sharpness: snap to initial then animate to 3.0
-                animStates[i].waveSharpness = p.initialSharpness + sharpnessOffset
-                withAnimation(.timingCurve(0.25, 0.46, 0.45, 0.94, duration: p.sharpnessTransMs / 1000)) {
-                    animStates[i].waveSharpness = 3.0
-                }
-                // Attack: snap to 0 then animate to 1
-                animStates[i].attackProgress = 0
-                withAnimation(.timingCurve(0.25, 0.46, 0.45, 0.94, duration: 0.3)) {
-                    animStates[i].attackProgress = 1
-                }
-                // Color
-                withAnimation(.timingCurve(0.25, 0.46, 0.45, 0.94, duration: 0.2)) {
-                    animStates[i].colorFactor = 1
-                    animStates[i].opacityFactor = 1
-                }
+                anims[i].vibration = Tween(
+                    from: anims[i].vibration.value(at: now), to: 1,
+                    start: now, duration: 0,
+                    spring: (p.springStiffness, p.springDamping)
+                )
+                // Sharpness snaps to initial (+zone offset) then eases to 3.0.
+                anims[i].sharpness = Tween(
+                    from: p.initialSharpness + sharpnessOffset, to: 3.0,
+                    start: now, duration: p.sharpnessTransMs / 1000, curve: .easeOutCubic
+                )
+                // Attack snaps to 0 then eases to 1.
+                anims[i].attack = Tween(from: 0, to: 1, start: now, duration: 0.3, curve: .easeOutCubic)
+                anims[i].color = Tween(from: anims[i].color.value(at: now), to: 1, start: now, duration: 0.2, curve: .easeOutCubic)
+                anims[i].opacity = Tween(from: anims[i].opacity.value(at: now), to: 1, start: now, duration: 0.2, curve: .easeOutCubic)
             } else if newSelected >= 0 {
-                // Another string active — decay and dim
-                let dur = p.releaseDurationMs / 1000
-                withAnimation(.timingCurve(0.25, 0.46, 0.45, 0.94, duration: dur)) {
-                    animStates[i].vibrationAmp = 0
-                }
-                withAnimation(.timingCurve(0.25, 0.46, 0.45, 0.94, duration: 0.35)) {
-                    animStates[i].colorFactor = 0
-                }
-                withAnimation(.timingCurve(0.25, 0.46, 0.45, 0.94, duration: 0.3)) {
-                    animStates[i].opacityFactor = dimmedOpacity
-                }
+                // Another string active — decay and dim.
+                let decayCurve: Curve = i < anims.count / 2 ? .easeOutCubic : .easeOutQuad
+                anims[i].vibration = Tween(from: anims[i].vibration.value(at: now), to: 0, start: now, duration: p.releaseDurationMs / 1000, curve: decayCurve)
+                anims[i].color = Tween(from: anims[i].color.value(at: now), to: 0, start: now, duration: 0.35, curve: .easeOutCubic)
+                anims[i].opacity = Tween(from: anims[i].opacity.value(at: now), to: dimmedOpacity, start: now, duration: 0.3, curve: .easeOutCubic)
             } else {
-                // None selected — return to idle
-                let dur = p.releaseDurationMs / 1000
-                withAnimation(.timingCurve(0.25, 0.46, 0.45, 0.94, duration: dur)) {
-                    animStates[i].vibrationAmp = 0
-                }
-                withAnimation(.timingCurve(0.25, 0.46, 0.45, 0.94, duration: 0.35)) {
-                    animStates[i].colorFactor = 0
-                }
-                withAnimation(.timingCurve(0.25, 0.46, 0.45, 0.94, duration: 0.3)) {
-                    animStates[i].opacityFactor = 1
-                }
+                // None selected — return to idle.
+                let decayCurve: Curve = i < anims.count / 2 ? .easeOutCubic : .easeOutQuad
+                anims[i].vibration = Tween(from: anims[i].vibration.value(at: now), to: 0, start: now, duration: p.releaseDurationMs / 1000, curve: decayCurve)
+                anims[i].color = Tween(from: anims[i].color.value(at: now), to: 0, start: now, duration: 0.35, curve: .easeOutCubic)
+                anims[i].opacity = Tween(from: anims[i].opacity.value(at: now), to: 1, start: now, duration: 0.3, curve: .easeOutCubic)
             }
         }
     }
@@ -310,47 +331,36 @@ struct BanjoStringCanvas: View {
 
     private func drawFrame(ctx: inout GraphicsContext, size: CGSize, now: Double) {
         let n = notes.count
-        guard n > 0 else { return }
+        guard n > 0, anims.count == n, physics.count == n else { return }
 
         let w = size.width
         let h = size.height
-        let hPad = safePaddingDp
-        let vPad = safePaddingDp
 
-        // Compute global time-based animation values
-        let breatheT = (now.truncatingRemainder(dividingBy: breathingPeriodMs / 1000)) / (breathingPeriodMs / 1000)
-        // EaseInOutSine approximation: sin(π * t / 2) for forward, then reverse
-        let breathePhase = breatheT.truncatingRemainder(dividingBy: 1.0)
+        // Global time-based breathing (0.70↔1.00 over 2400ms, EaseInOutSine-ish).
+        let breathePhase = (now.truncatingRemainder(dividingBy: breathingPeriodMs / 1000)) / (breathingPeriodMs / 1000)
         let breatheOscillator = sin(.pi * breathePhase) // 0→1→0
         let breatheAlpha = breathingOpacityMin + (breathingOpacityMax - breathingOpacityMin) * breatheOscillator
 
         let shimmerPhase = (now.truncatingRemainder(dividingBy: shimmerPeriodMs / 1000)) / (shimmerPeriodMs / 1000) * (2 * .pi)
 
         // --- Background gradient ---
-        let gradient = Gradient(stops: bgGradientStops.map {
-            Gradient.Stop(color: $0.1, location: $0.0)
-        })
+        let gradient = Gradient(stops: bgGradientStops.map { Gradient.Stop(color: $0.1, location: $0.0) })
         ctx.fill(
             Path(CGRect(origin: .zero, size: size)),
             with: .linearGradient(gradient, startPoint: .zero, endPoint: CGPoint(x: 0, y: h))
         )
 
-        // --- Vignette ---
+        // --- Vignette (subtle warm falloff toward the edges; kept light to match design) ---
         let vigRadius = max(w, h) * 0.85
-        let vigGradient = Gradient(colors: [.clear, Color.black.opacity(0.40)])
+        let vigGradient = Gradient(colors: [.clear, Color.black.opacity(0.15)])
         ctx.fill(
             Path(CGRect(origin: .zero, size: size)),
-            with: .radialGradient(vigGradient, center: CGPoint(x: w/2, y: h/2), startRadius: 0, endRadius: vigRadius)
+            with: .radialGradient(vigGradient, center: CGPoint(x: w / 2, y: h / 2), startRadius: 0, endRadius: vigRadius)
         )
 
-        // --- Strings area (no bridge bar, no frets) ---
-        let barLeft = hPad
-        let barWidth = w - 2 * hPad
-        let stringTop: CGFloat = 50  // top margin of strings -50 from previous
-        let stringBottom = h - vPad
-        let stringLength = max(1, stringBottom - stringTop)
-
-        // Store geometry for tap handling
+        // --- Strings area: edge-to-edge, 170pt top margin, to the bottom (Kotlin parity) ---
+        let stringTop: CGFloat = stringTopMargin
+        let stringBottom = h
         if stringTopPt != stringTop || stringBottomPt != stringBottom {
             let top = stringTop
             let bot = stringBottom
@@ -360,42 +370,42 @@ struct BanjoStringCanvas: View {
             }
         }
 
-        // Labels (string names) more centered on screen, with some top margin so they sit a little below center.
-        // (Previously low; now repositioned for better visual balance.)
+        // Labels float in the gap around 55% height; strings split into upper + lower tail.
         let labelY = h * 0.55
         let gapTop = labelY - 8
         let gapBottom = labelY + 65
         let upperLen = max(0.0, gapTop - stringTop)
         let lowerLen = max(0.0, stringBottom - gapBottom)
 
-        // --- Strings ---
-        let availableWidth = w - 2 * hPad
-        let bandWidth = availableWidth / CGFloat(n)
+        let bandWidth = w / CGFloat(n)
 
         for i in 0..<n {
-            let anim = animStates[i]
+            let anim = anims[i]
             let p = physics[i]
             let paletteIdx = (i + (5 - n)) % 5
             let palette = stringPalette[paletteIdx]
 
-            let centerX = hPad + bandWidth * (CGFloat(i) + 0.5)
+            let centerX = bandWidth * (CGFloat(i) + 0.5)
 
-            let stringColor = lerpColor(palette.idle, palette.active, CGFloat(anim.colorFactor))
+            let vibrationAmp = anim.vibration.value(at: now)
+            let colorFactor = anim.color.value(at: now)
+            let opacityFactor = anim.opacity.value(at: now)
+            let sharpness = anim.sharpness.value(at: now)
+            let attack = anim.attack.value(at: now)
+            let reveal = anim.reveal.value(at: now)
+
+            let stringColor = lerpColor(palette.idle, palette.active, CGFloat(colorFactor))
             let glowColor = palette.glow
 
-            let isActive = anim.vibrationAmp > 0.01
+            let isActive = vibrationAmp > 0.01
             let effectiveAlpha: CGFloat = isActive
-                ? CGFloat(anim.opacityFactor)
-                : CGFloat(anim.opacityFactor) * CGFloat(breatheAlpha)
+                ? CGFloat(opacityFactor)
+                : CGFloat(opacityFactor) * CGFloat(breatheAlpha)
 
-            let idleThick = p.idleThickPt
-            let activeThick = p.activeThickPt
-            let currentThick = lerpF(idleThick, activeThick, CGFloat(anim.colorFactor))
-
-            let maxAmpPx = p.vibAmpPt * CGFloat(anim.vibrationAmp)
+            let currentThick = lerpF(p.idleThickPt, p.activeThickPt, CGFloat(colorFactor))
+            let maxAmpPx = p.vibAmpPt * CGFloat(vibrationAmp)
             let shimmerAmpPx: CGFloat = 0.3
 
-            // Breathing width factor
             let breathFactor: CGFloat = isActive
                 ? CGFloat(1 + p.breathingAmplitude * sin(2 * .pi * now / p.breathingPeriodS))
                 : 1
@@ -405,144 +415,54 @@ struct BanjoStringCanvas: View {
             let blurWidth = coreWidth * (isActive ? blurWidthRatio : 1.15)
             let hazeWidth = coreWidth * (isActive ? hazeWidthRatio : 1.5)
 
-            // Strings full to bottom of screen (with top margin). Gapped so names float on top
-            // and lower tails continue below labels to end of screen.
+            // Upper segment: haze, blur, core
             if upperLen > 0.0 {
-                // Layer 1: haze (upper)
-                drawStringPath(
-                    ctx: &ctx,
-                    centerX: centerX,
-                    stringTop: stringTop,
-                    stringLength: upperLen,
-                    amplitude: maxAmpPx,
-                    shimmerAmp: isActive ? 0 : shimmerAmpPx,
-                    shimmerPhase: shimmerPhase,
-                    wavePhase: now,
-                    wavePeaks: p.vibWavePeaks,
-                    waveFreqHz: p.vibFreqHz,
-                    color: glowColor,
-                    alpha: glowAlpha * 0.15 * effectiveAlpha,
-                    strokeWidth: hazeWidth,
-                    revealProgress: CGFloat(anim.revealProgress)
-                )
-
-                // Layer 2: blur (upper)
-                drawStringPath(
-                    ctx: &ctx,
-                    centerX: centerX,
-                    stringTop: stringTop,
-                    stringLength: upperLen,
-                    amplitude: maxAmpPx,
-                    shimmerAmp: isActive ? 0 : shimmerAmpPx,
-                    shimmerPhase: shimmerPhase,
-                    wavePhase: now,
-                    wavePeaks: p.vibWavePeaks,
-                    waveFreqHz: p.vibFreqHz,
-                    color: glowColor,
-                    alpha: glowAlpha * 0.40 * effectiveAlpha,
-                    strokeWidth: blurWidth,
-                    revealProgress: CGFloat(anim.revealProgress)
-                )
-
-                // Layer 3: core (upper)
-                drawStringPath(
-                    ctx: &ctx,
-                    centerX: centerX,
-                    stringTop: stringTop,
-                    stringLength: upperLen,
-                    amplitude: maxAmpPx,
-                    shimmerAmp: isActive ? 0 : shimmerAmpPx,
-                    shimmerPhase: shimmerPhase,
-                    wavePhase: now,
-                    wavePeaks: p.vibWavePeaks,
-                    waveFreqHz: p.vibFreqHz,
-                    color: stringColor,
-                    alpha: effectiveAlpha,
-                    strokeWidth: coreWidth,
-                    sharpness: anim.waveSharpness,
-                    touchYNorm: anim.touchYNorm,
-                    attackProgress: anim.attackProgress,
-                    revealProgress: CGFloat(anim.revealProgress),
-                    isWound: p.isWound
-                )
+                drawStringPath(ctx: &ctx, centerX: centerX, stringTop: stringTop, stringLength: upperLen,
+                               amplitude: maxAmpPx, shimmerAmp: isActive ? 0 : shimmerAmpPx, shimmerPhase: shimmerPhase,
+                               wavePhase: now, wavePeaks: p.vibWavePeaks, waveFreqHz: p.vibFreqHz,
+                               color: glowColor, alpha: glowAlpha * 0.15 * effectiveAlpha, strokeWidth: hazeWidth,
+                               revealProgress: CGFloat(reveal))
+                drawStringPath(ctx: &ctx, centerX: centerX, stringTop: stringTop, stringLength: upperLen,
+                               amplitude: maxAmpPx, shimmerAmp: isActive ? 0 : shimmerAmpPx, shimmerPhase: shimmerPhase,
+                               wavePhase: now, wavePeaks: p.vibWavePeaks, waveFreqHz: p.vibFreqHz,
+                               color: glowColor, alpha: glowAlpha * 0.40 * effectiveAlpha, strokeWidth: blurWidth,
+                               revealProgress: CGFloat(reveal))
+                drawStringPath(ctx: &ctx, centerX: centerX, stringTop: stringTop, stringLength: upperLen,
+                               amplitude: maxAmpPx, shimmerAmp: isActive ? 0 : shimmerAmpPx, shimmerPhase: shimmerPhase,
+                               wavePhase: now, wavePeaks: p.vibWavePeaks, waveFreqHz: p.vibFreqHz,
+                               color: stringColor, alpha: effectiveAlpha, strokeWidth: coreWidth,
+                               sharpness: sharpness, touchYNorm: anim.touchYNorm, attackProgress: attack,
+                               revealProgress: CGFloat(reveal), isWound: p.isWound)
             }
 
+            // Lower tail: haze, blur, core
             if lowerLen > 0.0 {
-                // Layer 1: haze (lower tail)
-                drawStringPath(
-                    ctx: &ctx,
-                    centerX: centerX,
-                    stringTop: gapBottom,
-                    stringLength: lowerLen,
-                    amplitude: maxAmpPx,
-                    shimmerAmp: isActive ? 0 : shimmerAmpPx,
-                    shimmerPhase: shimmerPhase,
-                    wavePhase: now,
-                    wavePeaks: p.vibWavePeaks,
-                    waveFreqHz: p.vibFreqHz,
-                    color: glowColor,
-                    alpha: glowAlpha * 0.15 * effectiveAlpha,
-                    strokeWidth: hazeWidth,
-                    revealProgress: CGFloat(anim.revealProgress)
-                )
-
-                // Layer 2: blur (lower)
-                drawStringPath(
-                    ctx: &ctx,
-                    centerX: centerX,
-                    stringTop: gapBottom,
-                    stringLength: lowerLen,
-                    amplitude: maxAmpPx,
-                    shimmerAmp: isActive ? 0 : shimmerAmpPx,
-                    shimmerPhase: shimmerPhase,
-                    wavePhase: now,
-                    wavePeaks: p.vibWavePeaks,
-                    waveFreqHz: p.vibFreqHz,
-                    color: glowColor,
-                    alpha: glowAlpha * 0.40 * effectiveAlpha,
-                    strokeWidth: blurWidth,
-                    revealProgress: CGFloat(anim.revealProgress)
-                )
-
-                // Layer 3: core (lower)
-                drawStringPath(
-                    ctx: &ctx,
-                    centerX: centerX,
-                    stringTop: gapBottom,
-                    stringLength: lowerLen,
-                    amplitude: maxAmpPx,
-                    shimmerAmp: isActive ? 0 : shimmerAmpPx,
-                    shimmerPhase: shimmerPhase,
-                    wavePhase: now,
-                    wavePeaks: p.vibWavePeaks,
-                    waveFreqHz: p.vibFreqHz,
-                    color: stringColor,
-                    alpha: effectiveAlpha,
-                    strokeWidth: coreWidth,
-                    sharpness: anim.waveSharpness,
-                    touchYNorm: anim.touchYNorm,
-                    attackProgress: anim.attackProgress,
-                    revealProgress: CGFloat(anim.revealProgress),
-                    isWound: p.isWound
-                )
+                drawStringPath(ctx: &ctx, centerX: centerX, stringTop: gapBottom, stringLength: lowerLen,
+                               amplitude: maxAmpPx, shimmerAmp: isActive ? 0 : shimmerAmpPx, shimmerPhase: shimmerPhase,
+                               wavePhase: now, wavePeaks: p.vibWavePeaks, waveFreqHz: p.vibFreqHz,
+                               color: glowColor, alpha: glowAlpha * 0.15 * effectiveAlpha, strokeWidth: hazeWidth,
+                               revealProgress: CGFloat(reveal))
+                drawStringPath(ctx: &ctx, centerX: centerX, stringTop: gapBottom, stringLength: lowerLen,
+                               amplitude: maxAmpPx, shimmerAmp: isActive ? 0 : shimmerAmpPx, shimmerPhase: shimmerPhase,
+                               wavePhase: now, wavePeaks: p.vibWavePeaks, waveFreqHz: p.vibFreqHz,
+                               color: glowColor, alpha: glowAlpha * 0.40 * effectiveAlpha, strokeWidth: blurWidth,
+                               revealProgress: CGFloat(reveal))
+                drawStringPath(ctx: &ctx, centerX: centerX, stringTop: gapBottom, stringLength: lowerLen,
+                               amplitude: maxAmpPx, shimmerAmp: isActive ? 0 : shimmerAmpPx, shimmerPhase: shimmerPhase,
+                               wavePhase: now, wavePeaks: p.vibWavePeaks, waveFreqHz: p.vibFreqHz,
+                               color: stringColor, alpha: effectiveAlpha, strokeWidth: coreWidth,
+                               sharpness: sharpness, touchYNorm: anim.touchYNorm, attackProgress: attack,
+                               revealProgress: CGFloat(reveal), isWound: p.isWound)
             }
 
             // --- Label (floating on strings, ª style to match target) ---
             let labelColor = palette.label
-            let labelAlpha = (isActive ? 1.0 : Double(effectiveAlpha) * 0.85) * anim.revealProgress
-            let ordinalNum = n - i
-            let ordinal = stringOrdinal(ordinalNum)
+            let labelAlpha = (isActive ? 1.0 : Double(effectiveAlpha) * 0.85) * reveal
+            let ordinal = stringOrdinal(n - i)
 
-            drawStringLabel(
-                ctx: &ctx,
-                primary: notes[i].name,
-                secondary: ordinal,
-                centerX: centerX,
-                primaryY: labelY,
-                color: labelColor,
-                alpha: CGFloat(labelAlpha),
-                colorFactor: CGFloat(anim.colorFactor)
-            )
+            drawStringLabel(ctx: &ctx, primary: notes[i].name, secondary: ordinal,
+                            centerX: centerX, primaryY: labelY, color: labelColor,
+                            alpha: CGFloat(labelAlpha), colorFactor: CGFloat(colorFactor))
         }
     }
 
@@ -579,29 +499,25 @@ struct BanjoStringCanvas: View {
             let y = stringTop + CGFloat(s) * segH
             let yNorm = stringLength > 0 ? Double(s) / Double(segments) : 0
 
-            // Envelope
+            // Amplitude envelope with gaussian bias during attack
             let symEnv = sin(.pi * yNorm)
             let gaussExp = -((yNorm - touchYNorm) * (yNorm - touchYNorm)) / (2 * 0.35 * 0.35)
             let gaussianBias = max(0, symEnv * exp(gaussExp))
             let envelope = symEnv * attackProgress + gaussianBias * (1 - attackProgress)
 
-            // Vibration with sharpness shaping
+            // Sine vibration with sharpness shaping
             let vibOffset: CGFloat
             if amplitude > 0.01 {
                 let rawSine = sin(2 * .pi * wavePeaks * yNorm + wavePhase * waveFreqHz * 2 * .pi)
-                let shapedSine: Double
-                if sharpness >= 2.9 {
-                    shapedSine = rawSine
-                } else {
-                    let s = rawSine
-                    shapedSine = (s >= 0 ? 1 : -1) * pow(abs(s), 1 / sharpness)
-                }
-                vibOffset = CGFloat(amplitude) * CGFloat(envelope) * CGFloat(shapedSine)
+                let shapedSine: Double = sharpness >= 2.9
+                    ? rawSine
+                    : (rawSine >= 0 ? 1 : -1) * pow(abs(rawSine), 1 / sharpness)
+                vibOffset = amplitude * CGFloat(envelope) * CGFloat(shapedSine)
             } else {
                 vibOffset = 0
             }
 
-            // Wound micro-texture
+            // Wound-string micro-texture (D3/G3 only)
             let microTexture: CGFloat = (isWound && amplitude > 0.01)
                 ? CGFloat(sin(47 * yNorm * 2 * .pi) * 0.03) * amplitude
                 : 0
@@ -618,7 +534,11 @@ struct BanjoStringCanvas: View {
             }
         }
 
-        ctx.stroke(path, with: .color(color.opacity(Double(alpha.clamped(to: 0...1)))), lineWidth: strokeWidth)
+        ctx.stroke(
+            path,
+            with: .color(color.opacity(Double(alpha.clamped(to: 0...1)))),
+            style: StrokeStyle(lineWidth: strokeWidth, lineJoin: .round)
+        )
     }
 
     // MARK: - Label drawing
@@ -635,7 +555,6 @@ struct BanjoStringCanvas: View {
     ) {
         guard alpha > 0.001 else { return }
 
-        // Increased letter size for the note names and ordinals (floating on strings).
         let primarySp: CGFloat = 20 + (24 - 20) * colorFactor.clamped(to: 0...1)
         let secondarySp: CGFloat = 13 + (15 - 13) * colorFactor.clamped(to: 0...1)
 
@@ -684,12 +603,9 @@ struct BanjoStringCanvas: View {
                     .allowsHitTesting(false)
             }
         }
-        .padding(.horizontal, safePaddingDp)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        // Overlay for a11y only; canvas receives all real touches
     }
 }
-
 
 // MARK: - Helpers
 
@@ -714,7 +630,6 @@ private extension Comparable {
         min(max(self, range.lowerBound), range.upperBound)
     }
 }
-
 
 // MARK: - Previews
 

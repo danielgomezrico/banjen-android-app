@@ -16,7 +16,8 @@ enum AppColors {
 
     // Chrome
     static let accent = Color(hex: 0x6B9AB8)
-    static let wordmark = Color(hex: 0xFFFBE9)
+    static let wordmark = Color(hex: 0xFFFBE9)      // pill icons (light on dark pill)
+    static let title = Color(hex: 0x5C4A3E)         // BANJEN wordmark (dark on light bg)
     static let pillBg = Color(hex: 0x49251E)
     static let pillBorder = Color(hex: 0x6B4035)
     static let dropdownLabel = Color(hex: 0xFFFBE9)
