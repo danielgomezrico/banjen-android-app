@@ -6,7 +6,7 @@ Goal: reimplement **every** feature of the Android app (`android/`) on iOS. UI m
 ## Layout
 - `ios/BanjenCore/` — local Swift package. Pure, platform-agnostic logic + unit tests (`swift test`). Already wired into the app target.
 - `ios/Banjen/` — the app. **File-system-synchronized group**: any `.swift` added here is auto-compiled. SwiftUI views, audio engine, view model.
-- Bundle id `com.banjen.ios.Banjen`, deployment iOS 26.5, Xcode 26.5, Swift 6.
+- Bundle id `com.banjen.ios`, deployment iOS 17.0 (matches BanjenCore platforms: .iOS(.v17), .macOS(.v13)), Xcode 16+, Swift 5.9+. Avoid high placeholders like 26.5 (causes "OS version lower than deployment target").
 
 ## Build / test commands
 ```bash
