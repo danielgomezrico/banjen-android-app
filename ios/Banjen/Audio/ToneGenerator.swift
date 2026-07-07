@@ -51,8 +51,13 @@ final class ToneGenerator {
             guard let buffer = self.makePCMBuffer(from: int16Samples) else { return }
 
             // Start at volume 0, schedule with infinite loop, then ramp up.
+            //
+            // Must use the non-async overload here: the async `scheduleBuffer`
+            // only resumes once the scheduled segment finishes playing, and with
+            // `.loops` that segment never finishes — awaiting it would hang this
+            // task forever, and `playerNode.play()` below would never run.
             self.playerNode.volume = 0
-            await self.playerNode.scheduleBuffer(buffer, at: nil, options: .loops)
+            self.playerNode.scheduleBuffer(buffer, at: nil, options: .loops, completionHandler: nil)
             if !self.engine.isRunning { try? self.engine.start() }
             self.playerNode.play()
 

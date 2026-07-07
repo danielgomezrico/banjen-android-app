@@ -8,9 +8,11 @@ Banjen is an Android banjo tuner app (package: `com.makingiants.android.banjotun
 
 **Primary user**: Harold M. persona — older beginner who prefers ear-training over visual tuners. Simplicity is the core value proposition: "The simplest way to tune your banjo by ear."
 
+This repo hosts both the original Android app and a newer iOS port (SwiftUI, bundle id `com.banjen.ios`). Most guidance below (product context, personas, pains, features) applies to both platforms; build/architecture sections are split.
+
 ## Repository Layout
 
-The Android/Gradle project lives under **`android/`** (Gradle wrapper, `app/`, `baselineprofile/`, `build.gradle`, `settings.gradle`, `fastlane/`, `Gemfile`). The repo root keeps only docs (`docs/`, `README.md`, `CLAUDE.md`), general scripts (`scripts/`), `Makefile`, and CI (`.github/`). Run Gradle/Fastlane from `android/`, or use the root `make` targets (which `cd android` for you).
+The Android/Gradle project lives under **`android/`** (Gradle wrapper, `app/`, `baselineprofile/`, `build.gradle`, `settings.gradle`, `fastlane/`, `Gemfile`). The iOS app lives under **`ios/`** (`Banjen.xcodeproj`, `Banjen/` app target, `BanjenCore/` local Swift package). The repo root keeps only docs (`docs/`, `README.md`, `CLAUDE.md`), general scripts (`scripts/`), `Makefile`, and CI (`.github/`). Run Gradle/Fastlane from `android/`, or use the root `make` targets (which `cd android` for you).
 
 ## Build Commands
 
@@ -31,6 +33,32 @@ make format         # Format Kotlin with ktlint 1.5.0 (auto-downloads to .ktlint
 # Full build with coverage (jacoco runs automatically)
 (cd android && ./gradlew build)
 ```
+
+## iOS Build Commands
+
+```bash
+# Run BanjenCore unit tests (pure Swift, no simulator needed)
+(cd ios/BanjenCore && swift test)
+
+# Build/test the app target — needs a simulator destination
+xcodebuild -project ios/Banjen.xcodeproj -scheme Banjen -destination 'platform=iOS Simulator,name=iPhone 16' build
+xcodebuild -project ios/Banjen.xcodeproj -scheme Banjen -destination 'platform=iOS Simulator,name=iPhone 16' test
+```
+
+Crashlytics stays disabled until a real `GoogleService-Info.plist` (bundle id `com.banjen.ios`) is dropped into `ios/Banjen/`; Google Mobile Ads uses Google's test app ID until replaced before shipping (see `ios/Banjen/BanjenApp.swift`).
+
+## iOS Architecture
+
+`ios/BanjenCore` is a local Swift package (Swift 6, iOS 17+/macOS 13+) holding all platform-independent logic, mirroring the Android core files 1:1: `AppConstants`, `PitchDetector`, `ToneMath`, `TuningAnimationState`, `TuningModel`. It has its own test target (`BanjenCoreTests`) runnable without a simulator via `swift test`. The `ios/Banjen` app target is SwiftUI and depends on `BanjenCore`:
+
+- **`BanjenApp`** — `@main` entry point; conditionally configures Firebase Crashlytics and starts Google Mobile Ads.
+- **`ContentView`** / **`EarView`** / **`EarViewModel`** — top-level screen and its observable view model (Android's `EarActivity` equivalent, split into view + view model).
+- **`Audio/ToneGenerator.swift`** / **`Audio/PitchCaptureEngine.swift`** — tone synthesis/looping and mic-based pitch capture, the iOS counterparts of Android's `ToneGenerator` + `AudioRecord` loop.
+- **`Views/BanjoStringCanvas.swift`**, **`Views/TuningAnimationView.swift`**, **`Views/SettingsSheet.swift`**, **`Views/AdBannerView.swift`** — SwiftUI equivalents of the Android Canvas views, tuning animation, settings, and banner ad.
+- **`Theme/AppColors.swift`** — SwiftUI color theme, kept in sync with Android's Compose theme for UI parity (see recent `feat(ui): unify play/stop into one animated toggle and match iOS to Android`).
+- **`Analytics.swift`** — Firebase Analytics wrapper.
+
+When changing shared logic (tone math, pitch detection, tuning models, constants), update both `android/app/src/main/java/.../{ToneGenerator,PitchDetector,TuningModel,AppConstants}.kt` and their `ios/BanjenCore/Sources/BanjenCore/*.swift` counterparts to keep behavior identical across platforms.
 
 ## Architecture
 

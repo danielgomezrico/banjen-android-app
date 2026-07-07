@@ -7,10 +7,10 @@ Android app to help to tune a 4 string banjo
 ## Screenshots
 
 <p float="left">
-  <img src="fastlane/metadata/android/en-US/screenshots/7in/ss01-hero.png" width="200" />
-  <img src="fastlane/metadata/android/en-US/screenshots/7in/ss02-active-string.png" width="200" />
-  <img src="fastlane/metadata/android/en-US/screenshots/7in/ss03-simplicity.png" width="200" />
-  <img src="fastlane/metadata/android/en-US/screenshots/7in/ss04-no-ads.png" width="200" />
+  <img src="docs/assets/1.png" width="200" />
+  <img src="docs/assets/2.png" width="200" />
+  <img src="docs/assets/3.png" width="200" />
+  <img src="docs/assets/4.png" width="200" />
 </p>
 
 ## License
