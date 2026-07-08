@@ -10,7 +10,7 @@ apply from: '../jacoco.gradle'
 
 def appId = "com.makingiants.android.banjotuner"
 def appVersionName = "1.36.0"
-def appVersionCode = 130
+def appVersionCode = 131
 
 def customProperty(key) {
     if (project.hasProperty(key)) {
