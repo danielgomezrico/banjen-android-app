@@ -1,0 +1,66 @@
+name: iOS Build
+
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Prepare iOS AdMob config
+        env:
+          BANJEN_IOS_ADMOB_APP_ID: ${{ secrets.BANJEN_IOS_ADMOB_APP_ID }}
+          BANJEN_IOS_ADS_UNIT_ID_BANNER: ${{ secrets.BANJEN_IOS_ADS_UNIT_ID_BANNER }}
+        run: |
+          if [ -z "$BANJEN_IOS_ADMOB_APP_ID" ] || [ -z "$BANJEN_IOS_ADS_UNIT_ID_BANNER" ]; then
+            echo "::warning::BANJEN_IOS_ADMOB_APP_ID or BANJEN_IOS_ADS_UNIT_ID_BANNER not set — building with Google TEST ad ids"
+            exit 0
+          fi
+          printf '%s\n' \
+            "ADMOB_APP_ID = ${BANJEN_IOS_ADMOB_APP_ID}" \
+            "ADMOB_BANNER_UNIT_ID = ${BANJEN_IOS_ADS_UNIT_ID_BANNER}" \
+            > ios/Config/Ads.local.xcconfig
+          echo "Wrote ios/Config/Ads.local.xcconfig from repository secrets"
+
+      - name: Resolve Swift packages
+        run: |
+          xcodebuild -project ios/Banjen.xcodeproj -scheme Banjen \
+            -destination 'generic/platform=iOS Simulator' \
+            -resolvePackageDependencies
+
+      - name: Build Banjen (iOS Simulator)
+        run: |
+          xcodebuild -project ios/Banjen.xcodeproj -scheme Banjen \
+            -destination 'generic/platform=iOS Simulator' \
+            -sdk iphonesimulator \
+            build \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: BanjenCore unit tests
+        working-directory: ios/BanjenCore
+        run: swift test
+
+      - name: Verify AdMob ids in built app
+        if: ${{ secrets.BANJEN_IOS_ADMOB_APP_ID != '' }}
+        env:
+          BANJEN_IOS_ADMOB_APP_ID: ${{ secrets.BANJEN_IOS_ADMOB_APP_ID }}
+          BANJEN_IOS_ADS_UNIT_ID_BANNER: ${{ secrets.BANJEN_IOS_ADS_UNIT_ID_BANNER }}
+        run: |
+          APP_PLIST=$(find ~/Library/Developer/Xcode/DerivedData -path '*/Build/Products/Debug-iphonesimulator/Banjen.app/Info.plist' -print -quit)
+          if [ -z "$APP_PLIST" ]; then
+            echo "::error::Built Banjen.app Info.plist not found"
+            exit 1
+          fi
+          APP_ID=$(/usr/libexec/PlistBuddy -c 'Print :GADApplicationIdentifier' "$APP_PLIST")
+          UNIT_ID=$(/usr/libexec/PlistBuddy -c 'Print :GADBannerUnitIdentifier' "$APP_PLIST")
+          test "$APP_ID" = "$BANJEN_IOS_ADMOB_APP_ID"
+          test "$UNIT_ID" = "$BANJEN_IOS_ADS_UNIT_ID_BANNER"
+          echo "AdMob ids verified in built Info.plist"
